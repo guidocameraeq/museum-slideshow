@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Borrador 4 — Menú, Galerías y Ajustes agrupados</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fondo:#0E0E10; --panel:#1F1F22; --panel2:#34343A; --texto:#E8E6E1; --tenue:#A19D95;
+    --dorado:#C9A54E; --aviso:#E0A050; --bien:#8FBF8F; --foco:#F4F1EA; --focotx:#1A1A1C;
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; background:#18181b; color:var(--texto); font:400 16px Inter, sans-serif; }
+  header { padding:14px 22px; display:flex; flex-wrap:wrap; gap:10px 28px; align-items:center; background:#111; border-bottom:1px solid #2a2a2e; }
+  header h1 { font:600 18px Inter; margin:0 12px 0 0; }
+  .grp { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .grp span { color:var(--tenue); font-size:13px; margin-right:4px; }
+  .grp button { font:500 14px Inter; padding:7px 13px; border-radius:8px; border:1px solid #3a3a40; background:#1d1d21; color:var(--texto); cursor:pointer; }
+  .grp button.on { background:var(--foco); color:var(--focotx); border-color:var(--foco); }
+  main { padding:18px 22px 40px; max-width:1500px; margin:0 auto; }
+  #wrap { position:relative; width:100%; background:#000; overflow:hidden; border-radius:10px; }
+  #stage { position:absolute; left:0; top:0; width:1920px; height:1080px; transform-origin:0 0; overflow:hidden; background:var(--fondo); font-family:Inter, sans-serif; }
+  #note { margin-top:14px; color:var(--tenue); font-size:14px; line-height:1.5; max-width:1100px; }
+  html.tv, html.tv body { margin:0; padding:0; width:1920px; height:1080px; overflow:hidden; background:#000; }
+  html.tv header, html.tv #note { display:none !important; }
+  html.tv main { padding:0; margin:0; max-width:none; }
+  html.tv #wrap { position:fixed; left:0; top:0; width:1920px; height:1080px; border-radius:0; }
+
+  /* ---------- piezas comunes ---------- */
+  .abs { position:absolute; }
+  .fondoimg { position:absolute; inset:0; background-size:cover; background-position:center; }
+  .t-xl { font:600 92px/1.02 Inter; letter-spacing:-1.5px; }
+  .t-h1 { font:600 52px/1.1 Inter; }
+  .tenue { color:var(--tenue); }
+  .oro { color:var(--dorado); }
+  .ayuda { position:absolute; left:0; right:0; bottom:0; height:84px; padding:0 120px; display:flex; align-items:center; gap:46px; background:rgba(0,0,0,.55); font:400 26px Inter; color:var(--tenue); }
+  .ayuda b { display:inline-block; min-width:54px; text-align:center; padding:3px 12px; margin-right:12px; border-radius:9px; background:rgba(255,255,255,.14); color:var(--texto); font:600 24px Inter; }
+  /* Botón estándar (igual al de la app): normal = vidrio; foco = casi blanco con letra oscura; elegido = borde y punto dorados */
+  .bt { display:flex; align-items:center; gap:16px; border-radius:16px; background:rgba(255,255,255,.14); color:var(--texto); font:500 32px Inter; padding:0 30px; }
+  .bt.foco { background:var(--foco); color:var(--focotx); font-weight:600; box-shadow:0 0 0 6px rgba(244,241,234,.28), 0 14px 40px rgba(0,0,0,.55); transform:scale(1.035); }
+  .bt .ic { width:44px; height:44px; flex:none; }
+  .bt .ic svg { width:100%; height:100%; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .bt .sub { font:400 22px Inter; opacity:.75; margin-left:auto; }
+  .bt.primario { background:var(--dorado); color:#1A1608; font-weight:600; }
+  .bt.primario.foco { background:var(--foco); color:var(--focotx); }
+  .dato { display:inline-flex; align-items:center; gap:12px; font:400 26px Inter; color:var(--texto); }
+  .dato i { width:12px; height:12px; border-radius:50%; background:var(--dorado); display:inline-block; }
+  .dato.ok i { background:var(--bien); }
+  .marco { position:absolute; border:14px solid #0b0b0b; outline:3px solid var(--dorado); outline-offset:-17px; box-shadow:0 30px 80px rgba(0,0,0,.65); background-size:cover; background-position:center; }
+  .velo-izq { position:absolute; inset:0; background:linear-gradient(90deg, rgba(14,14,16,.97) 0%, rgba(14,14,16,.90) 38%, rgba(14,14,16,.35) 70%, rgba(14,14,16,.15) 100%); }
+  .velo-todo { position:absolute; inset:0; background:rgba(14,14,16,.62); }
+
+  /* ---------- Inicio B (tarjetas) ---------- */
+  .card { position:absolute; border-radius:22px; overflow:hidden; background-size:cover; background-position:center; box-shadow:0 18px 50px rgba(0,0,0,.5); transition:none; }
+  .card::after { content:""; position:absolute; inset:0; background:linear-gradient(0deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.05) 62%); }
+  .card .tx { position:absolute; left:34px; right:34px; bottom:28px; z-index:2; }
+  .card .tx b { display:block; font:600 44px/1.1 Inter; }
+  .card .tx span { display:block; margin-top:8px; font:400 26px Inter; color:rgba(255,255,255,.78); }
+  .card.foco { outline:8px solid var(--foco); outline-offset:6px; transform:scale(1.03); z-index:5; box-shadow:0 0 0 14px rgba(244,241,234,.18), 0 26px 70px rgba(0,0,0,.7); }
+  .card.foco .tx b { color:#fff; }
+  .card.foco::before { content:""; position:absolute; left:0; top:0; right:0; height:10px; background:var(--foco); z-index:3; }
+  .tile { position:absolute; border-radius:18px; background:var(--panel); display:flex; align-items:center; gap:22px; padding:0 30px; font:500 32px Inter; }
+  .tile .ic { width:50px; height:50px; flex:none; }
+  .tile .ic svg { width:100%; height:100%; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .tile small { display:block; font:400 22px Inter; color:var(--tenue); margin-top:4px; }
+  .tile.foco { background:var(--foco); color:var(--focotx); font-weight:600; outline:6px solid rgba(244,241,234,.3); outline-offset:3px; transform:scale(1.04); }
+  .tile.foco small { color:#55524b; }
+
+  /* ---------- Galerías (árbol) ---------- */
+  .fila { position:absolute; left:120px; right:120px; height:76px; border-radius:14px; background:var(--panel); display:flex; align-items:center; padding:0 28px; font:500 34px Inter; }
+  .fila.foco { background:var(--foco); color:var(--focotx); font-weight:600; box-shadow:0 0 0 5px rgba(244,241,234,.26); }
+  .fila .n { margin-left:auto; font:400 28px Inter; color:var(--tenue); display:flex; align-items:center; gap:22px; }
+  .fila.foco .n { color:#55524b; }
+  .fila.hijo .nom { font-weight:400; }
+  .fila.grupo .nom { font-weight:600; }
+  .fila.destildada .nom { color:var(--tenue); }
+  .fila.destildada.foco .nom { color:#55524b; }
+  .chk { width:44px; height:44px; border-radius:11px; border:3px solid var(--tenue); flex:none; margin-right:24px; position:relative; }
+  .chk.si { background:var(--dorado); border-color:var(--dorado); }
+  .chk.si::after { content:""; position:absolute; left:13px; top:5px; width:12px; height:22px; border:solid #1A1608; border-width:0 5px 5px 0; transform:rotate(45deg); }
+  .chk.medio { border-color:var(--dorado); }
+  .chk.medio::after { content:""; position:absolute; left:8px; top:17px; width:22px; height:6px; background:var(--dorado); border-radius:3px; }
+  .fila.foco .chk:not(.si) { border-color:#7a766d; }
+  .fila.foco .chk.medio::after { background:#B08A2E; }
+  .fila.foco .chk.medio { border-color:#B08A2E; }
+  .fila.foco .chk.si { background:#B08A2E; border-color:#B08A2E; }
+  .flecha { width:34px; height:34px; flex:none; margin-right:14px; }
+  .flecha svg { width:100%; height:100%; stroke:currentColor; fill:none; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
+  .sangria { display:inline-block; width:64px; flex:none; }
+  .nuevas { position:absolute; left:120px; right:120px; bottom:112px; height:84px; border-radius:14px; background:var(--panel); display:flex; align-items:center; padding:0 28px; font:500 32px Inter; }
+  .nuevas .v { margin-left:auto; color:var(--tenue); font-weight:600; }
+
+  /* ---------- Ajustes ---------- */
+  .ajt { position:absolute; left:120px; top:44px; }
+  .arow { position:absolute; left:120px; height:84px; border-radius:12px; background:var(--panel); display:flex; align-items:center; padding:0 28px; font:500 32px Inter; }
+  .arow .v { font:600 32px Inter; }
+  .arow.foco { background:var(--panel2); }
+  .arow.foco .v { color:var(--dorado); }
+  .arow.foco .nm { font-weight:600; }
+  .arow .ay { font:400 22px Inter; color:var(--tenue); }
+  .vista { position:absolute; right:120px; top:150px; width:540px; }
+  .vista .pared { height:340px; border-radius:16px; position:relative; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  .vista .mini { position:absolute; left:88px; top:30px; width:364px; height:280px; border:12px solid #0b0b0b; outline:2px solid var(--dorado); outline-offset:-14px; background-size:cover; background-position:center; box-shadow:0 14px 34px rgba(0,0,0,.55); }
+  .vista .cap { margin-top:18px; font:400 24px/1.4 Inter; color:var(--tenue); }
+  .vista .cap b { color:var(--texto); font-weight:600; }
+
+  /* ---------- Conexión ---------- */
+  .barra-res { position:absolute; left:120px; right:120px; height:150px; border-radius:16px; background:var(--panel); padding:22px 30px; }
+  .barra-res .pista { margin-top:20px; height:30px; border-radius:15px; background:#0a0a0b; overflow:hidden; display:flex; }
+  .barra-res .rel { background:linear-gradient(90deg,#9a7c36,var(--dorado)); height:100%; }
+  .barra-res .vis { background:#5d5a52; height:100%; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Menú y galerías — borrador 4</h1>
+  <div class="grp" id="gPan"><span>Pantalla</span></div>
+  <div class="grp" id="gFoco"><span>Foco</span></div>
+  <div class="grp"><span>Teclado</span><span style="margin:0">flechas ↑ ↓ mueven el foco · → ← abren/cierran en Galerías</span></div>
+</header>
+<main>
+  <div id="wrap"><div id="stage"></div></div>
+  <div id="note"></div>
+</main>
+<script>
+// Copias locales (dominio público, de "Galerías-prueba"): los links de Wikimedia armados de memoria no cargaban.
+const IMG = {
+  monet: 'img/monet.jpg',
+  gogh:  'img/gogh.jpg',
+  perla: 'img/perla.jpg',
+  venus: 'img/rafael.jpg',
+  gioconda: 'img/rafael.jpg',
+  caminante: 'img/caminante.jpg',
+};
+const bg = k => `background-image:url('${IMG[k]}'); background-color:#2a2a2e`;
+const $ = id => document.getElementById(id);
+const TV = /[?&]tv=1/.test(location.search);
+const qs = new URLSearchParams(location.search);
+
+const IC = {
+  play:'<svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg>',
+  grid:'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.2"/><rect x="13" y="4" width="7" height="7" rx="1.2"/><rect x="4" y="13" width="7" height="7" rx="1.2"/><rect x="13" y="13" width="7" height="7" rx="1.2"/></svg>',
+  brush:'<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.4-2.2-.6-1.3.2-2.8 1.7-2.8H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/></svg>',
+  clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>',
+  nube:'<svg viewBox="0 0 24 24"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5 4 4 0 0 1 17.5 18z"/></svg>',
+  luna:'<svg viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/></svg>',
+  info:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
+  der:'<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
+  aba:'<svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg>',
+};
+const AYUDA_BASE = '<span><b>▲ ▼ ◄ ►</b>Moverse</span><span><b>OK</b>Elegir</span><span><b>Atrás</b>Salir de la app</span>';
+
+// Botones de Inicio: [clave, título, icono, subtítulo]
+const MENU = [
+  ['ver','Ver la galería','play','Impresionismo'],
+  ['gal','Galerías','grid','8 tildadas'],
+  ['apa','Apariencia','brush','Galería moderna'],
+  ['pase','Pase','clock','1 min por obra'],
+  ['con','Conexión y espacio','nube','Reserva 50'],
+  ['pro','Protector','luna','Activado'],
+  ['est','Estado','info',''],
+];
+const DATOS = [
+  ['8 galerías tildadas · 612 obras', ''],
+  ['Reserva: 38 de 50 obras listas', 'ok'],
+  ['Sincronizado hoy 18:43', ''],
+];
+
+function bt(x,y,w,h,txt,foco,{cls='',ic='',sub=''}={}) {
+  return `<div class="abs bt ${cls} ${foco?'foco':''}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">`
+    + (ic?`<span class="ic">${IC[ic]}</span>`:'') + `<span>${txt}</span>` + (sub?`<span class="sub">${sub}</span>`:'') + `</div>`;
+}
+const datos = (x,y,gap=46) => DATOS.map((d,i)=>`<div class="abs dato ${d[1]}" style="left:${x}px;top:${y+i*gap}px"><i></i>${d[0]}</div>`).join('');
+
+/* ---------- 1. Inicio A: obra de fondo, menú a la izquierda ---------- */
+function inicioA(f) {
+  let h = `<div class="fondoimg" style="${bg('monet')}"></div><div class="velo-izq"></div>`;
+  h += `<div class="abs tenue" style="left:120px;top:92px;font:500 26px Inter;letter-spacing:5px">GALERÍA DE ARTE</div>`;
+  h += `<div class="abs t-xl" style="left:116px;top:134px">Museum<br>Slideshow</div>`;
+  h += datos(120, 352);
+  h += bt(120,508,820,124,'Ver la galería',f===0,{cls:'primario',ic:'play',sub:'Impresionismo · 24 obras'});
+  const pos = [[120,652],[540,652],[120,756],[540,756],[120,860],[540,860]];
+  MENU.slice(1).forEach((m,i)=>{ h += bt(pos[i][0],pos[i][1],400,84,m[1],f===i+1,{}); });
+  // el sexto botón (Estado) queda solo en su fila; ajusto el ancho de los de dos columnas a 340
+  h += `<div class="abs" style="right:90px;bottom:116px;text-align:right;font:400 24px Inter;color:rgba(255,255,255,.85);text-shadow:0 2px 10px #000">Impresión, sol naciente<br><span style="opacity:.7">Claude Monet · 1872</span></div>`;
+  h += `<div class="ayuda">${AYUDA_BASE}</div>`;
+  return h;
+}
+
+/* ---------- 2. Inicio B: tarjetas grandes con imagen, estilo Google TV ---------- */
+function inicioB(f) {
+  let h = `<div class="fondoimg" style="${bg('gogh')};filter:blur(26px) brightness(.85);transform:scale(1.15)"></div><div class="velo-todo"></div>`;
+  h += `<div class="abs t-h1" style="left:120px;top:62px">Museum Slideshow</div>`;
+  h += `<div class="abs dato" style="right:120px;top:78px"><i></i>Sincronizado hoy 18:43</div>`;
+  const c = [
+    [120,170,760,430,'monet',0],
+    [900,170,450,430,'gioconda',1],
+    [1370,170,430,430,'gogh',2],
+  ];
+  c.forEach(([x,y,w,hh,img,i])=>{
+    h += `<div class="card ${f===i?'foco':''}" style="left:${x}px;top:${y}px;width:${w}px;height:${hh}px;${bg(img)}"><div class="tx"><b>${MENU[i][1]}</b><span>${i===0?'Impresionismo · 24 obras · tema Galería moderna':i===1?'8 tildadas · 612 obras':'Galería moderna · Modo automático'}</span></div></div>`;
+    if (i===0) h += `<div class="abs" style="left:150px;top:200px;width:84px;height:84px;border-radius:50%;background:rgba(14,14,16,.7);z-index:6;display:flex;align-items:center;justify-content:center"><span style="width:44px;height:44px;color:#fff">${IC.play.replace('<svg','<svg style="fill:#fff;stroke:#fff;width:100%;height:100%"')}</span></div>`;
+  });
+  const tw = 405, ty = 650;
+  [3,4,5,6].forEach((i,k)=>{
+    const m = MENU[i];
+    h += `<div class="tile ${f===i?'foco':''}" style="left:${120+k*(tw+20)}px;top:${ty}px;width:${tw}px;height:130px"><span class="ic">${IC[m[2]]}</span><div>${m[1]}${m[3]?`<small>${m[3]}</small>`:''}</div></div>`;
+  });
+  h += `<div class="abs dato ok" style="left:120px;top:830px"><i></i>Reserva: 38 de 50 obras listas</div>`;
+  h += `<div class="abs dato" style="left:760px;top:830px"><i></i>8 galerías tildadas · 612 obras</div>`;
+  h += `<div class="ayuda">${AYUDA_BASE}</div>`;
+  return h;
+}
+/* ---------- 3. Galerías: árbol de la carpeta de Drive ---------- */
+const ARBOL = [
+  {id:'ren', nombre:'Renacimiento', abierto:true, hijos:[
+    {nombre:'Rafael', obras:64, on:true}, {nombre:'Botticelli', obras:52, on:true}, {nombre:'Leonardo', obras:71, on:true}]},
+  {id:'imp', nombre:'Impresionismo', abierto:true, hijos:[
+    {nombre:'Monet', obras:86, on:true}, {nombre:'Renoir', obras:48, on:true}, {nombre:'Pissarro', obras:39, on:false}]},
+  {nombre:'Caravaggio', obras:22, on:true},
+  {nombre:'Mitología', obras:142, on:true},
+  {nombre:'Barroco', obras:127, on:true},
+];
+function filasArbol() {
+  const f = [];
+  ARBOL.forEach(n => {
+    if (n.hijos) { f.push({n, grupo:true, nivel:0}); if (n.abierto) n.hijos.forEach(c => f.push({n:c, nivel:1, padre:n})); }
+    else f.push({n, nivel:0});
+  });
+  return f;
+}
+const estadoGrupo = g => { const k = g.hijos.filter(c=>c.on).length; return k===0?'no':k===g.hijos.length?'si':'medio'; };
+const obrasDe = n => n.hijos ? n.hijos.reduce((a,c)=>a+c.obras,0) : n.obras;
+function galerias(f) {
+  const hojas = []; ARBOL.forEach(n => n.hijos ? hojas.push(...n.hijos) : hojas.push(n));
+  const tild = hojas.filter(h=>h.on);
+  const total = tild.reduce((a,h)=>a+h.obras,0);
+  let h = `<div class="abs t-h1" style="left:120px;top:40px">Galerías</div>`;
+  h += `<div class="abs" style="right:120px;top:54px;font:600 34px Inter;color:var(--dorado)">${tild.length} galerías tildadas · ${total.toLocaleString('es-AR')} obras</div>`;
+  const filas = filasArbol();
+  filas.forEach((r,i) => {
+    const st = r.grupo ? estadoGrupo(r.n) : (r.n.on ? 'si' : 'no');
+    const cls = ['fila', r.grupo?'grupo':'', r.nivel?'hijo':'', st==='no'?'destildada':'', i===f?'foco':''].join(' ');
+    h += `<div class="${cls}" style="top:${138+i*66}px;height:58px">`
+      + (r.nivel ? '<span class="sangria"></span>' : '')
+      + (r.grupo ? `<span class="flecha">${r.n.abierto?IC.aba:IC.der}</span>` : '<span class="flecha"></span>')
+      + `<span class="chk ${st==='no'?'':st}"></span><span class="nom">${r.n.nombre}</span>`
+      + `<span class="n">${r.grupo?'<span style="opacity:.8">'+r.n.hijos.length+' galerías</span>':''}<span>${obrasDe(r.n)} obras</span></span></div>`;
+  });
+  h += `<div class="nuevas"><span>Galerías nuevas</span><span class="v">‹  Tildadas  ›</span></div>`;
+  h += `<div class="ayuda"><span><b>OK</b>Tilda</span><span><b>►</b>Abre el grupo</span><span><b>◄</b>Lo cierra</span><span><b>Atrás</b>Vuelve</span></div>`;
+  return h;
+}
+
+/* ---------- 4. Apariencia: ajustes agrupados ---------- */
+const APA = [
+  ['Tema', ['Galería moderna','Sala oscura','Inmersivo','Libro de arte'], 0],
+  ['Modo', ['Automático','Claro','Oscuro'], 0],
+  ['Horario del modo automático', ['Claro de 7:00 a 20:00','Claro de 8:00 a 19:00'], 0],
+  ['Color de pared', ['Blanco galería','Gris cálido','Piedra','Carbón','Negro','Azul noche','Bordó'], 0],
+  ['Marco', ['El del tema','Negro fino','Negro con filete dorado','Madera','Dorado','Sin marco','Al azar por obra','El que diga la galería'], 0],
+  ['Tamaño de la obra', ['Normal','Grande','Máximo'], 1],
+  ['Pantalla completa con marco', ['No','Sí'], 0],
+  ['Explicación en pantalla', ['Cuando entra','Nunca'], 0],
+  ['Nombre de la sala', ['Siempre','Unos segundos','Nunca'], 1],
+  ['Cartel', ['Automático','Completo','Ficha','Mínimo'], 0],
+];
+const PAREDES = {'Blanco galería':'#ECE8E0','Gris cálido':'#CFCAC1','Piedra':'#B7AE9F','Carbón':'#2B2B2E','Negro':'#0A0A0A','Azul noche':'#161D33','Bordó':'#4A1A24'};
+function apariencia(f) {
+  let h = `<div class="ajt t-h1">Apariencia</div>`;
+  h += `<div class="abs tenue" style="left:120px;top:122px;font:400 24px Inter">Arriba/Abajo recorren · Izquierda/Derecha cambian el valor</div>`;
+  APA.forEach((a,i) => {
+    const foco = i===f, v = a[1][a[2]];
+    h += `<div class="arow ${foco?'foco':''}" style="top:${158+i*76}px;height:68px;width:1070px;font-size:30px"><span class="nm" style="width:470px">${a[0]}</span>`
+      + `<span class="v" style="font-size:30px">${foco?'‹  '+v+'  ›':v}</span></div>`;
+  });
+  const pared = PAREDES[APA[3][1][APA[3][2]]];
+  const claro = ['#ECE8E0','#CFCAC1','#B7AE9F'].includes(pared);
+  h += `<div class="vista" style="top:158px"><div class="pared" style="background:${pared}"><div class="mini" style="${bg('monet')}"></div></div>`
+    + `<div class="cap"><b>Vista previa</b><br>Tema ${APA[0][1][APA[0][2]]} · pared ${APA[3][1][APA[3][2]].toLowerCase()} · obra ${APA[5][1][APA[5][2]].toLowerCase()}.<br><span style="opacity:.8">${AYUDA_APA[f] || ''}</span></div></div>`;
+  h += `<div class="ayuda"><span><b>▲ ▼</b>Recorrer</span><span><b>◄ ►</b>Cambiar el valor</span><span><b>Atrás</b>Vuelve a Inicio</span></div>`;
+  return h;
+}
+const AYUDA_APA = ['Cada tema es una forma distinta de mostrar la obra.','Automático: claro de día, oscuro de noche.','A qué hora cambia de claro a oscuro.','Cada modo tiene sus colores de pared.','El del tema, uno fijo, al azar o el que diga la galería.','Grande es el equilibrio entre obra e información.','La obra entera, con su marco, al apretar OK.','Si entra al lado de la obra, o nunca.','Cuándo se ve el nombre de la sala.','Cuánta información lleva el cartel de cada obra.'];
+
+/* ---------- 5. Conexión y espacio ---------- */
+const CON = [
+  ['Carpeta de Drive', ['1a2B…x9Qz'], 0, 'Se cambia desde la PC', false],
+  ['Sincronizar cada', ['1 hora','3 horas','6 horas','12 horas','1 día'], 2, '', true],
+  ['Reserva de obras', ['20 obras','50 obras','100 obras','200 obras'], 1, 'Cuántas obras próximas guarda la tele', true],
+  ['Espacio máximo', ['500 MB','1 GB','2 GB'], 1, 'Tope de seguridad de la reserva', true],
+  ['Sincronizar ahora', ['Última vez: hoy 18:43'], 0, '', false],
+];
+function conexion(f) {
+  let h = `<div class="ajt t-h1">Conexión y espacio</div>`;
+  h += `<div class="abs tenue" style="left:120px;top:122px;font:400 24px Inter">Cómo y cuánto baja la tele de tu carpeta de Drive</div>`;
+  CON.forEach((a,i) => {
+    const foco = i===f, v = a[1][a[2]], edit = a[4];
+    h += `<div class="arow ${foco?'foco':''}" style="top:${170+i*104}px;height:92px;right:120px"><span class="nm" style="width:560px">${a[0]}</span>`
+      + `<div style="flex:1"><div class="v">${i===4 ? (foco?'<span style="background:var(--foco);color:#1A1A1C;padding:8px 22px;border-radius:12px;margin-left:-22px">Sincronizar ahora</span>':'<span style="opacity:.9">Sincronizar ahora</span>') : (foco&&edit?'‹  '+v+'  ›':v)}</div>`
+      + (a[3] ? `<div class="ay">${a[3]}</div>` : (i===4 ? `<div class="ay">${v}</div>` : '')) + `</div></div>`;
+  });
+  h += `<div class="barra-res" style="top:710px;height:200px"><div style="display:flex;align-items:baseline"><span style="font:600 34px Inter">Reserva de obras</span><span style="margin-left:auto;font:600 34px Inter;color:var(--dorado)">38 de 50 obras listas · 120 MB</span></div>`
+    + `<div class="pista"><div class="rel" style="width:63.3%"></div><div class="vis" style="width:16.7%"></div></div>`
+    + `<div style="display:flex;gap:44px;margin-top:20px;font:400 24px Inter;color:var(--tenue)"><span><i style="display:inline-block;width:18px;height:18px;border-radius:4px;background:var(--dorado);vertical-align:-2px;margin-right:10px"></i>Próximas, ya bajadas</span><span><i style="display:inline-block;width:18px;height:18px;border-radius:4px;background:#5d5a52;vertical-align:-2px;margin-right:10px"></i>10 ya vistas, para volver atrás</span><span style="margin-left:auto">Con internet, siempre hay obras por delante</span></div></div>`;
+  h += `<div class="ayuda"><span><b>▲ ▼</b>Recorrer</span><span><b>◄ ►</b>Cambiar el valor</span><span><b>OK</b>Sincronizar</span><span><b>Atrás</b>Vuelve a Inicio</span></div>`;
+  return h;
+}
+
+/* ---------- Control ---------- */
+const PANT = {
+  'inicio':    {t:'Inicio — A (obra de fondo)', fn:inicioA, n:7, nom:MENU.map(m=>m[1]),
+    nota:'Propuesta A: la obra de la galería actual de fondo, nombre grande a la izquierda y el botón principal «Ver la galería» destacado en dorado. Los datos útiles quedan chicos arriba del botón.'},
+  'inicio-b':  {t:'Inicio — B (tarjetas)', fn:inicioB, n:7, nom:MENU.map(m=>m[1]),
+    nota:'Propuesta B, estilo Google TV: tarjetas grandes con imagen para lo más usado y fichas más chicas para lo técnico. La obra de fondo va desenfocada.'},
+  'galerias':  {t:'Galerías', fn:galerias, n:11, nom:null,
+    nota:'Árbol de la carpeta de Drive. En el borrador podés probar: ▲▼ mueve, ► abre un grupo, ◄ lo cierra, OK tilda (tildar un grupo tilda todo lo de adentro; un grupo con algunas tildadas queda a medias).'},
+  'apariencia':{t:'Apariencia', fn:apariencia, n:APA.length, nom:APA.map(a=>a[0]),
+    nota:'Ajustes agrupados de Apariencia. Con las flechas ◄ ► cambiás el valor y la vista previa de la derecha se actualiza (tema, pared, tamaño).'},
+  'conexion':  {t:'Conexión y espacio', fn:conexion, n:CON.length, nom:CON.map(a=>a[0]),
+    nota:'Conexión y espacio, con la Reserva de obras y una barra que muestra cuántas hay listas.'},
+};
+let pan = qs.get('pantalla') in PANT ? qs.get('pantalla') : 'inicio';
+let foco = parseInt(qs.get('foco') || (pan==='galerias'?'4':pan==='apariencia'?'3':pan==='conexion'?'2':'0'), 10) || 0;
+if (qs.get('abre') === 'no') ARBOL.forEach(n => { if (n.hijos) n.abierto = false; });
+
+function render() {
+  const P = PANT[pan];
+  const n = pan==='galerias' ? filasArbol().length : P.n;
+  foco = Math.max(0, Math.min(n-1, foco));
+  $('stage').innerHTML = P.fn(foco);
+  $('note').textContent = P.nota;
+  document.querySelectorAll('#gPan button').forEach(b => b.classList.toggle('on', b.dataset.k===pan));
+  const gf = $('gFoco'); gf.innerHTML = '<span>Foco en</span>';
+  const nombres = pan==='galerias' ? filasArbol().map(r=>r.n.nombre) : P.nom;
+  nombres.forEach((nm,i) => { const b = document.createElement('button'); b.textContent = nm; b.className = i===foco?'on':''; b.onclick = () => { foco = i; render(); }; gf.appendChild(b); });
+}
+function mover(dx, dy) {
+  if (pan==='inicio') {
+    if (dy) { if (foco===0) { if (dy>0) foco = 1; } else if (dy>0) foco = Math.min(6, foco+2); else foco = foco<=2 ? 0 : foco-2; }
+    if (dx && foco>0) { const c = (foco-1)&1; if (dx>0 && c===0) foco++; if (dx<0 && c===1) foco--; }
+  } else if (pan==='inicio-b') {
+    if (dy>0 && foco<=2) foco = foco+3 > 6 ? 6 : foco+3;
+    else if (dy<0 && foco>=3) foco = Math.min(foco-3, 2);
+    if (dx) { const lim = foco<=2 ? [0,2] : [3,6]; foco = Math.max(lim[0], Math.min(lim[1], foco+dx)); }
+  } else if (pan==='galerias') {
+    const filas = filasArbol(), r = filas[foco];
+    if (dy) foco += dy;
+    if (dx>0 && r.grupo && !r.n.abierto) r.n.abierto = true;
+    if (dx<0) { if (r.grupo && r.n.abierto) r.n.abierto = false; else if (r.padre) foco = filas.findIndex(x=>x.n===r.padre); }
+  } else {
+    if (dy) foco += dy;
+    if (dx) { const a = pan==='apariencia' ? APA[foco] : CON[foco]; if (a[1].length>1 && (pan==='apariencia' || a[4])) a[2] = (a[2]+dx+a[1].length) % a[1].length; }
+  }
+  render();
+}
+function ok() {
+  if (pan==='galerias') {
+    const r = filasArbol()[foco];
+    if (r.grupo) { const marca = estadoGrupo(r.n)!=='si'; r.n.hijos.forEach(c=>c.on = marca); } else r.n.on = !r.n.on;
+    render();
+  }
+}
+document.addEventListener('keydown', ev => {
+  const m = {ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[ev.key];
+  if (m) { ev.preventDefault(); mover(m[0], m[1]); } else if (ev.key==='Enter') ok();
+});
+Object.keys(PANT).forEach(k => {
+  const b = document.createElement('button'); b.textContent = PANT[k].t; b.dataset.k = k;
+  b.onclick = () => { pan = k; foco = k==='galerias'?4:k==='apariencia'?3:k==='conexion'?2:0; render(); };
+  $('gPan').appendChild(b);
+});
+function scale() {
+  const wrap = $('wrap'), st = $('stage');
+  if (TV) { st.style.transform = 'none'; wrap.style.height = '1080px'; return; }
+  const s = wrap.clientWidth / 1920;
+  st.style.transform = `scale(${s})`; wrap.style.height = (1080*s) + 'px';
+}
+if (TV) document.documentElement.classList.add('tv');
+window.addEventListener('resize', scale);
+render(); scale();
+</script>
+</body>
+</html>
