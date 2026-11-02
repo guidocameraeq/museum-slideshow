@@ -18,10 +18,10 @@ Repo hermano: `../volumen-maestro` (Volumen Maestro) es **la casa de la tele**: 
 
 | Qué | Valor |
 |---|---|
-| TV | TCL "Smart TV Pro" (G09), Google TV, Android TV 12, 2 GB RAM, dibuja a 1920×1080 sobre panel 4K |
+| TV | TCL "Smart TV Pro" (G09), Google TV, Android TV 12, 2 GB RAM, chip Amlogic T963D4. Las apps dibujan a 1920×1080; una superficie de 3840×2160 sale a 4K real (probado 02/11) |
 | IP / puerto ADB | `192.168.0.219:5555`, Wi-Fi "Yulius". Si no conecta, mirar que la PC esté en esa red (a veces queda en "Domotics3") |
-| adb | `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Google.PlatformTools_Microsoft.Winget.Source_8wekyb3d8bbwe\platform-tools\adb.exe` |
-| JDK / SDK | Temurin 17 en `C:\Program Files\Eclipse Adoptium\jdk-17*` · SDK en `%LOCALAPPDATA%\Android\Sdk` (platform 34) |
+| adb | El primero que exista: `%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe` · `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Google.PlatformTools_Microsoft.Winget.Source_8wekyb3d8bbwe\platform-tools\adb.exe` · `%APPDATA%\SideQuest\platform-tools\adb.exe` (el único en la PC de `C:\Users\guido` al 02/11) |
+| JDK / SDK | Temurin 17 en `C:\Program Files\Eclipse Adoptium\jdk-17*` · SDK en `%LOCALAPPDATA%\Android\Sdk` (platform 34). **Faltan en la PC de `C:\Users\guido` (02/11)** |
 | Firma | `keystore.jks` en la raíz, **versionado a propósito** (repo privado; Guido no guarda nada en la PC). Se crea en la sesión 0 |
 
 Pasos: `adb connect 192.168.0.219:5555` → `adb devices` debe decir `device`. Si dice `unauthorized`, Guido acepta el cartel en la TV.
@@ -72,6 +72,7 @@ Los rituales viven en `.claude/skills/`: **`/inicio` · `/cierre` · `/instalar`
 | `docs/SESSION_HANDOFF.md` | **Save game** — foto única de dónde quedamos | `/cierre` lo sobreescribe entero |
 | `docs/TODO.md` | ÚNICA fuente de pendientes | `/cierre`: completadas afuera, nuevas adentro |
 | `docs/CHANGELOG.md` | Historia de cambios | `/cierre`: entrada por sesión |
+| `docs/diseno/` | Diseño visual aprobado: borradores HTML + `decisiones.md` (lo aprobado por Guido) | al cambiar el diseño |
 | `docs/formato-galeria.md` | El formato de `galeria.json`, para el agente de arte de Guido | al cambiar el formato (subir `formato`) |
 | `docs/desarrollo.md` | Entorno, clave de Drive, permiso del protector, compilar e instalar | al cambiar herramientas |
 

@@ -38,7 +38,9 @@ Reglas del archivo:
       "archivo": "monet-impresion-sol-naciente.jpg",
       "titulo": "Impresión, sol naciente",
       "autor": "Claude Monet",
+      "vida_autor": "1840–1926",
       "anio": "1872",
+      "movimiento": "Impresionismo",
       "tecnica": "Óleo sobre lienzo",
       "medidas": "48 × 63 cm",
       "ubicacion": "Musée Marmottan Monet, París",
@@ -75,12 +77,15 @@ Todos son texto entre comillas.
 | `archivo` | sí | El nombre **exacto** de la imagen en la misma subcarpeta. Respeta mayúsculas, minúsculas y la extensión. |
 | `titulo` | no | El título de la obra. |
 | `autor` | no | Quién la hizo. |
+| `vida_autor` | no | Los años del autor, por ejemplo `"1840–1926"` o `"c. 1390–1441"`. |
 | `anio` | no | Texto, no número, para admitir cosas como `"c. 1503-1519"` o `"siglo XV"`. |
+| `movimiento` | no | El movimiento o la época, por ejemplo `"Impresionismo"` o `"Renacimiento"`. |
 | `tecnica` | no | Por ejemplo, `"Óleo sobre tabla"`. |
 | `medidas` | no | Por ejemplo, `"77 × 53 cm"`. |
 | `ubicacion` | no | Dónde está hoy: museo y ciudad. |
 | `forma` | no | `"rectangular"` (el valor por defecto), `"redonda"` u `"ovalada"`. Ponela **siempre** en las obras redondas u ovaladas (tondos, medallones): la app no las puede adivinar por los píxeles, y con este dato les pone un marco redondo. |
-| `explicacion` | no | El texto tipo cartel de museo: qué muestra la obra, por qué importa, qué mirar. Entre 80 y 250 palabras funciona bien. Los párrafos se separan con `\n\n`. Texto plano, sin Markdown ni HTML. |
+| `explicacion` | no | El texto tipo cartel de museo: qué muestra la obra, por qué importa, qué mirar. Entre 80 y 150 palabras es lo ideal: así entra al lado de la obra en la mayoría de los casos (si no entra, la app la muestra aparte con el botón OK). Los párrafos se separan con `\n\n`. Texto plano, sin Markdown ni HTML. |
+| `marco` | no | El marco que sugiere el agente para esta obra. La app lo usa solo si Guido elige "el que diga la galería". El catálogo de nombres se define cuando estén los marcos reales; un nombre desconocido se ignora. |
 | `credito` | no | De dónde sale la imagen o su licencia. Se muestra chico. |
 
 ## Qué hace la app si algo no está perfecto

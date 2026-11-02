@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Museum Slideshow — Temas v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#121212; --panel:#1b1b1d; --line:#3a3a3e; --text:#e8e6e1; --muted:#a19d95; --gold:#c9a54e; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 Inter, system-ui, sans-serif; }
+  header { padding:20px 24px 0; }
+  header a { color:var(--gold); font-size:14px; }
+  h1 { margin:6px 0 4px; font:500 26px 'EB Garamond', serif; }
+  .sub { color:var(--muted); margin:0 0 14px; max-width:1100px; }
+  main { padding:0 24px 48px; max-width:1500px; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px 28px; align-items:center; margin-bottom:12px; }
+  .grp { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .grp b { font-weight:500; color:var(--muted); margin-right:4px; font-size:14px; }
+  .btn { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px 12px; font:14px Inter; cursor:pointer; }
+  .btn.on { border-color:var(--gold); color:#fff; background:#2a2418; }
+  .btn:disabled { opacity:.35; cursor:not-allowed; }
+  .sw { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; border:1px solid rgba(128,128,128,.7); }
+  .chk { font-size:14px; color:var(--muted); display:flex; gap:6px; align-items:center; cursor:pointer; }
+  .chk.dis { opacity:.4; cursor:not-allowed; }
+  .hint { color:var(--muted); font-size:13px; margin:6px 0 0; }
+  .warn { color:#e8b44a; font-size:14px; min-height:21px; margin:6px 0 0; }
+  #wrap { width:100%; position:relative; overflow:hidden; border-radius:4px; background:#000; }
+  #wrap:fullscreen { display:flex; align-items:center; justify-content:center; border-radius:0; }
+  #stage { width:1920px; height:1080px; position:absolute; left:0; top:0; transform-origin:0 0; overflow:hidden; }
+  #wrap:fullscreen #stage { position:relative; flex:none; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:14px; margin-top:22px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 16px; }
+  .card h3 { margin:0 0 4px; font:500 20px 'EB Garamond', serif; }
+  .card.fav { border-color:var(--gold); }
+  .tag { display:inline-block; font-size:12px; color:#1b1b1d; background:var(--gold); border-radius:4px; padding:1px 6px; margin-left:6px; vertical-align:middle; }
+  h2 { font:500 22px 'EB Garamond', serif; margin:28px 0 8px; }
+  ol.q li { margin:8px 0; }
+  .muted { color:var(--muted); }
+
+  /* ---------- Escenario 1920x1080: todo se posiciona en coordenadas absolutas ---------- */
+  .wall { position:absolute; inset:0; overflow:hidden; }
+  .content { position:absolute; left:0; top:0; width:1920px; height:1080px; }
+  .wk { position:absolute; }
+  .frame, .fillet, .mat, .obra { display:block; }
+  .frame { padding:var(--F,0); } .fillet { padding:var(--fil,0); } .mat { padding:var(--M,0); }
+  .round .frame, .round .fillet, .round .mat, .round .obra { border-radius:50%; }
+  .round .obra { object-fit:cover; }
+  .meas { position:absolute; left:0; top:0; width:1920px; height:0; visibility:hidden; pointer-events:none; }
+  .sala { position:absolute; left:110px; top:76px; font:500 21px Inter; letter-spacing:.18em; text-transform:uppercase; color:var(--ls); white-space:nowrap; }
+  .safe { position:absolute; inset:54px 96px; border:3px dashed rgba(255,80,80,.8); pointer-events:none; display:none; z-index:9; }
+  .safe span { position:absolute; right:10px; bottom:6px; color:rgba(255,80,80,.9); font:20px Inter; }
+  #stage.show-safe .safe { display:block; }
+
+  /* ---------- Carteles: una sola receta de tipografía, los temas ponen los valores ---------- */
+  .lbl { position:absolute; box-sizing:border-box; color:var(--lt); font-family:var(--lf, Inter, sans-serif); line-height:1.3; }
+  .lbl.sm { --u:.82; }
+  .lbl .t { font-family:var(--tf, Inter, sans-serif); font-weight:var(--tw,600); font-style:var(--tst,normal); font-size:calc(var(--ts) * var(--u,1)); line-height:1.18; }
+  .lbl .a { font-size:calc(var(--as) * var(--u,1)); color:var(--la); margin-top:6px; font-weight:var(--aw,400); text-transform:var(--at,none); letter-spacing:var(--al,0); }
+  .lbl .yr { font-size:calc(var(--ds) * var(--u,1)); color:var(--ld); margin-top:3px; }
+  .lbl .mv { font-size:calc(var(--ms) * var(--u,1)); font-style:italic; letter-spacing:.03em; color:var(--lc); margin-top:2px; }
+  .lbl .d { font-size:calc(var(--ds) * var(--u,1)); color:var(--ld); margin-top:6px; }
+  .lbl .d + .d { margin-top:2px; }
+  .lbl .x { font-size:calc(var(--xs) * var(--u,1)); line-height:1.45; color:var(--ld); margin:16px 0 0; }
+  .lbl .c { font-size:calc(var(--cs) * var(--u,1)); color:var(--lc); margin-top:12px; }
+  .lbl .ok { display:flex; align-items:center; gap:10px; margin-top:14px; font-size:calc(var(--os) * var(--u,1)); color:var(--ld); }
+  .lbl .ok i { font:normal 600 calc(14px * var(--u,1)) Inter; border:2px solid currentColor; border-radius:50%; width:calc(34px * var(--u,1)); height:calc(34px * var(--u,1)); display:inline-flex; align-items:center; justify-content:center; flex:none; }
+  /* nombre bajo cada obra de una pared */
+  .lbl.nm { text-align:center; }
+  .lbl.nm .t { font-size:var(--nts); } .lbl.nm .a { font-size:var(--nas); margin-top:4px; }
+  /* cuadrito flotante (solo cuando no hay ningún lugar libre) */
+  .chip { position:absolute; box-sizing:border-box; padding:12px 18px; border-radius:6px; background:rgba(10,10,10,.62); color:#fff; font-family:Inter, sans-serif; z-index:5; }
+  .chip .t { font:600 24px/1.2 Inter; } .chip .a { font:400 18px/1.3 Inter; margin-top:4px; opacity:.9; }
+  .chip .ok { font:400 15px/1.3 Inter; margin-top:8px; opacity:.8; }
+  #stage.m-l { --sh:0 22px 44px rgba(0,0,0,.22), 0 4px 10px rgba(0,0,0,.12); }
+  #stage.m-d { --sh:0 24px 54px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.06); }
+
+  /* ---------- Marcos (selector «Marco»; Galería moderna y Sala oscura) ---------- */
+  .f-fino .frame { background:#1c1a18; box-shadow:var(--sh); } .m-d.f-fino .frame { background:#060606; }
+  .f-filete .frame { background:linear-gradient(145deg,#1a1817,#0b0b0b); box-shadow:var(--sh); }
+  .f-filete .fillet { background:linear-gradient(135deg,#8c6d2f,#e0c171 50%,#8c6d2f); }
+  .f-madera .frame { background:repeating-linear-gradient(97deg,#6f4a2a 0 7px,#7e5632 7px 13px,#684426 13px 21px,#835a34 21px 26px);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.4), inset 0 0 0 3px rgba(255,225,180,.14), var(--sh); }
+  .f-dorado .frame { background:linear-gradient(135deg,#7d5d22 0%,#e3c36b 22%,#a07b32 45%,#f2da8c 62%,#8a6727 82%,#d4b25c 100%);
+    box-shadow:inset 0 0 0 2px #4d3710, inset 0 0 0 calc(var(--F) * .2) #c9a54e, inset 0 0 0 calc(var(--F) * .25) #6b4f1a, var(--sh); }
+  .f-dorado .obra { box-shadow:0 0 0 3px #2a1d08; }
+  .f-sin .obra { box-shadow:var(--sh); }
+
+  /* ---------- Galería moderna ---------- */
+  .t-gm.m-l { --lt:#222; --la:#2a2a2a; --ld:#555; --lc:#7a7770; --ls:rgba(0,0,0,.4); }
+  .t-gm.m-d { --lt:#ece9e2; --la:#e0ddd5; --ld:#a8a59d; --lc:#8a877f; --ls:rgba(255,255,255,.38); }
+  .t-gm .wall { background:linear-gradient(180deg,var(--w1),var(--w2)); }
+  .t-gm { --ts:31px; --as:24px; --ds:20px; --ms:18px; --cs:16px; --xs:20px; --os:19px; --nts:27px; --nas:20px; }
+  .t-gm .mat { background:#fbfaf6; } .t-gm.m-d .mat { background:#2a2a2d; }
+  .has-mat.t-gm.m-l .obra { box-shadow:0 0 0 1px rgba(0,0,0,.12), 0 0 0 min(7px, calc(var(--M) * .4)) #f3f1ea; }
+  .has-mat.t-gm.m-d .obra { box-shadow:0 0 0 1px rgba(255,255,255,.1), 0 0 0 min(7px, calc(var(--M) * .4)) #202023; }
+
+  /* ---------- Sala oscura ---------- */
+  .t-so.m-d { --lt:#e9e4da; --la:#d8cdb6; --ld:#a8a196; --lc:#8a847a; --ls:rgba(230,220,200,.38); }
+  .t-so.m-l { --lt:#2a2622; --la:#4a443c; --ld:#5f594f; --lc:#7a746a; --ls:rgba(60,45,30,.5); }
+  .t-so.m-d .wall { background:radial-gradient(ellipse 55% 75% at 50% 38%, color-mix(in srgb, var(--w1), #fff 22%) 0%, var(--w1) 45%, var(--w2) 100%); }
+  .t-so.m-l .wall { background:radial-gradient(ellipse 60% 80% at 50% 38%, color-mix(in srgb, var(--w1), #fff 55%) 0%, var(--w1) 50%, var(--w2) 100%); }
+  .t-so { --ts:40px; --tf:'EB Garamond', serif; --tw:400; --tst:italic; --as:21px; --aw:500; --at:uppercase; --al:.06em;
+          --ds:20px; --ms:18px; --cs:16px; --xs:20px; --os:19px; --nts:33px; --nas:19px; }
+  .t-so .lbl.nm .a { letter-spacing:.05em; }
+
+  /* ---------- Inmersivo: sin degradado sobre la obra ---------- */
+  .t-im { --ts:32px; --as:24px; --ds:20px; --ms:17px; --cs:16px; --xs:20px; --os:18px; --nts:26px; --nas:20px; }
+  .t-im .sala { background:rgba(0,0,0,.45); color:#fff; padding:3px 12px; border-radius:4px; }
+  .t-im .wall { background:#000; }
+  .t-im .bg { position:absolute; left:-8%; top:-8%; width:116%; height:116%; object-fit:cover; }
+  .t-im.m-d .bg { filter:blur(70px) brightness(.38) saturate(1.15); }
+  .t-im.m-l .bg { filter:blur(70px) brightness(1.2) saturate(.85); }
+  .t-im.m-l .wall::after { content:''; position:absolute; inset:0; background:rgba(255,255,255,.38); }
+  .t-im .obra { box-shadow:0 10px 36px rgba(0,0,0,.4); }
+  .t-im.m-d { --lt:#fff; --la:rgba(255,255,255,.9); --ld:rgba(255,255,255,.8); --lc:rgba(255,255,255,.62); }
+  .t-im.m-l { --lt:#14120f; --la:#1d1b18; --ld:#2e2b26; --lc:#4a463f; }
+  .t-im.m-l .wall::after { background:rgba(255,255,255,.5); }
+  .t-im.m-d .lbl { text-shadow:0 1px 6px rgba(0,0,0,.5); }
+
+  /* ---------- Libro de arte ---------- */
+  .t-lb.m-l { --tx:#2a241b; --tx2:#6b6049; --gut:rgba(90,65,25,.2); --ls:rgba(60,45,30,.5); }
+  .t-lb.m-d { --tx:#ddd7ca; --tx2:#938c7e; --gut:rgba(0,0,0,.65); --ls:rgba(230,220,200,.38); }
+  .t-lb.m-l .wall { background:color-mix(in srgb, var(--pg), #6b5a3a 24%); }
+  .t-lb.m-d .wall { background:color-mix(in srgb, var(--pg), #000 70%); }
+  .book { position:absolute; left:96px; top:54px; width:1728px; height:972px; display:flex; box-shadow:0 30px 70px rgba(0,0,0,.5); font-family:'EB Garamond', serif; color:var(--tx); }
+  .pgL, .pgR { position:relative; height:972px; background:var(--pg); }
+  .pgL { width:960px; display:flex; align-items:center; justify-content:center; padding:44px 64px 44px 44px; }
+  .pgR { width:768px; padding:40px 56px 36px 64px; overflow:hidden; }
+  .pgL::after { content:''; position:absolute; top:0; right:0; bottom:0; width:70px; background:linear-gradient(to right, transparent, var(--gut)); }
+  .pgR::before { content:''; position:absolute; top:0; left:0; bottom:0; width:70px; background:linear-gradient(to left, transparent, var(--gut)); }
+  .pgL > *, .pgR > * { position:relative; z-index:1; }
+  .t-lb .obra { box-shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 14px rgba(0,0,0,.22); }
+  .run { font:500 17px Inter; letter-spacing:.16em; text-transform:uppercase; color:var(--tx2); height:26px; }
+  .bt { font:italic 500 44px/1.08 'EB Garamond', serif; margin:12px 0 6px; }
+  .ba { font:500 29px 'EB Garamond', serif; } .bm { font:400 21px/1.3 'EB Garamond', serif; color:var(--tx2); }
+  .bmv { font:italic 400 19px/1.3 'EB Garamond', serif; color:var(--tx2); letter-spacing:.03em; opacity:.9; }
+  .rule { height:1px; background:var(--tx2); opacity:.45; margin:14px 0; }
+  .bx { font:400 25px/1.42 'EB Garamond', serif; margin:0; }
+  .bc { font:italic 400 17px 'EB Garamond', serif; color:var(--tx2); margin-top:12px; }
+  .bok { display:flex; align-items:center; gap:10px; margin-top:18px; font:400 21px 'EB Garamond', serif; color:var(--tx2); }
+  .bok i { font:normal 600 14px Inter; border:2px solid currentColor; border-radius:50%; width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; }
+  .wk.rel { position:relative; left:auto !important; top:auto !important; }
+  /* Modo TV (?tv=1&tema=..&modo=..&disp=..&tam=..&pared=..&marco=..&expl=..): solo el escenario, 1920x1080 exactos, sin escalar */
+  html.tv, html.tv body { margin:0; padding:0; width:1920px; height:1080px; overflow:hidden; background:#000; }
+  html.tv header, html.tv main > :not(#wrap):not(#tvtag) { display:none !important; }
+  html.tv main { padding:0; margin:0; max-width:none; }
+  html.tv #wrap { position:fixed; left:0; top:0; width:1920px; height:1080px; border-radius:0; }
+  #tvtag { display:none; }
+  html.tv #tvtag { display:block; position:fixed; right:30px; bottom:20px; z-index:50; font:400 18px/1.3 Inter, sans-serif; color:rgba(255,255,255,.78); background:rgba(0,0,0,.38); padding:3px 12px; border-radius:4px; white-space:nowrap; pointer-events:none; }
+</style>
+</head>
+<body>
+<header>
+  <a href="02-temas-y-modos.html">← Borrador 2: temas y modos</a>
+  <h1>Museum Slideshow — Temas, colores y acomodador</h1>
+  <p class="sub">Borrador 3 · 02/11/2026 · Cuatro temas, modo Claro / Oscuro, color de pared, marco y tamaño. Lo nuevo: el acomodador mide la obra y el espacio que sobra, pone el cartel donde más lugar hay y elige cuánta información entra entera. Pantallas a 1920×1080. Obras de dominio público (Wikimedia Commons).</p>
+</header>
+<main>
+  <div class="bar"><div class="grp" id="gTheme"><b>Tema</b></div><div class="grp" id="gMode"><b>Modo</b></div><div class="grp" id="gWall"><b>Color de pared</b></div></div>
+  <div class="bar"><div class="grp" id="gScene"><b>Disposición</b></div></div>
+  <div class="bar"><div class="grp" id="gFrame"><b>Marco</b></div><div class="grp" id="gSize"><b>Tamaño de la obra</b></div><div class="grp" id="gExpl"><b>Explicación</b></div></div>
+  <div class="bar">
+    <label class="chk"><input type="checkbox" id="cSala" checked> Nombre de la sala arriba</label>
+    <label class="chk"><input type="checkbox" id="cOk" checked> Aviso «OK · Leer sobre la obra»</label>
+    <label class="chk"><input type="checkbox" id="cSafe"> Margen de seguridad de la tele</label>
+    <button class="btn" id="bFull">Pantalla completa (F)</button>
+  </div>
+  <div id="wrap"><div id="stage"><div class="wall"></div><div class="content"></div><div class="sala"></div><div class="meas"></div><div class="safe"><span>margen de seguridad</span></div></div></div>
+  <p class="warn" id="warn"></p>
+  <p class="hint" id="note"></p>
+  <div id="tvtag"></div>
+  <p class="hint">Teclas: ← → cambia la disposición · ↑ ↓ cambia el tema · M cambia el modo · T cambia el tamaño · O muestra u oculta la explicación (el OK del control) · F pantalla completa. Para juzgar letras y colores, mirala en pantalla completa y desde lejos.</p>
+  <div class="cards">
+    <div class="card fav"><h3>1 · Galería moderna <span class="tag">tu favorito</span></h3><span class="muted">Pared lisa, marco negro fino y paspartú; el cartel donde más lugar queda. De noche, la misma galería con pared carbón.</span></div>
+    <div class="card"><h3>2 · Sala oscura</h3><span class="muted">Pared en penumbra con un foco sobre la obra y marco negro con filete dorado. Su pared por defecto es negra (de día, gris cálido).</span></div>
+    <div class="card"><h3>3 · Inmersivo <span class="tag">el que más vas a usar</span></h3><span class="muted">La obra lo más grande posible sobre su propia imagen desenfocada, sin degradado. Si sobra lugar al costado va el cartel; si no, un cuadrito.</span></div>
+    <div class="card"><h3>4 · Libro de arte</h3><span class="muted">Doble página: la obra a la izquierda, ficha y explicación a la derecha. Muestra las obras de a una; el color de pared cambia el color del papel.</span></div>
+  </div>
+  <p class="hint">Tamaño de la obra (solo temas con marco): <b>Normal</b> obra más chica y más aire · <b>Grande</b> hasta el 88 % del espacio permitido (el valor por defecto) · <b>Máximo</b> todo el espacio permitido y marco fino. En los tres el cartel va donde sobra lugar.</p>
+
+  <h2>Preguntas para vos</h2>
+  <ol class="q" id="preguntas">
+    <li><b>Paspartú de la Galería moderna:</b> el borde blanco (o gris, de noche) entre el marco y la obra lo dejé con cualquier marco que elijas, menos «Sin marco». ¿Está bien, o preferís que lo tenga solo el marco negro fino del tema?</li>
+    <li><b>Cuadrito flotante:</b> solo aparece cuando no queda ni un costado libre (por ejemplo «El nacimiento de Venus», que es muy ancho, en Máximo o en Inmersivo). Lo puse abajo a la izquierda, sobre la obra, con título, autor y año. ¿Te sirve ahí, o preferís otra esquina, o que la obra se achique un poco para dejarle lugar?</li>
+    <li><b>Explicación en las Paredes de 2 o 3 obras:</b> no la muestro nunca (no hay lugar para tres textos largos); cada obra lleva solo su nombre abajo. La tecla OK la abriría en una vista tipo Libro de arte. ¿Alcanza así?</li>
+  </ol>
+</main>
+<script>
+const W = 'https://thumb.wikimedia.org/wikipedia/commons/thumb/';
+const O = {
+  monet:{src:'https://upload.wikimedia.org/wikipedia/commons/5/54/Claude_Monet%2C_Impression%2C_soleil_levant.jpg', w:1600,h:1245,
+    t:'Impresión, sol naciente', a:'Claude Monet', vida:'1840–1926', mov:'Impresionismo', y:'1872', tec:'Óleo sobre lienzo', med:'48 × 63 cm', ubi:'Musée Marmottan Monet, París'},
+  venus:{src:W+'0/0b/Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg/3840px-Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg', w:30000,h:18840,
+    t:'El nacimiento de Venus', a:'Sandro Botticelli', vida:'1445–1510', mov:'Renacimiento', y:'c. 1484-1486', tec:'Temple sobre lienzo', med:'172,5 × 278,9 cm', ubi:'Galería Uffizi, Florencia'},
+  gioconda:{src:W+'e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/3840px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg', w:7479,h:11146,
+    t:'La Gioconda', a:'Leonardo da Vinci', vida:'1452–1519', mov:'Renacimiento', y:'c. 1503-1519', tec:'Óleo sobre tabla de álamo', med:'77 × 53 cm', ubi:'Museo del Louvre, París'},
+  armino:{src:W+'f/f9/Lady_with_an_Ermine_-_Leonardo_da_Vinci_-_Google_Art_Project.jpg/3840px-Lady_with_an_Ermine_-_Leonardo_da_Vinci_-_Google_Art_Project.jpg', w:30894,h:41545,
+    t:'La dama del armiño', a:'Leonardo da Vinci', vida:'1452–1519', mov:'Renacimiento', y:'c. 1489-1491', tec:'Óleo sobre tabla de nogal', med:'54 × 39 cm', ubi:'Museo Czartoryski, Cracovia'},
+  arnolfini:{src:W+'3/33/Van_Eyck_-_Arnolfini_Portrait.jpg/3840px-Van_Eyck_-_Arnolfini_Portrait.jpg', w:4386,h:6000,
+    t:'El matrimonio Arnolfini', a:'Jan van Eyck', vida:'c. 1390–1441', mov:'Pintura flamenca primitiva', y:'1434', tec:'Óleo sobre tabla de roble', med:'82,2 × 60 cm', ubi:'National Gallery, Londres'},
+  caminante:{src:W+'b/b9/Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg/1920px-Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg', w:2327,h:2980,
+    t:'El caminante sobre el mar de nubes', a:'Caspar David Friedrich', vida:'1774–1840', mov:'Romanticismo', y:'c. 1817', tec:'Óleo sobre lienzo', med:'94,8 × 74,8 cm', ubi:'Kunsthalle de Hamburgo'},
+  tondo:{src:W+'4/48/Michelangelo_Buonarroti_-_Tondo_Doni_-_Google_Art_Project.jpg/1920px-Michelangelo_Buonarroti_-_Tondo_Doni_-_Google_Art_Project.jpg', w:2016,h:2024,
+    t:'Tondo Doni', a:'Miguel Ángel', vida:'1475–1564', mov:'Renacimiento', y:'c. 1505-1506', tec:'Temple sobre tabla', med:'120 cm de diámetro', ubi:'Galería Uffizi, Florencia', round:true},
+};
+for (const k in O) O[k].k = k;
+const EX = {
+  monet:'Monet pintó esta vista del puerto de Le Havre, la ciudad donde creció, en 1872. Un sol pequeño y anaranjado se refleja en el agua entre la bruma, y unas barcas apenas se adivinan como siluetas oscuras. Las pinceladas son rápidas y sueltas: lo que le interesaba era captar la impresión fugaz de la luz, no los detalles. La obra se mostró en 1874, en una exposición independiente de artistas que no seguían el sistema oficial de los salones. Un crítico se burló del título y llamó «impresionistas» a todo el grupo; el nombre quedó para siempre como el de un movimiento. Hoy se conserva en el Museo Marmottan Monet, de París.',
+  venus:'Botticelli pintó esta obra hacia 1485 y es una de las imágenes más famosas del Renacimiento italiano. Muestra a Venus, la diosa del amor, llegando a la orilla sobre una concha. A la izquierda, los vientos la empujan con su soplo; a la derecha, una figura femenina se adelanta para cubrirla con un manto lleno de flores. Está pintada al temple sobre lienzo, un soporte poco habitual entonces en Florencia, donde se usaba más la tabla. Su tema es mitológico y no religioso, algo poco frecuente en su época, y se relaciona con la familia Medici, que gobernaba la ciudad. Se conserva en la Galería Uffizi, de Florencia, y mide casi 2,8 metros de ancho.',
+  gioconda:'Leonardo da Vinci empezó este retrato hacia 1503 y siguió trabajando en él durante años. La tradición dice que representa a Lisa Gherardini, esposa del comerciante florentino Francesco del Giocondo; de ahí el nombre «La Gioconda». Se destaca por el sfumato, una técnica de veladuras muy suaves que desdibuja los contornos, y por la expresión apenas insinuada de la modelo, ante un paisaje lejano. Leonardo se llevó la tabla a Francia, y allí pasó a las colecciones reales; hoy pertenece al Museo del Louvre, de París. En 1911 fue robada por un italiano que había trabajado en el museo, y se recuperó en 1913. Aquel episodio aumentó su fama en todo el mundo.',
+  armino:'Leonardo pintó este retrato hacia 1490, cuando trabajaba en Milán al servicio de Ludovico Sforza, gobernante de la ciudad. Se cree que la joven es Cecilia Gallerani, que formaba parte de su corte. Ella sostiene un armiño, un animal que se asocia con la pureza y que también aludía al propio Ludovico, quien había recibido la Orden del Armiño. El giro del cuerpo y de la cabeza, que parecen atender a algo fuera del cuadro, da una sensación de movimiento poco común en los retratos de esa época. Es uno de los pocos retratos de mujeres de Leonardo. Se conserva en el Museo Czartoryski, de Cracovia, y es la única obra suya que está en Polonia.',
+  arnolfini:'Jan van Eyck firmó este cuadro con una frase en latín escrita en la pared, sobre el espejo: «Jan van Eyck estuvo aquí, 1434». Muestra a una pareja en una habitación. Se cree que son el comerciante italiano Giovanni di Nicolao Arnolfini, que vivía en Brujas, y su esposa, aunque los expertos discuten quiénes son en realidad. El espejo redondo del fondo refleja la escena vista desde atrás, con dos personas más en la puerta. El pintor describe con enorme detalle las telas, la madera, el metal y una lámpara con una sola vela encendida. Es uno de los grandes ejemplos de la pintura al óleo del norte de Europa en el siglo XV. Pertenece a la National Gallery, de Londres, desde 1842.',
+  caminante:'Caspar David Friedrich pintó hacia 1817 a un hombre de espaldas, de pie sobre una roca, frente a un mar de niebla del que asoman cumbres lejanas. Como lo vemos desde atrás, quien mira el cuadro se pone en el lugar del caminante y comparte con él ese momento de soledad ante la naturaleza. Friedrich fue uno de los grandes pintores del Romanticismo alemán, un movimiento que daba mucha importancia a las emociones y a la grandeza de los paisajes. Esta obra suele elegirse como imagen de esa época y se ha reproducido en incontables libros y portadas. Se conserva en la Kunsthalle de Hamburgo, en Alemania.',
+  tondo:'Un tondo es una pintura de forma circular. Miguel Ángel pintó este hacia 1505 y 1506 para el comerciante florentino Agnolo Doni, y representa a la Sagrada Familia: la Virgen, san José y el Niño. Los tres forman un grupo apretado, y la Virgen gira el cuerpo con fuerza para recibir al niño, una pose que muchos artistas posteriores imitaron. Detrás hay un muro bajo y, más allá, figuras desnudas de jóvenes. Los colores son intensos y los cuerpos tienen un volumen casi de escultura, algo lógico en un artista que se consideraba sobre todo escultor. Es una de las poquísimas pinturas de caballete que se atribuyen a Miguel Ángel. Se conserva en la Galería Uffizi, de Florencia.',
+};
+const SCENES = [
+  {name:'Horizontal', obras:['monet'], sala:'Impresionismo · 3 / 24'},
+  {name:'Muy ancha', obras:['venus'], sala:'Renacimiento italiano · 7 / 31'},
+  {name:'Vertical', obras:['gioconda'], sala:'Renacimiento italiano · 12 / 31'},
+  {name:'Redonda', obras:['tondo'], sala:'Renacimiento italiano · 18 / 31'},
+  {name:'Pared de 2', obras:['caminante','arnolfini'], sala:'Retratos y paisajes · 5 / 40'},
+  {name:'Pared de 3', obras:['gioconda','armino','arnolfini'], sala:'Retratos · 9 / 22'},
+];
+const THEMES = [{k:'gm',n:'Galería moderna'},{k:'so',n:'Sala oscura'},{k:'im',n:'Inmersivo'},{k:'lb',n:'Libro de arte'}];
+const MODES = [{k:'l',n:'Claro'},{k:'d',n:'Oscuro'}];
+const SIZES = [{k:'n',n:'Normal'},{k:'g',n:'Grande'},{k:'x',n:'Máximo'}];
+const EXPL = [{k:'si',n:'Cuando entra'},{k:'no',n:'Nunca'}];
+// Colores de pared: 3 por modo. c1/c2 = arriba/abajo de la pared; pg = color de la página del Libro de arte
+const WALLS = {
+  l:[{k:'blanco-galeria',n:'Blanco galería',c1:'#f6f5f1',c2:'#ebe9e3',pg:'#fbf9f3'},
+     {k:'gris-calido',n:'Gris cálido',c1:'#e9e5de',c2:'#d9d4ca',pg:'#f5eedd'},
+     {k:'piedra',n:'Piedra',c1:'#d9d0c0',c2:'#c3b9a6',pg:'#e8dec6'}],
+  d:[{k:'carbon',n:'Carbón',c1:'#2a2a2c',c2:'#1a1a1c',pg:'#1d1c1b'},
+     {k:'negro',n:'Negro',c1:'#141415',c2:'#050506',pg:'#0e0e0f'},
+     {k:'azul-noche',n:'Azul noche',c1:'#1b2744',c2:'#0c1325',pg:'#131c30'}],
+};
+const WDEF = {gm:{l:0,d:0}, so:{l:1,d:1}, im:{l:0,d:0}, lb:{l:1,d:0}};   // color de pared por defecto de cada tema
+// Marcos: el «del tema» es el primero. F = grosor del marco, fil = filete dorado (px del escenario) por tamaño n/g/x
+const FRAMES = [{k:'tema',n:'Del tema'},{k:'fino',n:'Negro fino'},{k:'filete',n:'Negro con filete dorado'},{k:'madera',n:'Madera'},{k:'dorado',n:'Dorado'},{k:'sin',n:'Sin marco'}];
+const THEME_FRAME = {gm:'fino', so:'filete'};
+const FRD = {fino:{n:[14,0],g:[10,0],x:[5,0]}, filete:{n:[20,4],g:[14,3],x:[8,2]}, madera:{n:[32,0],g:[22,0],x:[11,0]}, dorado:{n:[44,0],g:[30,0],x:[16,0]}, sin:{n:[0,0],g:[0,0],x:[0,0]}};
+const MAT = {n:64, g:34, x:12};     // paspartú (solo Galería moderna, y no con «sin marco»)
+const SAFE = {x:96, y:54, w:1728, h:972, r:1824, b:1026};
+const CAP = {n:{w:1000,h:680}, g:{w:1521,h:856}, x:{w:1728,h:972}};   // caja máxima (obra + marco) por tamaño
+const GAP = 40;       // aire entre la obra y su cartel
+const CREDITO = 'Dominio público, vía Wikimedia Commons';
+const R = {};         // dibujantes por tema
+let ti = 0, mi = 0, sc = 0, si = 1, pw = null, fm = 0, ex = true;   // tema, modo, disposición, tamaño (Grande), pared (null = la del tema), marco, explicación
+let LAY = {};         // lo que decidió el acomodador en el último dibujo
+const hasFrame = th => th === 'gm' || th === 'so';
+const $ = id => document.getElementById(id);
+const stage = $('stage'), wrap = $('wrap'), wall = stage.querySelector('.wall');
+const content = stage.querySelector('.content'), sala = stage.querySelector('.sala'), meas = stage.querySelector('.meas');
+const cSala = $('cSala'), cOk = $('cOk'), cSafe = $('cSafe');
+const wallIdx = th => pw == null ? WDEF[th][MODES[mi].k] : pw;
+
+// marco, filete y paspartú de la escena actual (px del escenario); e = lo que el marco suma al ancho y al alto de la obra
+function frameDims(th){
+  if (!hasFrame(th)) return {key:'', F:0, fil:0, M:0, e:0};
+  const key = FRAMES[fm].k === 'tema' ? THEME_FRAME[th] : FRAMES[fm].k, sz = SIZES[si].k;
+  const [F, fil] = FRD[key][sz], M = (th === 'gm' && key !== 'sin') ? MAT[sz] : 0;
+  return {key, F, fil, M, e: 2*(F + fil + M)};
+}
+// obra (lado interno) que cabe en una caja exterior bw×bh con marco e; respeta la proporción
+function fit1(o, bw, bh, e){
+  const r = o.w/o.h; let w = Math.min(bw-e, (bh-e)*r), h = w/r;
+  if (o.round) w = h = Math.min(bw-e, bh-e);
+  return [Math.round(w), Math.round(o.round ? w : h)];
+}
+function wkHTML(o, x, y, iw, ih, e){
+  return `<div class="wk${o.round ? ' round' : ''}" style="left:${x}px;top:${y}px;width:${iw+e}px;height:${ih+e}px"><div class="frame"><div class="fillet"><div class="mat"><img class="obra" data-k="${o.k}" src="${o.src}" alt="${o.t}" style="width:${iw}px;height:${ih}px"></div></div></div></div>`;
+}
+
+// ---------- Carteles ----------
+// Tres niveles de información: full = ficha + explicación · fic = ficha · min = título, autor y año
+function labHTML(o, lv, ok, w, pos){
+  let h = `<div class="t">${o.t}</div>`;
+  if (lv === 'min') h += `<div class="a">${o.a}, ${o.y}</div>`;
+  else {
+    h += `<div class="a">${o.a} (${o.vida})</div><div class="yr">${o.y}</div><div class="mv">${o.mov}</div><div class="d">${o.tec} · ${o.med}</div><div class="d">${o.ubi}</div>`;
+    if (lv === 'full') h += `<p class="x">${EX[o.k]}</p>`;
+    h += `<div class="c">${CREDITO}</div>`;
+  }
+  if (ok) h += `<div class="ok"><i>OK</i>Leer sobre la obra</div>`;
+  return `<div class="lbl lv-${lv}${w < 340 ? ' sm' : ''}" style="width:${w}px;${pos || ''}">${h}</div>`;
+}
+function nameHTML(o, w, pos){
+  return `<div class="lbl nm" style="width:${w}px;${pos || ''}"><div class="t">${o.t}</div><div class="a">${o.a}, ${o.y}</div></div>`;
+}
+function chipHTML(o, pos){ return `<div class="chip" style="max-width:440px;${pos || ''}"><div class="t">${o.t}</div><div class="a">${o.a}, ${o.y}</div></div>`; }
+// mide el alto REAL del texto ya renderizado (con las fuentes y el CSS del tema actual)
+function measure(html){
+  meas.innerHTML = html; const el = meas.firstElementChild;
+  const r = {h: el.offsetHeight, w: el.offsetWidth, ok: el.scrollWidth <= el.clientWidth + 1};
+  meas.innerHTML = ''; return r;
+}
+const LVL = {full:{max:620, min:340}, fic:{max:460, min:250}, min:{max:420, min:210}};
+
+// ---------- El acomodador: una obra sola ----------
+function planSingle(o, fd, cap){
+  const e = fd.e, [iw, ih] = fit1(o, cap.w, cap.h, e), w = iw + e, h = ih + e, okOn = cOk.checked;
+  const levels = [];
+  if (ex) levels.push(['full', false]);
+  ['fic', 'min'].forEach(lv => { if (okOn) levels.push([lv, true]); levels.push([lv, false]); });
+  // espacio libre dentro del margen de seguridad: a la derecha, a la izquierda y abajo (la obra pegada al lado contrario)
+  const sideW = SAFE.w - w - GAP, belowH = SAFE.h - h - GAP;
+  const places = [{p:'right', aw:sideW, ah:SAFE.h}, {p:'left', aw:sideW, ah:SAFE.h}, {p:'below', aw:SAFE.w, ah:belowH}]
+    .map(q => Object.assign(q, {area: Math.max(0, q.aw) * Math.max(0, q.ah)})).sort((a, b) => b.area - a.area);   // el más grande primero; empate: derecha
+  const free = {right:sideW, left:sideW, below:belowH};
+  for (const [lv, ok] of levels) for (const q of places) {
+    if (q.aw <= 0 || q.ah <= 0) continue;
+    const side = q.p !== 'below', L = LVL[lv];
+    const Lw = Math.floor(side ? Math.min(q.aw, L.max) : Math.min(q.aw, Math.max(w, 640), lv === 'full' ? 1000 : 820));
+    if (Lw < L.min) continue;
+    const m = measure(labHTML(o, lv, ok, Lw));
+    if (!m.ok || m.h > q.ah) continue;
+    let wx, wy, lx, ly;
+    if (side) {
+      const x0 = SAFE.x + (SAFE.w - (w + GAP + Lw)) / 2;
+      wy = SAFE.y + (SAFE.h - h) / 2;
+      wx = q.p === 'right' ? x0 : x0 + Lw + GAP; lx = q.p === 'right' ? x0 + w + GAP : x0;
+      ly = Math.min(Math.max(SAFE.y, wy + h - m.h), SAFE.b - m.h);   // alineado con el borde de abajo de la obra
+    } else {
+      const y0 = SAFE.y + (SAFE.h - (h + GAP + m.h)) / 2;
+      wx = SAFE.x + (SAFE.w - w) / 2; wy = y0; ly = y0 + h + GAP;
+      lx = Math.max(SAFE.x, Math.min(wx, SAFE.r - Lw));
+    }
+    return {html: wkHTML(o, wx, wy, iw, ih, e) + labHTML(o, lv, ok, Lw, `left:${lx}px;top:${ly}px;height:${m.h}px`),
+            lay:{level:lv, place:q.p, ok, w, h, Lw, free}};
+  }
+  // no hay lugar libre en ningún costado: cuadrito flotante chico, con información mínima, en una esquina de la obra
+  const wx = SAFE.x + (SAFE.w - w) / 2, wy = SAFE.y + (SAFE.h - h) / 2, m = measure(chipHTML(o));
+  return {html: wkHTML(o, wx, wy, iw, ih, e) + chipHTML(o, `left:${wx + 20}px;top:${wy + h - 20 - m.h}px`), lay:{level:'chip', place:'chip', ok:false, w, h, free}};
+}
+
+// ---------- El acomodador: paredes de 2 o 3 obras, cada una con su nombre abajo ----------
+const CAPP = {n:{w:1380, h:720}, g:{w:1521, h:856}, x:{w:1728, h:972}};
+const GP = {n:[110, 80], g:[64, 50], x:[24, 24]};      // aire entre obras: [pared de 2, pared de 3]
+function planPared(os, fd, cap, G){
+  const n = os.length, e = fd.e, rs = os.map(o => o.round ? 1 : o.w/o.h), NG = 26, MINC = 300;
+  let ih = cap.h - e - NG - 90, L = null;
+  for (let it = 0; it < 60; it++) {
+    const cols = os.map((o, i) => { const iw = Math.round(ih * rs[i]), ow = iw + e; return {iw, ow, cw: Math.max(ow, MINC)}; });
+    let strip = 0;
+    cols.forEach((c, i) => { c.m = measure(nameHTML(os[i], c.cw)); strip = Math.max(strip, c.m.h); });
+    const tw = cols.reduce((s, c) => s + c.cw, 0) + (n - 1) * G, th = Math.round(ih) + e + NG + strip;
+    L = {cols, strip, tw, th};
+    if (tw <= cap.w + 0.5 && th <= cap.h + 0.5) break;      // las obras se achican lo justo para que entren con su franja de nombres
+    ih *= Math.min(cap.w / tw, cap.h / th) * 0.995;
+  }
+  ih = Math.round(ih);
+  const x0 = SAFE.x + (SAFE.w - L.tw) / 2, y0 = SAFE.y + (SAFE.h - L.th) / 2;
+  let cx = x0, html = '';
+  L.cols.forEach((c, i) => {
+    html += wkHTML(os[i], cx + (c.cw - c.ow) / 2, y0, c.iw, os[i].round ? c.iw : ih, e);
+    html += nameHTML(os[i], c.cw, `left:${cx}px;top:${y0 + ih + e + NG}px;height:${L.strip}px`);
+    cx += c.cw + G;
+  });
+  return {html, lay:{level:'names', place:'row', ok:false, w:L.tw, h:L.th}};
+}
+// ---------- Dibujantes por tema ----------
+function applyPalette(th){
+  const w = WALLS[MODES[mi].k][wallIdx(th)];
+  stage.style.setProperty('--w1', w.c1); stage.style.setProperty('--w2', w.c2); stage.style.setProperty('--pg', w.pg);
+}
+// Galería moderna, Sala oscura e Inmersivo comparten el acomodador; cambia el marco (Inmersivo no tiene) y la pared
+R.main = function(th){
+  const fd = frameDims(th), os = SCENES[sc].obras.map(k => O[k]), sz = th === 'im' ? 'x' : SIZES[si].k;
+  ['F', 'fil', 'M'].forEach(p => stage.style.setProperty('--' + p, fd[p] + 'px'));
+  if (th === 'im') wall.innerHTML = `<img class="bg" src="${os[Math.floor(os.length/2)].src}" alt="">`;
+  const plan = os.length === 1 ? planSingle(os[0], fd, th === 'im' ? CAP.x : CAP[sz]) : planPared(os, fd, CAPP[sz], GP[sz][os.length - 2]);
+  content.innerHTML = plan.html; LAY = plan.lay;
+};
+// Libro de arte: una sola obra a la izquierda; a la derecha la ficha y, si entra entera, la explicación
+R.lb = function(){
+  const o = O[SCENES[sc].obras[0]], [iw, ih] = fit1(o, 852, 884, 0);
+  ['F', 'fil', 'M'].forEach(p => stage.style.setProperty('--' + p, '0px'));
+  const head = `<div class="run">${cSala.checked ? SCENES[sc].sala : ''}</div><h2 class="bt">${o.t}</h2><div class="ba">${o.a} (${o.vida})</div><div class="bm">${o.y}</div><div class="bmv">${o.mov}</div><div class="bm" style="margin-top:6px">${o.tec} · ${o.med}</div><div class="bm">${o.ubi}</div>`;
+  const tail = `<div class="bc">${CREDITO}</div>`;
+  const okl = cOk.checked ? `<div class="bok"><i>OK</i>Leer sobre la obra</div>` : '';
+  const left = wkHTML(o, 0, 0, iw, ih, 0).replace('class="wk', 'class="wk rel');
+  const draw = full => content.innerHTML = `<div class="book"><div class="pgL">${left}</div><div class="pgR">${head}${full ? `<div class="rule"></div><p class="bx">${EX[o.k]}</p>` : ''}${tail}${full ? '' : okl}</div></div>`;
+  let full = ex;
+  if (full) {
+    draw(true);
+    const pr = content.querySelector('.pgR'), bx = content.querySelector('.bx'); let fits = false;
+    for (let s = 26; s >= 17 && !fits; s--) { bx.style.fontSize = s + 'px'; fits = pr.scrollHeight <= pr.clientHeight; }
+    if (!fits) full = false;       // no entra entera ni en la letra más chica: no se muestra
+  }
+  if (!full) draw(false);
+  LAY = {level: full ? 'full' : 'fic', place:'page', ok: !full && cOk.checked};
+};
+function boxOf(el){ return {l:el.offsetLeft, t:el.offsetTop, r:el.offsetLeft + el.offsetWidth, b:el.offsetTop + el.offsetHeight}; }
+const overlap = (a, b) => Math.min(a.r, b.r) - Math.max(a.l, b.l) > 0.5 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 0.5;
+// el nombre de la sala nunca pisa la obra ni un cartel: si no hay lugar libre arriba a la izquierda, se oculta
+function placeSala(th){
+  if (th === 'lb' || !cSala.checked) { sala.style.display = 'none'; LAY.sala = 'no'; return; }
+  sala.textContent = SCENES[sc].sala; sala.style.display = '';
+  const b = boxOf(sala); b.l -= 10; b.r += 10; b.t -= 8; b.b += 8;
+  const hit = [...content.querySelectorAll('.wk,.lbl,.chip')].some(el => overlap(b, boxOf(el)));
+  sala.style.display = hit ? 'none' : ''; LAY.sala = hit ? 'oculta' : 'visible';
+}
+// ---- Modo TV: ?tv=1&tema=..&modo=..&disp=..&tam=..&pared=..&marco=..&expl=.. (valores: número desde 1, clave o nombre sin tildes, ej. tema=galeria-moderna&pared=piedra&marco=madera&expl=nunca) ----
+const QS = new URLSearchParams(location.search);
+const TV = ['tv', 'tema', 'modo', 'disp', 'tam', 'pared', 'marco', 'expl'].some(p => QS.has(p)) && QS.get('tv') !== '0';
+if (TV) {
+  document.documentElement.classList.add('tv');
+  const norm = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const pick = (p, arr, cur) => { const v = QS.get(p); if (v == null) return cur; const i = arr.findIndex((x, j) => String(j+1) === v || norm(x.k || '') === norm(v) || norm(x.n || x.name) === norm(v)); return i < 0 ? cur : i; };
+  ti = pick('tema', THEMES, ti); mi = pick('modo', MODES, mi); sc = pick('disp', SCENES, sc); si = pick('tam', SIZES, si);
+  fm = pick('marco', FRAMES, fm);
+  if (QS.has('pared') && !/^(tema|del-tema|0)$/.test(norm(QS.get('pared')))) pw = pick('pared', WALLS[MODES[mi].k], 0);
+  if (QS.has('expl')) ex = !/^(0|no|nunca|false)$/.test(norm(QS.get('expl')));
+  cSala.checked = true; cOk.checked = true; cSafe.checked = false;
+}
+function tvTag(th, fd){
+  const t = [THEMES[ti].n, MODES[mi].n, SCENES[sc].name];
+  if (hasFrame(th)) t.push(SIZES[si].n);
+  if (th !== 'im' && pw != null && pw !== WDEF[th][MODES[mi].k]) t.push('pared ' + WALLS[MODES[mi].k][pw].n.toLowerCase());
+  if (hasFrame(th) && fd.key !== THEME_FRAME[th]) t.push('marco ' + FRAMES.find(f => f.k === fd.key).n.toLowerCase());
+  if (!ex) t.push('sin explicación');
+  $('tvtag').textContent = t.join(' · ');
+}
+function tvReady(){   // marca la página como lista cuando cargaron fuentes e imágenes (lo usa el script de capturas)
+  document.fonts.ready.then(() => { render(); return document.fonts.ready; })
+    .then(() => Promise.all([...stage.querySelectorAll('img')].map(i => i.decode().catch(() => {}))))
+    .then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.body.dataset.bad = [...stage.querySelectorAll('img')].filter(i => !i.complete || !i.naturalWidth).length;
+      document.body.dataset.ready = '1';
+    })));
+}
+function describe(th){
+  const L = LAY;
+  if (th === 'lb') return 'Libro de arte: ' + (L.level === 'full' ? 'la explicación entra entera en la página.' : 'la explicación no se muestra (solo la ficha).') + (SCENES[sc].obras.length > 1 ? ' Muestra solo la primera obra.' : '');
+  const lv = {full:'ficha y explicación', fic:'ficha', min:'título, autor y año', names:'nombre bajo cada obra', chip:'cuadrito flotante con título, autor y año'}[L.level];
+  const pl = {right:'a la derecha', left:'a la izquierda', below:'abajo', chip:'en una esquina de la obra, porque no queda lugar libre', row:''}[L.place];
+  return 'Acomodador: ' + (L.level === 'names' ? lv : `${lv}, ${pl}`) + (L.ok ? ' · con la línea «OK · Leer sobre la obra»' : '') + (L.sala === 'oculta' ? ' · el nombre de la sala se ocultó para no pisar la obra' : '') + '.';
+}
+function btns(id, items, cur, fn, dis){
+  const g = $(id); g.querySelectorAll('.btn').forEach(b => b.remove());
+  items.forEach((it, i) => {
+    const b = document.createElement('button'); b.className = 'btn' + (i === cur ? ' on' : '');
+    b.innerHTML = (it.sw ? `<span class="sw" style="background:${it.sw}"></span>` : '') + (it.n || it.name); b.disabled = !!dis;
+    b.onclick = () => { fn(i); render(); }; g.appendChild(b);
+  });
+}
+function render(){
+  const th = THEMES[ti].k, framed = hasFrame(th), fd = frameDims(th), sz = framed ? SIZES[si].k : th === 'im' ? 'x' : 'n';
+  stage.className = `t-${th} m-${MODES[mi].k} s-${sz}` + (framed ? ` f-${fd.key}` : '') + (fd.M > 0 ? ' has-mat' : '') + (cSafe.checked ? ' show-safe' : '');
+  wall.innerHTML = ''; applyPalette(th);
+  (R[th] || R.main)(th);
+  placeSala(th);
+  btns('gTheme', THEMES, ti, i => ti = i); btns('gMode', MODES, mi, i => mi = i);
+  btns('gWall', [{n:'Del tema'}].concat(WALLS[MODES[mi].k].map(w => ({n:w.n, sw:w.c1}))), pw == null ? 0 : pw + 1, i => pw = i === 0 ? null : i - 1, th === 'im');
+  btns('gScene', SCENES, sc, i => sc = i);
+  btns('gFrame', FRAMES, fm, i => fm = i, !framed); btns('gSize', SIZES, framed ? si : -1, i => si = i, !framed);
+  btns('gExpl', EXPL, ex ? 0 : 1, i => ex = i === 0);
+  $('warn').textContent = (th === 'lb' && SCENES[sc].obras.length > 1) ? 'Libro de arte muestra las obras de a una' : '';
+  const base = th === 'lb' ? 'Libro de arte: el color de pared cambia el color del papel; no tiene marco ni tamaño porque la página ya es el cartel.' :
+    th === 'im' ? 'Inmersivo: el fondo es la propia obra desenfocada, así que el color de pared no cuenta; la obra ocupa todo el espacio permitido.' :
+    sz === 'x' ? 'Máximo: la obra ocupa todo el espacio permitido, con marco fino.' : sz === 'g' ? 'Grande: la obra con su marco ocupa hasta el 88 % del espacio permitido.' : 'Normal: la obra más chica, con más aire.';
+  $('note').textContent = base + ' ' + describe(th);
+  if (TV) tvTag(th, fd);
+}
+function scale(){
+  if (TV) { stage.style.transform = 'none'; stage.style.margin = '0'; stage.style.transformOrigin = '0 0'; wrap.style.height = '1080px'; return; }
+  if (document.fullscreenElement === wrap) {
+    const s = Math.min(window.innerWidth/1920, window.innerHeight/1080);
+    stage.style.transform = `scale(${s})`; stage.style.width = '1920px';
+    stage.style.margin = `${-(1080-1080*s)/2}px ${-(1920-1920*s)/2}px`; stage.style.transformOrigin = 'center center'; wrap.style.height = '';
+  } else {
+    const s = wrap.clientWidth / 1920;
+    stage.style.transform = `scale(${s})`; stage.style.margin = '0'; stage.style.transformOrigin = '0 0'; wrap.style.height = (1080*s) + 'px';
+  }
+}
+[cSala, cOk, cSafe].forEach(c => c.onchange = render);
+$('bFull').onclick = () => wrap.requestFullscreen();
+document.addEventListener('fullscreenchange', scale);
+window.addEventListener('resize', scale);
+document.addEventListener('keydown', ev => {
+  const k = ev.key, n = SCENES.length;
+  if (k === 'ArrowRight') sc = (sc+1) % n; else if (k === 'ArrowLeft') sc = (sc-1+n) % n;
+  else if (k === 'ArrowDown') ti = (ti+1) % THEMES.length; else if (k === 'ArrowUp') ti = (ti-1+THEMES.length) % THEMES.length;
+  else if (k === 'm' || k === 'M') mi = 1 - mi;
+  else if (k === 't' || k === 'T') { if (hasFrame(THEMES[ti].k)) si = (si+1) % SIZES.length; }
+  else if (k === 'o' || k === 'O') ex = !ex;      // el OK del control: muestra u oculta la explicación
+  else if (k === 'f' || k === 'F') { document.fullscreenElement ? document.exitFullscreen() : wrap.requestFullscreen(); return; }
+  else return;
+  ev.preventDefault(); render();
+});
+window.S = {set(t, m, s, z, p, f, e){ ti = t; mi = m; sc = s; si = z; pw = p == null ? null : p; fm = f || 0; ex = e !== false; render(); }};
+// ---- Comprobación de geometría (desde la consola: await __checkAll() o await __checkAll(true) para sumar paredes y marcos) ----
+window.__geo = function(){
+  const th = THEMES[ti].k, P = [], sr = stage.getBoundingClientRect(), s = sr.width/1920, L = LAY, os = SCENES[sc].obras.map(k => O[k]);
+  const Rc = el => { const r = el.getBoundingClientRect(); return {l:(r.left-sr.left)/s, t:(r.top-sr.top)/s, r:(r.right-sr.left)/s, b:(r.bottom-sr.top)/s}; };
+  const inSafe = (r, nm) => { if (r.l < 95 || r.t < 53 || r.r > 1825 || r.b > 1027) P.push(`${nm} fuera del margen (${r.l|0},${r.t|0},${r.r|0},${r.b|0})`); };
+  const ov = (a, b) => Math.min(a.r, b.r) - Math.max(a.l, b.l) > 0.5 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 0.5;
+  const imgs = [...stage.querySelectorAll('.obra')]; let maxErr = 0;
+  const expN = th === 'lb' ? 1 : os.length;
+  if (imgs.length !== expN) P.push(`cantidad de obras ${imgs.length}, esperaba ${expN}`);
+  imgs.forEach(im => {
+    const r = Rc(im), o = O[im.dataset.k], w = r.r - r.l, h = r.b - r.t;
+    const err = o.round ? Math.abs(w-h)/w : Math.abs((w/h)/(o.w/o.h) - 1);
+    maxErr = Math.max(maxErr, err);
+    if (err > 0.01) P.push(`proporción mal en ${o.k}: ${(err*100).toFixed(2)} %`);
+    if (!im.complete || !im.naturalWidth) P.push(`imagen sin cargar: ${o.k}`);
+    inSafe(r, 'obra ' + o.k);
+  });
+  const wks = [...stage.querySelectorAll('.wk')], wr = wks.map(Rc); wr.forEach((r, i) => inSafe(r, 'marco ' + i));
+  const lbs = [...stage.querySelectorAll('.content .lbl, .content .chip')], lr = lbs.map(Rc);
+  lbs.forEach((l, i) => {
+    inSafe(lr[i], 'cartel');
+    if (l.scrollHeight > l.clientHeight + 1) P.push(`texto cortado en el cartel (${l.scrollHeight} > ${l.clientHeight})`);
+    if (l.scrollWidth > l.clientWidth + 1) P.push('texto del cartel se desborda a lo ancho');
+    if (l.classList.contains('chip')) { if (!wr.some(w => lr[i].l >= w.l - 1 && lr[i].r <= w.r + 1 && lr[i].t >= w.t - 1 && lr[i].b <= w.b + 1)) P.push('el cuadrito se sale de la obra'); }
+    else if (th !== 'lb' && wr.some(w => ov(lr[i], w))) P.push('el cartel pisa la obra o el marco');
+    lr.forEach((o2, j) => { if (j > i && ov(lr[i], o2)) P.push('dos carteles se pisan'); });
+  });
+  if (sala.style.display !== 'none' && sala.textContent) {
+    const r = Rc(sala); inSafe(r, 'sala');
+    if (wr.some(w => ov(r, w)) || lr.some(l => ov(r, l))) P.push('la sala pisa la obra o un cartel');
+  }
+  // nivel de información elegido: lo que se ve tiene que coincidir con lo que decidió el acomodador
+  if (th === 'lb') {
+    inSafe(Rc(content.querySelector('.book')), 'libro');
+    const pr = content.querySelector('.pgR'); if (pr.scrollHeight > pr.clientHeight + 1) P.push('el texto no entra en la página derecha');
+    const pl = Rc(content.querySelector('.pgL'));
+    imgs.forEach(im => { const r = Rc(im); if (r.r > pl.r - 60 || r.l < pl.l || r.t < pl.t || r.b > pl.b) P.push('obra fuera de su página'); });
+    const bx = content.querySelector('.bx');
+    if ((L.level === 'full') !== !!bx) P.push('nivel del libro no coincide'); else if (bx && bx.textContent !== EX[os[0].k]) P.push('explicación cortada');
+    if (!ex && bx) P.push('explicación visible con «Nunca»');
+  } else if (L.level === 'names') {
+    const nm = [...content.querySelectorAll('.lbl.nm')];
+    if (nm.length !== os.length) P.push('falta el nombre bajo alguna obra');
+    wr.forEach((w, i) => { const r = Rc(nm[i]); if (Math.abs((r.l + r.r)/2 - (w.l + w.r)/2) > 1.5 || r.t < w.b - 0.5) P.push('el nombre no está centrado bajo su obra'); if (!nm[i].textContent.includes(os[i].t) || !nm[i].textContent.includes(os[i].y)) P.push('nombre incompleto'); });
+  } else {
+    const has = sel => !!content.querySelector(sel), x = content.querySelector('.x');
+    if (L.level === 'full' && (!x || x.textContent !== EX[os[0].k])) P.push('explicación incompleta o ausente');
+    if (L.level === 'full' && !ex) P.push('explicación visible con «Nunca»');
+    if (L.level === 'fic' && (!has('.mv') || has('.x'))) P.push('nivel ficha mal armado');
+    if (L.level === 'min' && (has('.mv') || has('.x') || !has('.lbl'))) P.push('nivel mínimo mal armado');
+    if (L.level === 'chip' && (!has('.chip') || has('.lbl'))) P.push('cuadrito mal armado');
+    if (L.level === 'chip' && (L.free.right >= 210 || L.free.below >= 120)) P.push(`cuadrito aunque había lugar libre (${L.free.right|0} / ${L.free.below|0})`);
+    if (L.level !== 'chip' && !!has('.ok') !== !!L.ok) P.push('línea OK no coincide');
+  }
+  return {P, maxErr, n: imgs.length, lay: Object.assign({}, L)};
+};
+const settle = () => Promise.all([...stage.querySelectorAll('img')].map(i => i.decode().catch(() => {})));
+window.__checkAll = async function(extra){
+  await document.fonts.ready;
+  const bad = [], keep = [ti, mi, sc, si, pw, fm, ex]; let combos = 0, maxErr = 0; const lvl = {}, full = {};
+  const run = async (t, m, c, z, p, f, e, tag) => {
+    S.set(t, m, c, z, p, f, e); await settle();
+    const g = __geo(); combos++; maxErr = Math.max(maxErr, g.maxErr);
+    const key = THEMES[t].k + (hasFrame(THEMES[t].k) ? '/' + SIZES[z].k : '');
+    lvl[g.lay.level] = (lvl[g.lay.level] || 0) + 1;
+    if (!tag && e && SCENES[c].obras.length === 1) { const f2 = full[key] = full[key] || [0, 0]; f2[1]++; if (g.lay.level === 'full') f2[0]++; }
+    if (g.P.length) bad.push(`${THEMES[t].n}/${MODES[m].n}/${SCENES[c].name}/${SIZES[z].n}${tag || ''}${e ? '' : '/sin expl'}: ${g.P.join('; ')}`);
+  };
+  for (let t = 0; t < THEMES.length; t++) for (let m = 0; m < 2; m++) for (let c = 0; c < SCENES.length; c++)
+    for (let z = 0; z < (hasFrame(THEMES[t].k) ? 3 : 1); z++) for (const e of [true, false]) await run(t, m, c, hasFrame(THEMES[t].k) ? z : 1, null, 0, e);
+  if (extra) {
+    for (let t = 0; t < THEMES.length; t++) for (let m = 0; m < 2; m++) for (const c of [0, 2, 4]) for (let p = 0; p < 3; p++) await run(t, m, c, 1, p, 0, true, `/pared${p}`);
+    for (let t = 0; t < 2; t++) for (let m = 0; m < 2; m++) for (const c of [0, 3, 5]) for (let f = 1; f < FRAMES.length; f++) for (let z = 0; z < 3; z++) await run(t, m, c, z, null, f, true, `/marco${f}`);
+  }
+  S.set(...keep); return {combos, maxErrPct: +(maxErr*100).toFixed(3), niveles: lvl, completaPorTemaYTamano: full, bad};
+};
+document.fonts.ready.then(render);
+render(); scale();
+if (TV) tvReady();
+</script>
+</body>
+</html>

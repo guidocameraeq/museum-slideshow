@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Museum Slideshow — Mapa y estilo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#121212; --panel:#1b1b1d; --line:#3a3a3e; --text:#e8e6e1; --muted:#a19d95; --gold:#c9a54e; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 Inter, system-ui, sans-serif; }
+  header { padding:20px 24px 0; }
+  h1 { margin:0 0 4px; font:500 26px 'EB Garamond', serif; }
+  .sub { color:var(--muted); margin:0 0 16px; }
+  .tabs { display:flex; gap:8px; border-bottom:1px solid var(--line); padding:0 24px; }
+  .tab { background:none; border:0; color:var(--muted); font:500 15px Inter; padding:10px 14px; cursor:pointer; border-bottom:2px solid transparent; }
+  .tab.on { color:var(--text); border-bottom-color:var(--gold); }
+  section { display:none; padding:20px 24px 48px; max-width:1500px; }
+  section.on { display:block; }
+  .bar { display:flex; flex-wrap:wrap; gap:6px 18px; align-items:center; margin-bottom:12px; }
+  .grp { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .grp b { font-weight:500; color:var(--muted); margin-right:4px; font-size:14px; }
+  .btn { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px 12px; font:14px Inter; cursor:pointer; }
+  .btn.on { border-color:var(--gold); color:#fff; background:#2a2418; }
+  .chk { font-size:14px; color:var(--muted); display:flex; gap:6px; align-items:center; cursor:pointer; }
+  .hint { color:var(--muted); font-size:13px; margin:6px 0 0; }
+  #wrap { width:100%; position:relative; overflow:hidden; border-radius:4px; background:#000; }
+  #wrap:fullscreen { display:flex; align-items:center; justify-content:center; border-radius:0; }
+  #stage { width:1920px; height:1080px; position:absolute; left:0; top:0; transform-origin:0 0; overflow:hidden; }
+  #wrap:fullscreen #stage { position:relative; flex:none; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px; margin-top:22px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px; }
+  .card h3 { margin:0 0 6px; font:500 20px 'EB Garamond', serif; }
+  .card.rec { border-color:var(--gold); }
+  .card ul { margin:6px 0 0; padding-left:18px; }
+  .card li { margin:2px 0; }
+  .tag { display:inline-block; font-size:12px; color:#1b1b1d; background:var(--gold); border-radius:4px; padding:1px 6px; margin-left:6px; vertical-align:middle; }
+  h2 { font:500 22px 'EB Garamond', serif; margin:28px 0 8px; }
+  ol.q li { margin:6px 0; }
+  .muted { color:var(--muted); }
+
+  /* ---------- Escenario 1920x1080: lo que dibuja la tele ---------- */
+  .wall { position:absolute; inset:0; }
+  .content { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .group { display:flex; }
+  .group.below { flex-direction:column; align-items:center; }
+  .group.below-left { flex-direction:column; align-items:flex-start; }
+  .group.right { flex-direction:row; align-items:flex-end; }
+  .group.pared { flex-direction:row; align-items:flex-start; }
+  .pcol { display:flex; flex-direction:column; align-items:center; }
+  .frame, .fillet, .mat { display:block; }
+  .obra { display:block; }
+  .round .frame, .round .fillet, .round .mat, .round .obra { border-radius:50%; }
+  .round .obra { object-fit:cover; }
+  .sala { position:absolute; left:110px; top:76px; font:500 21px Inter; letter-spacing:.18em; text-transform:uppercase; }
+  .safe { position:absolute; inset:54px 96px; border:3px dashed rgba(255,80,80,.8); pointer-events:none; display:none; }
+  .safe span { position:absolute; right:10px; bottom:6px; color:rgba(255,80,80,.9); font:20px Inter; }
+  #stage.show-safe .safe { display:block; }
+  .lbl .t { line-height:1.15; }
+  .lbl .ok { display:flex; align-items:center; gap:10px; margin-top:14px; }
+  .lbl .ok i { font-style:normal; font:600 15px Inter; border-radius:50%; width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; }
+
+  /* A — Clásico */
+  .st-A .wall { background:radial-gradient(ellipse 70% 60% at 50% 30%, #6e2a2c 0%, #4f1c1f 55%, #361214 100%); }
+  .st-A .frame { padding:44px; background:linear-gradient(135deg,#7d5d22 0%,#e3c36b 22%,#a07b32 45%,#f2da8c 62%,#8a6727 82%,#d4b25c 100%);
+    box-shadow: inset 0 0 0 2px #4d3710, inset 0 0 0 9px #c9a54e, inset 0 0 0 11px #6b4f1a, inset 0 0 0 30px rgba(0,0,0,0), 0 30px 60px rgba(0,0,0,.55); }
+  .st-A .mat { box-shadow:0 0 0 3px #2a1d08; }
+  .st-A .lbl { margin-top:34px; padding:18px 36px 16px; text-align:center; color:#2b2112; max-width:900px;
+    background:linear-gradient(160deg,#d9c08a,#b8975a 55%,#cfb27a); border-radius:3px; box-shadow:0 8px 20px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.3); }
+  .st-A .lbl .t { font:italic 500 38px 'EB Garamond', serif; }
+  .st-A .lbl .a { font:500 28px 'EB Garamond', serif; margin-top:2px; }
+  .st-A .lbl .d { font:400 23px 'EB Garamond', serif; }
+  .st-A .lbl .c { font:italic 400 19px 'EB Garamond', serif; opacity:.75; margin-top:4px; }
+  .st-A .lbl .ok { justify-content:center; font:400 20px 'EB Garamond', serif; }
+  .st-A .lbl .ok i { border:2px solid #2b2112; }
+  .st-A .sala { color:rgba(240,215,170,.55); }
+  .st-A .pcol .lbl { padding:10px 20px; margin-top:26px; }
+
+  /* B — Galería moderna */
+  .st-B .wall { background:linear-gradient(180deg,#f1efea 0%,#e9e6df 100%); }
+  .st-B .frame { padding:14px; background:#1c1a18; box-shadow:0 22px 44px rgba(0,0,0,.22), 0 4px 10px rgba(0,0,0,.12); }
+  .st-B .mat { padding:64px; background:#fbfaf6; }
+  .st-B .obra { box-shadow:0 0 0 1px rgba(0,0,0,.12), 0 0 0 7px #f3f1ea; }
+  .st-B .lbl { width:400px; margin-left:64px; color:#222; font-family:Inter, sans-serif; }
+  .st-B .lbl .t { font:600 31px Inter; }
+  .st-B .lbl .a { font:400 26px Inter; margin-top:6px; }
+  .st-B .lbl .d { font:400 21px Inter; color:#555; margin-top:4px; }
+  .st-B .lbl .c { font:400 17px Inter; color:#888; margin-top:12px; }
+  .st-B .lbl .ok { font:400 19px Inter; color:#555; }
+  .st-B .lbl .ok i { border:2px solid #555; }
+  .st-B .sala { color:rgba(0,0,0,.4); }
+  .st-B .pcol .lbl { width:auto; margin:26px 0 0; text-align:left; align-self:stretch; }
+
+  /* C — Sala oscura */
+  .st-C .wall { background:radial-gradient(ellipse 55% 75% at 50% 38%, #3b3733 0%, #262422 45%, #141414 100%); }
+  .st-C .frame { padding:20px; background:linear-gradient(145deg,#1a1817,#0b0b0b); box-shadow:0 34px 80px rgba(0,0,0,.85); }
+  .st-C .fillet { padding:4px; background:linear-gradient(135deg,#8c6d2f,#e0c171 50%,#8c6d2f); }
+  .st-C .lbl { margin-top:34px; max-width:660px; color:#e9e4da; align-self:flex-start; }
+  .st-C .lbl .t { font:italic 400 40px 'EB Garamond', serif; }
+  .st-C .lbl .a { font:500 22px Inter; letter-spacing:.06em; margin-top:8px; text-transform:uppercase; color:#d8cdb6; }
+  .st-C .lbl .d { font:400 21px Inter; color:#a8a196; margin-top:4px; }
+  .st-C .lbl .c { font:400 17px Inter; color:#77716a; margin-top:10px; }
+  .st-C .lbl .ok { font:400 19px Inter; color:#a8a196; }
+  .st-C .lbl .ok i { border:2px solid #a8a196; }
+  .st-C .sala { color:rgba(230,220,200,.38); }
+  .st-C .pcol .lbl { margin-top:26px; }
+  .st-C .pcol { align-items:flex-start; }
+
+  /* Pared: carteles más chicos */
+  .pcol .lbl .t { font-size:28px !important; }
+  .pcol .lbl .a { font-size:21px !important; }
+
+  /* Mapa */
+  svg text { font-family:Inter, sans-serif; }
+  .map { width:100%; height:auto; background:var(--panel); border:1px solid var(--line); border-radius:8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Museum Slideshow — Mapa de pantallas y estilo</h1>
+  <p class="sub">Borrador 1 · 01/11/2026 · Las pantallas están a 1920×1080, el tamaño real que dibuja la tele. Las obras son de dominio público (Wikimedia Commons).</p>
+</header>
+<nav class="tabs">
+  <button class="tab" data-tab="mapa">1 · Mapa de pantallas</button>
+  <button class="tab on" data-tab="estilo">2 · Estilo del tema Museo</button>
+</nav>
+
+<!-- ===================== ESTILO ===================== -->
+<section id="estilo" class="on">
+  <div class="bar">
+    <div class="grp" id="gStyle"><b>Estilo</b></div>
+    <div class="grp" id="gScene"><b>Obra</b></div>
+  </div>
+  <div class="bar">
+    <label class="chk"><input type="checkbox" id="cSala" checked> Nombre de la sala arriba</label>
+    <label class="chk"><input type="checkbox" id="cOk" checked> Aviso «OK · Leer sobre la obra»</label>
+    <label class="chk"><input type="checkbox" id="cSafe"> Margen de seguridad de la tele</label>
+    <button class="btn" id="bFull">Pantalla completa (F)</button>
+  </div>
+  <div id="wrap"><div id="stage"><div class="wall"></div><div class="content"></div><div class="sala"></div><div class="safe"><span>margen de seguridad</span></div></div></div>
+  <p class="hint">Teclas: ← → cambia la obra · 1 2 3 cambia el estilo · F pantalla completa. Para juzgar letras y colores, mirala en pantalla completa y desde lejos.</p>
+
+  <div class="cards">
+    <div class="card">
+      <h3>A · Clásico</h3>
+      <span class="muted">Como las salas del Prado o del Louvre.</span>
+      <ul>
+        <li>Pared bordó, marco dorado, chapa de bronce abajo.</li>
+        <li><b>A favor:</b> es el más «museo». Queda muy bien con cuadros antiguos.</li>
+        <li><b>En contra:</b> el bordó pelea con cuadros de tonos cálidos y el marco dorado no va con arte moderno. El cartel abajo achica las obras horizontales.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>B · Galería moderna</h3>
+      <span class="muted">Como el MoMA: pared blanca, nada distrae.</span>
+      <ul>
+        <li>Marco negro fino, paspartú blanco ancho, cartel al costado.</li>
+        <li><b>A favor:</b> muy prolijo, le queda bien a cualquier época. El cartel al costado deja la obra más grande.</li>
+        <li><b>En contra:</b> de noche la pantalla blanca ilumina la pieza como una lámpara, y la tele está siempre prendida.</li>
+      </ul>
+    </div>
+    <div class="card rec">
+      <h3>C · Sala oscura <span class="tag">recomendado</span></h3>
+      <span class="muted">Pared en penumbra y un foco sobre la obra.</span>
+      <ul>
+        <li>Marco negro con un filete dorado y el cartel escrito sobre la pared.</li>
+        <li><b>A favor:</b> la obra es lo más luminoso de la pantalla, como en un museo con foco. De noche no encandila. Va con cualquier época.</li>
+        <li><b>En contra:</b> de día, con mucha luz en la pieza, puede verse apagado.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="hint">Como todo puede ser ajuste: los estilos que no elijas pueden quedar como opción de «color de pared» dentro del tema Museo.</p>
+
+  <h2>Preguntas para vos</h2>
+  <ol class="q">
+    <li><b>¿Qué estilo?</b> (Puede ser una mezcla: por ejemplo, la pared de C con el cartel al costado de B.)</li>
+    <li><b>¿Dónde va el cartel?</b> Abajo centrado (A), al costado (B) o abajo a la izquierda (C). Al costado la obra queda más grande.</li>
+    <li><b>¿Mostramos «OK · Leer sobre la obra»</b> en el cartel cuando la obra tiene explicación? Recuerda que hay más para leer.</li>
+    <li><b>¿Mostramos el nombre de la sala</b> (la galería) chiquito arriba a la izquierda?</li>
+    <li><b>Pared:</b> en el dibujo todas las obras quedan a la misma altura. ¿Te gusta así, o preferís que respeten su tamaño real cuando el JSON trae las medidas?</li>
+  </ol>
+</section>
+
+<!-- ===================== MAPA ===================== -->
+<section id="mapa">
+  <p class="muted" style="margin-top:0">Todas las pantallas de la app y cómo se pasa de una a otra con el control. La app y el protector son <b>la misma galería</b>: solo cambia por dónde se entra.</p>
+  <svg class="map" viewBox="0 0 1400 600" role="img" aria-label="Mapa de pantallas">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c9a54e"/></marker>
+    </defs>
+    <g fill="#1f1f22" stroke="#4a4a50" stroke-width="1.5">
+      <rect x="40" y="120" width="240" height="80" rx="10"/>
+      <rect x="40" y="300" width="240" height="80" rx="10"/>
+      <rect x="400" y="160" width="320" height="190" rx="12" stroke="#c9a54e" stroke-width="2.5"/>
+      <rect x="880" y="50" width="240" height="90" rx="10"/>
+      <rect x="880" y="270" width="240" height="160" rx="10"/>
+      <rect x="1180" y="270" width="190" height="90" rx="10"/>
+      <rect x="1180" y="470" width="190" height="90" rx="10"/>
+      <rect x="400" y="470" width="320" height="80" rx="10" stroke-dasharray="6 5"/>
+    </g>
+    <g fill="#e8e6e1" font-size="20" font-weight="600">
+      <text x="160" y="157" text-anchor="middle">Ícono de la app</text>
+      <text x="160" y="337" text-anchor="middle">La tele queda quieta</text>
+      <text x="560" y="200" text-anchor="middle" font-size="26">Galería</text>
+      <text x="1000" y="88" text-anchor="middle">Explicación</text>
+      <text x="1000" y="305" text-anchor="middle">Barra</text>
+      <text x="1275" y="308" text-anchor="middle">Ajustes</text>
+      <text x="1275" y="508" text-anchor="middle">Estado</text>
+      <text x="560" y="505" text-anchor="middle">Salir</text>
+    </g>
+    <g fill="#a19d95" font-size="15">
+      <text x="160" y="181" text-anchor="middle">en el inicio de la tele</text>
+      <text x="160" y="361" text-anchor="middle">arranca como protector</text>
+      <text x="560" y="232" text-anchor="middle">la obra, según el tema</text>
+      <text x="560" y="266" text-anchor="middle">← →  obra anterior / siguiente</text>
+      <text x="560" y="292" text-anchor="middle">Play/Pausa  pausa el pase</text>
+      <text x="560" y="318" text-anchor="middle">↑ ↓  elegir obra en una Pared</text>
+      <text x="1000" y="112" text-anchor="middle">el texto largo de la obra</text>
+      <text x="1000" y="337" text-anchor="middle">Galería · Tema</text>
+      <text x="1000" y="363" text-anchor="middle">Sincronizar ahora</text>
+      <text x="1000" y="389" text-anchor="middle">Ajustes</text>
+      <text x="1275" y="332" text-anchor="middle">todas las opciones</text>
+      <text x="1275" y="532" text-anchor="middle">qué pasó, qué falta</text>
+      <text x="560" y="529" text-anchor="middle">vuelve a la tele</text>
+    </g>
+    <g stroke="#c9a54e" stroke-width="2" fill="none" marker-end="url(#ar)">
+      <path d="M280,160 C340,160 340,215 398,215"/>
+      <path d="M280,340 C340,340 340,300 398,300"/>
+      <path d="M720,190 C800,190 800,85 878,85"/>
+      <path d="M880,115 C810,115 800,215 722,215"/>
+      <path d="M720,295 C800,295 800,320 878,320"/>
+      <path d="M880,380 C800,380 790,325 722,325"/>
+      <path d="M1120,315 L1178,315"/>
+      <path d="M1275,360 L1275,468"/>
+      <path d="M560,350 L560,468"/>
+    </g>
+    <g fill="#c9a54e" font-size="16" font-weight="600">
+      <text x="322" y="146" text-anchor="middle">abre</text>
+      <text x="345" y="358" text-anchor="middle">arranca sola</text>
+      <text x="772" y="118" text-anchor="middle">OK</text>
+      <text x="852" y="186" text-anchor="middle">OK o Atrás</text>
+      <text x="800" y="290" text-anchor="middle">Abajo</text>
+      <text x="785" y="392" text-anchor="middle">Atrás</text>
+      <text x="1149" y="305" text-anchor="middle">elegir</text>
+      <text x="1290" y="420">elegir</text>
+      <text x="575" y="415">Atrás</text>
+    </g>
+  </svg>
+
+  <h2>Situaciones especiales</h2>
+  <p class="muted">Cada una necesita su aviso. Ninguna termina en pantalla negra.</p>
+  <div class="cards">
+    <div class="card"><h3>Primera vez</h3>Bajando las obras: un aviso con el avance («Bajando 12 de 40») y, en cuanto hay una obra, empieza a mostrarla.</div>
+    <div class="card"><h3>Sin obras y sin internet</h3>Un mensaje que explica qué pasa y qué hacer, con acceso a Estado.</div>
+    <div class="card"><h3>Sincronizando de fondo</h3>¿Un indicador chiquito en una esquina, o nada? <b>(pregunta para vos)</b></div>
+    <div class="card"><h3>Galería con errores</h3>Se muestra igual; las obras afectadas van sin cartel y el problema queda en Estado.</div>
+    <div class="card"><h3>Falta el permiso del protector</h3>Al tocar «Usar como protector»: aviso con el comando para darlo.</div>
+    <div class="card"><h3>Espacio lleno</h3>Deja de bajar y lo avisa en Estado.</div>
+  </div>
+
+  <h2>Lo que queda por dibujar después de este paso</h2>
+  <ol>
+    <li>Tema Museo completo, con el estilo elegido.</li>
+    <li>Explicación: lo que se abre con OK.</li>
+    <li>Temas Inmersivo y Libro de arte.</li>
+    <li>Barra, Ajustes y Estado, más los avisos de arriba.</li>
+    <li>Ícono y banner del templo.</li>
+  </ol>
+</section>
+
+<script>
+const W = 'https://thumb.wikimedia.org/wikipedia/commons/thumb/';
+const O = {
+  monet:{src:'https://upload.wikimedia.org/wikipedia/commons/5/54/Claude_Monet%2C_Impression%2C_soleil_levant.jpg', w:1600,h:1245,
+    t:'Impresión, sol naciente', a:'Claude Monet', y:'1872', tec:'Óleo sobre lienzo', med:'48 × 63 cm', ubi:'Musée Marmottan Monet, París'},
+  venus:{src:W+'0/0b/Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg/1920px-Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg', w:30000,h:18840,
+    t:'El nacimiento de Venus', a:'Sandro Botticelli', y:'c. 1484-1486', tec:'Temple sobre lienzo', med:'172,5 × 278,9 cm', ubi:'Galería Uffizi, Florencia'},
+  gioconda:{src:W+'e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/1920px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg', w:7479,h:11146,
+    t:'La Gioconda', a:'Leonardo da Vinci', y:'c. 1503-1519', tec:'Óleo sobre tabla de álamo', med:'77 × 53 cm', ubi:'Museo del Louvre, París'},
+  armino:{src:W+'f/f9/Lady_with_an_Ermine_-_Leonardo_da_Vinci_-_Google_Art_Project.jpg/1920px-Lady_with_an_Ermine_-_Leonardo_da_Vinci_-_Google_Art_Project.jpg', w:30894,h:41545,
+    t:'La dama del armiño', a:'Leonardo da Vinci', y:'c. 1489-1491', tec:'Óleo sobre tabla de nogal', med:'54 × 39 cm', ubi:'Museo Czartoryski, Cracovia'},
+  arnolfini:{src:W+'3/33/Van_Eyck_-_Arnolfini_Portrait.jpg/1920px-Van_Eyck_-_Arnolfini_Portrait.jpg', w:4386,h:6000,
+    t:'El matrimonio Arnolfini', a:'Jan van Eyck', y:'1434', tec:'Óleo sobre tabla de roble', med:'82,2 × 60 cm', ubi:'National Gallery, Londres'},
+  caminante:{src:W+'b/b9/Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg/1920px-Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg', w:2327,h:2980,
+    t:'El caminante sobre el mar de nubes', a:'Caspar David Friedrich', y:'c. 1817', tec:'Óleo sobre lienzo', med:'94,8 × 74,8 cm', ubi:'Kunsthalle de Hamburgo'},
+  tondo:{src:W+'4/48/Michelangelo_Buonarroti_-_Tondo_Doni_-_Google_Art_Project.jpg/1920px-Michelangelo_Buonarroti_-_Tondo_Doni_-_Google_Art_Project.jpg', w:2016,h:2024,
+    t:'Tondo Doni', a:'Miguel Ángel', y:'c. 1505-1506', tec:'Temple sobre tabla', med:'120 cm de diámetro', ubi:'Galería Uffizi, Florencia', round:true},
+};
+const SCENES = [
+  {name:'Horizontal', obras:['monet'], sala:'Impresionismo · 3 / 24'},
+  {name:'Muy ancha', obras:['venus'], sala:'Renacimiento italiano · 7 / 31'},
+  {name:'Vertical', obras:['gioconda'], sala:'Renacimiento italiano · 12 / 31'},
+  {name:'Redonda', obras:['tondo'], sala:'Renacimiento italiano · 18 / 31'},
+  {name:'Pared de 2', obras:['caminante','arnolfini'], sala:'Retratos y paisajes · 5 / 40'},
+  {name:'Pared de 3', obras:['gioconda','armino','arnolfini'], sala:'Retratos · 9 / 22'},
+];
+// F marco, fil filete, M paspartú; label: dónde va el cartel
+const ST = {
+  A:{name:'A · Clásico', F:44, fil:0, M:0, label:'below'},
+  B:{name:'B · Galería moderna', F:14, fil:0, M:64, label:'right'},
+  C:{name:'C · Sala oscura', F:20, fil:4, M:0, label:'below-left'},
+};
+let style = 'C', scene = 0;
+
+const stage = document.getElementById('stage'), wrap = document.getElementById('wrap');
+const content = stage.querySelector('.content'), sala = stage.querySelector('.sala');
+const cSala = document.getElementById('cSala'), cOk = document.getElementById('cOk'), cSafe = document.getElementById('cSafe');
+
+function frame(o){
+  return `<div class="${o.round?'round':''}"><div class="frame"><div class="fillet"><div class="mat"><img class="obra" src="${o.src}" alt="${o.t}"></div></div></div></div>`;
+}
+function label(o, mini){
+  if (mini) return `<div class="lbl"><div class="t">${o.t}</div><div class="a">${o.a}, ${o.y}</div></div>`;
+  return `<div class="lbl"><div class="t">${o.t}</div><div class="a">${o.a}, ${o.y}</div>`+
+    `<div class="d">${o.tec} · ${o.med}</div><div class="d">${o.ubi}</div>`+
+    `<div class="c">Dominio público, vía Wikimedia Commons</div>`+
+    (cOk.checked ? `<div class="ok"><i>OK</i>Leer sobre la obra</div>` : '')+`</div>`;
+}
+function setImg(img, w, h){ img.style.width = Math.round(w)+'px'; img.style.height = Math.round(h)+'px'; }
+
+function render(){
+  const cfg = ST[style], sc = SCENES[scene];
+  const e = 2*(cfg.F + cfg.fil + cfg.M), GAP = 34;
+  stage.className = 'st-'+style + (cSafe.checked ? ' show-safe' : '');
+  sala.textContent = cSala.checked ? sc.sala : '';
+  if (sc.obras.length === 1) {
+    const o = O[sc.obras[0]], r = o.w/o.h;
+    content.innerHTML = `<div class="group ${cfg.label}">${frame(o)}${label(o,false)}</div>`;
+    const lbl = content.querySelector('.lbl');
+    let aw, ah;
+    if (cfg.label === 'right') { aw = 1920 - 2*130 - lbl.offsetWidth - 64; ah = 1080 - 2*110; }
+    else { aw = 1920 - 2*150; ah = 1080 - 2*118 - lbl.offsetHeight - GAP; }
+    let w = aw - e, h = w / r;
+    if (h > ah - e) { h = ah - e; w = h * r; }
+    if (o.round) w = h = Math.min(w, h);
+    setImg(content.querySelector('.obra'), w, h);
+    if (cfg.label === 'below-left') content.querySelector('.group').style.width = (w + e) + 'px';
+  } else {
+    const os = sc.obras.map(k => O[k]);
+    content.innerHTML = `<div class="group pared" style="gap:${sc.obras.length===3?80:110}px">`+
+      os.map(o => `<div class="pcol">${frame(o)}${label(o,true)}</div>`).join('') + `</div>`;
+    const lh = Math.max(...[...content.querySelectorAll('.lbl')].map(l => l.offsetHeight + 26));
+    const G = sc.obras.length===3 ? 80 : 110, n = os.length;
+    const sumR = os.reduce((s,o) => s + o.w/o.h, 0);
+    const aw = 1920 - 2*120, ah = 1080 - 2*118 - lh;
+    const h = Math.min((aw - n*e - (n-1)*G) / sumR, ah - e);
+    content.querySelectorAll('.pcol').forEach((col, i) => {
+      const w = h * os[i].w/os[i].h;
+      setImg(col.querySelector('.obra'), w, h);
+      col.style.width = (w + e) + 'px';
+    });
+  }
+  document.querySelectorAll('#gStyle .btn').forEach(b => b.classList.toggle('on', b.dataset.k === style));
+  document.querySelectorAll('#gScene .btn').forEach(b => b.classList.toggle('on', +b.dataset.k === scene));
+}
+
+function scale(){
+  if (document.fullscreenElement === wrap) {
+    const s = Math.min(window.innerWidth/1920, window.innerHeight/1080);
+    stage.style.transform = `scale(${s})`; stage.style.width='1920px';
+    stage.style.margin = `${-(1080-1080*s)/2}px ${-(1920-1920*s)/2}px`;
+    stage.style.transformOrigin = 'center center';
+    wrap.style.height = '';
+  } else {
+    const s = wrap.clientWidth / 1920;
+    stage.style.transform = `scale(${s})`; stage.style.margin = '0'; stage.style.transformOrigin = '0 0';
+    wrap.style.height = (1080*s) + 'px';
+  }
+}
+
+for (const k in ST) {
+  const b = document.createElement('button'); b.className='btn'; b.textContent = ST[k].name; b.dataset.k = k;
+  b.onclick = () => { style = k; render(); }; document.getElementById('gStyle').appendChild(b);
+}
+SCENES.forEach((s, i) => {
+  const b = document.createElement('button'); b.className='btn'; b.textContent = s.name; b.dataset.k = i;
+  b.onclick = () => { scene = i; render(); }; document.getElementById('gScene').appendChild(b);
+});
+[cSala, cOk, cSafe].forEach(c => c.onchange = render);
+document.getElementById('bFull').onclick = () => wrap.requestFullscreen();
+document.addEventListener('fullscreenchange', scale);
+window.addEventListener('resize', scale);
+document.addEventListener('keydown', ev => {
+  if (ev.key === 'ArrowRight') { scene = (scene+1) % SCENES.length; render(); }
+  else if (ev.key === 'ArrowLeft') { scene = (scene-1+SCENES.length) % SCENES.length; render(); }
+  else if ('123'.includes(ev.key) && ev.key.length===1) { style = 'ABC'['123'.indexOf(ev.key)]; render(); }
+  else if (ev.key === 'f' || ev.key === 'F') { document.fullscreenElement ? document.exitFullscreen() : wrap.requestFullscreen(); }
+});
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
+  document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === t.dataset.tab));
+  scale();
+});
+document.fonts.ready.then(render);
+render(); scale();
+</script>
+</body>
+</html>

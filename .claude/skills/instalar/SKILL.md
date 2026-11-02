@@ -9,7 +9,9 @@ Variables (PowerShell):
 
 ```powershell
 $env:JAVA_HOME = (Get-ChildItem 'C:\Program Files\Eclipse Adoptium' -Directory | Where-Object Name -like 'jdk-17*' | Select-Object -First 1).FullName
-$adb = "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\Google.PlatformTools_Microsoft.Winget.Source_8wekyb3d8bbwe\platform-tools\adb.exe"
+$adb = @("$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe",
+         "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\Google.PlatformTools_Microsoft.Winget.Source_8wekyb3d8bbwe\platform-tools\adb.exe",
+         "$env:APPDATA\SideQuest\platform-tools\adb.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
 $tv  = "192.168.0.219:5555"
 ```
 
