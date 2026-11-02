@@ -42,7 +42,10 @@ import local.museumslideshow.BuildConfig
 import local.museumslideshow.R
 import local.museumslideshow.ajustes.ListaAjustes
 import local.museumslideshow.ajustes.Preferencias
+import local.museumslideshow.ajustes.estaTildada
 import local.museumslideshow.catalogo.CatalogoCargado
+import local.museumslideshow.reserva.ErrorReserva
+import local.museumslideshow.reserva.EstadoReserva
 import local.museumslideshow.catalogo.TipoProblema
 import local.museumslideshow.galeria.esTeclaVolumen
 import local.museumslideshow.sync.Sincronizacion
@@ -89,7 +92,7 @@ private fun hora(res: android.content.res.Resources, ms: Long): String =
     SimpleDateFormat(res.getString(R.string.formato_hora_corta), ES_AR).format(Date(ms))
 
 /** Tamaño con coma decimal: "21 MB", "1,1 GB". */
-private fun tamano(res: android.content.res.Resources, bytes: Long): String {
+internal fun tamano(res: android.content.res.Resources, bytes: Long): String {
     val gb = bytes / (1024.0 * 1024 * 1024)
     return if (gb >= 1.0) res.getString(R.string.formato_tamano_gb, String.format(ES_AR, "%.1f", gb))
     else res.getString(R.string.formato_tamano_mb, Math.round(bytes / (1024.0 * 1024)).toInt())
@@ -111,10 +114,12 @@ private fun armarLineas(
     prefs: Preferencias,
     usadoBytes: Long?,
     sincronizando: Boolean,
+    reserva: EstadoReserva?,
 ): List<Linea> {
     val res = ctx.resources
     val l = ArrayList<Linea>()
-    val obras = cat?.galerias?.sumOf { it.obras.size } ?: 0
+    val tildadas = cat?.galerias.orEmpty().filter { prefs.estaTildada(it.driveId) }
+    val obras = tildadas.sumOf { it.obras.size }
 
     // --- Sincronización
     l += Linea(res.getString(R.string.est_sec_sync), Tipo.SECCION)
@@ -138,13 +143,34 @@ private fun armarLineas(
     if (cat == null || obras == 0) {
         l += Linea(res.getString(R.string.est_sin_obras), Tipo.TENUE)
     } else {
-        val g = res.getQuantityString(R.plurals.cantidad_galerias, cat.galerias.size, cat.galerias.size)
+        val g = res.getQuantityString(R.plurals.cantidad_galerias, tildadas.size, tildadas.size)
         val o = res.getQuantityString(R.plurals.cantidad_obras, obras, obras)
         l += Linea(res.getString(R.string.estado_resumen, g, o), Tipo.NORMAL)
-        for (gal in cat.galerias) {
+        for (gal in tildadas) {
             val n = res.getQuantityString(R.plurals.cantidad_obras, gal.obras.size, gal.obras.size)
             l += Linea(res.getString(R.string.estado_galeria_linea, gal.titulo, n), Tipo.TENUE)
         }
+    }
+
+    // --- Reserva de obras
+    l += Linea(res.getString(R.string.est_sec_reserva), Tipo.SECCION)
+    if (reserva == null || !reserva.conPedido) {
+        l += Linea(res.getString(R.string.est_reserva_sin_pedido, reserva?.obrasGuardadas ?: 0), Tipo.TENUE)
+    } else {
+        l += Linea(res.getString(R.string.est_reserva_guardadas, reserva.obrasGuardadas, tamano(res, reserva.bytes)), Tipo.NORMAL)
+        l += Linea(res.getString(R.string.est_reserva_por_delante, reserva.listasPorDelante, reserva.porDelante), Tipo.NORMAL)
+        l += Linea(res.getString(R.string.est_reserva_vistas, reserva.vistasGuardadas), Tipo.NORMAL)
+        if (reserva.bajando > 0) l += Linea(res.getString(R.string.est_reserva_bajando, reserva.bajando), Tipo.AVISO)
+    }
+    val sinRed = reserva?.sinInternet == true || cat?.problemaUltimoIntento?.tipo == TipoProblema.ERROR_RED
+    if (sinRed && obras > 0) l += Linea(res.getString(R.string.est_reserva_sin_internet), Tipo.AVISO)
+    when (reserva?.ultimoError) {
+        null -> {}
+        ErrorReserva.SIN_INTERNET -> l += Linea(res.getString(R.string.est_reserva_error_internet), Tipo.AVISO)
+        ErrorReserva.ESPACIO_LLENO -> l += Linea(res.getString(R.string.est_reserva_error_espacio), Tipo.AVISO)
+        ErrorReserva.NO_DECODIFICA -> l += Linea(res.getString(R.string.est_reserva_error_imagen), Tipo.AVISO)
+        ErrorReserva.MUY_GRANDE -> l += Linea(res.getString(R.string.est_reserva_error_grande), Tipo.AVISO)
+        ErrorReserva.DRIVE -> l += Linea(res.getString(R.string.est_reserva_error_drive, reserva?.detalleError ?: "?"), Tipo.AVISO)
     }
 
     // --- Espacio
@@ -196,13 +222,14 @@ fun PantallaEstado(
     prefs: Preferencias,
     sincronizando: Boolean,
     alVolver: () -> Unit,
+    reserva: EstadoReserva? = null,
     modifier: Modifier = Modifier,
 ) {
     val ctx = LocalContext.current
-    val usado by produceState<Long?>(null, cat) {
+    val usado by produceState<Long?>(null, cat, reserva?.bytes) {
         value = withContext(Dispatchers.IO) { tamanoCarpeta(Sincronizacion.dirBase(ctx)) }
     }
-    val lineas = remember(cat, prefs.espacioMaximo, usado, sincronizando) { armarLineas(ctx, cat, prefs, usado, sincronizando) }
+    val lineas = remember(cat, prefs, usado, sincronizando, reserva) { armarLineas(ctx, cat, prefs, usado, sincronizando, reserva) }
     val volver by rememberUpdatedState(alVolver)
     val scroll = rememberScrollState()
     val scope = rememberCoroutineScope()

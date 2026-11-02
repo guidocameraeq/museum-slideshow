@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -19,7 +20,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,7 +37,19 @@ import local.museumslideshow.ajustes.delGrupo
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.ajustes.PreferenciasDesdeTexto
 import local.museumslideshow.ajustes.SincronizarCada
+import local.museumslideshow.ajustes.estaTildada
+import local.museumslideshow.catalogo.Arbol
 import local.museumslideshow.catalogo.Catalogo
+import local.museumslideshow.galeria.ConstantesGaleria
+import local.museumslideshow.galeria.Pase
+import local.museumslideshow.reserva.DescargadorDrive
+import local.museumslideshow.reserva.GestorReserva
+import local.museumslideshow.reserva.ObraRef
+import local.museumslideshow.reserva.ParametrosReserva
+import local.museumslideshow.sync.DriveApiHttp
+import local.museumslideshow.sync.ProcesadorImagenAndroid
+import local.museumslideshow.sync.medirImagen
+import local.museumslideshow.temas.RegistroTemas
 import local.museumslideshow.catalogo.CatalogoCargado
 import local.museumslideshow.galeria.AccionesApp
 import local.museumslideshow.galeria.GaleriaEnPantalla
@@ -71,6 +89,45 @@ class MainActivity : ComponentActivity() {
     private var focoInicio by mutableIntStateOf(0)
 
     private val almacen by lazy { AlmacenAjustes.de(applicationContext) }
+
+    /** La reserva de obras: vive con la app (sigue bajando aunque la galería no esté abierta). */
+    private val scopeReserva = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val reserva: GestorReserva by lazy {
+        val dir = Sincronizacion.dirBase(applicationContext)
+        GestorReserva(
+            scope = scopeReserva,
+            dirBase = dir,
+            descargador = DescargadorDrive(DriveApiHttp(BuildConfig.DRIVE_API_KEY), dir, ProcesadorImagenAndroid()),
+            parametros = {
+                val p = preferencias ?: Preferencias()
+                ParametrosReserva(p.reservaObras, p.espacioMaximo.bytes)
+            },
+            registrar = { Log.i(Registro.TAG, Registro.limpiar(it)) },
+        )
+    }
+    private var claveReserva: List<Any?>? = null
+
+    /**
+     * Con la galería cerrada nadie le dice a la reserva dónde va el pase: se lo calcula acá, con el mismo orden y la misma
+     * mezcla que la galería (empieza en la primera obra, que es donde abre). Con la galería abierta lo hace ella.
+     */
+    private fun pedirReservaSinGaleria() {
+        if (galeriaAbierta) return
+        val cat = catalogo ?: return
+        val p = preferencias ?: return
+        val pase = Pase.armar(cat.galerias, p, RegistroTemas.de(p.tema), Pase.SEMILLA_SESION)
+        val extras = Pase.obrasSinMedidas(cat.galerias, p).take(ConstantesGaleria.MAX_SIN_MEDIDAS).map { ObraRef(it.driveId, it.archivo) }
+        if (pase == null) {
+            if (extras.isNotEmpty()) reserva.actualizar(emptyList(), 0, extras)
+            return
+        }
+        reserva.actualizar(pase.ordenDeObras().map { ObraRef(it.driveId, it.archivo) }, 0, extras)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        scopeReserva.cancel()
+    }
     private var cadaProgramada: SincronizarCada? = null
     private var carpetaVista: String? = null
     private var primeraLectura = true
@@ -87,7 +144,7 @@ class MainActivity : ComponentActivity() {
     private fun irA(destino: PantallaApp, atrasA: PantallaApp = PantallaApp.INICIO) {
         when {
             destino == PantallaApp.GALERIA -> galeriaAbierta = true
-            destino == PantallaApp.INICIO -> { galeriaAbierta = false; salto = null }
+            destino == PantallaApp.INICIO -> { galeriaAbierta = false; salto = null; pedirReservaSinGaleria() }
             atrasA != PantallaApp.GALERIA -> galeriaAbierta = false
         }
         atras = atrasA
@@ -108,6 +165,21 @@ class MainActivity : ComponentActivity() {
                     preferencias = p
                     Log.i(Registro.TAG, Registro.limpiar("Preferencias efectivas: $p"))
                     alCambiarAjustes(p)
+                    val clave = listOf(p.seleccionGalerias, p.galeriasNuevas, p.orden, p.galeria, p.pared, p.tema, p.reservaObras, p.espacioMaximo)
+                    if (clave != claveReserva) {
+                        claveReserva = clave
+                        pedirReservaSinGaleria()
+                    }
+                }
+            }
+            // Si Drive no dio las medidas de alguna obra, la reserva la baja para poder medirla: cuando llega, se recarga el catálogo.
+            launch {
+                reserva.estado.map { it.version }.distinctUntilChanged().collect {
+                    val hay = catalogo?.galerias?.any { g -> g.obras.any { o -> !o.conMedidas } } == true
+                    if (hay) {
+                        delay(800)
+                        recargar()
+                    }
                 }
             }
             recargar()
@@ -140,12 +212,30 @@ class MainActivity : ComponentActivity() {
         if (texto.isNotEmpty()) {
             val reset = texto.containsKey("reset")
             almacen.cambiar { actual -> PreferenciasDesdeTexto.aplicar(if (reset) Preferencias() else actual, texto) }
+            aplicarTildes(texto)
             texto["escena"]?.toIntOrNull()?.let {
                 salto = SaltoEscena(it)
                 Log.i(Registro.TAG, "Salto a la escena $it")
             }
         }
         PantallaApp.deIntent(texto)?.let { irA(it) }
+    }
+
+    /** Extras `tildar` y `destildar` (id o nombre de carpeta, sin importar mayúsculas ni tildes): para probar antes de la pantalla Galerías. */
+    private suspend fun aplicarTildes(texto: Map<String, String>) {
+        val pedidos = listOfNotNull(texto["tildar"]?.let { it to true }, texto["destildar"]?.let { it to false })
+        if (pedidos.isEmpty()) return
+        val cat = catalogo ?: withContext(Dispatchers.IO) { Catalogo.cargar(Sincronizacion.dirBase(applicationContext), ::medirImagen) }
+        val arbol = Arbol(cat)
+        almacen.cambiar { actual ->
+            var p = actual
+            for ((nombre, valor) in pedidos) {
+                val ids = arbol.resolver(nombre)
+                Log.i(Registro.TAG, Registro.limpiar("Tildes: ${if (valor) "tildar" else "destildar"} '$nombre' -> ${ids.size} carpetas"))
+                for (id in ids) p = arbol.tildar(p, id, valor)
+            }
+            p
+        }
     }
 
     /** Un ajuste cambió (o se leyeron al abrir): reprograma la sincronización o sincroniza si cambió la carpeta. */
@@ -208,7 +298,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private suspend fun recargar() {
-        catalogo = withContext(Dispatchers.IO) { Catalogo.cargar(Sincronizacion.dirBase(applicationContext)) }
+        catalogo = withContext(Dispatchers.IO) { Catalogo.cargar(Sincronizacion.dirBase(applicationContext), ::medirImagen) }
+        reserva.releer()
+        pedirReservaSinGaleria()
     }
 
     @Composable
@@ -219,8 +311,10 @@ class MainActivity : ComponentActivity() {
             return
         }
         val cat = catalogo
-        val hayObras = (cat?.galerias?.sumOf { it.obras.size } ?: 0) > 0
-        val todos = remember(cat) { ListaAjustes.construir(cat?.galerias.orEmpty().map { GaleriaOpcion(it.driveId, it.titulo) }) }
+        val estadoReserva by reserva.estado.collectAsState()
+        val tildadas = cat?.galerias.orEmpty().filter { p.estaTildada(it.driveId) }
+        val hayObras = tildadas.sumOf { it.obras.size } > 0
+        val todos = remember(cat, p.seleccionGalerias, p.galeriasNuevas) { ListaAjustes.construir(tildadas.map { GaleriaOpcion(it.driveId, it.titulo) }) }
         val volver = { irA(atras) }
         Box(Modifier.fillMaxSize()) {
             if (galeriaAbierta) {
@@ -233,10 +327,11 @@ class MainActivity : ComponentActivity() {
                         sincronizando = sincronizando,
                         mensajeSync = mensajeSync,
                         teclasActivas = pantalla == PantallaApp.GALERIA,
+                        reserva = reserva,
                     )
                 } else {
                     PantallaSinObras(
-                        SinObras.motivo(sincronizando, cat),
+                        SinObras.motivo(sincronizando, cat, hayTildadas = tildadas.isNotEmpty()),
                         activa = pantalla == PantallaApp.GALERIA,
                         alVerEstado = { irA(PantallaApp.ESTADO, atrasA = PantallaApp.GALERIA) },
                         alVolver = { irA(PantallaApp.INICIO) },
@@ -250,6 +345,7 @@ class MainActivity : ComponentActivity() {
                         alCambiarFoco = { focoInicio = it },
                         alAbrir = { destino -> abrirDesdeInicio(destino) },
                         alSalir = { finish() },
+                        reserva = estadoReserva,
                     )
                     PantallaApp.GALERIA -> Unit
                     PantallaApp.GALERIAS -> PantallaGalerias(activa = true, alVolver = volver)
@@ -265,12 +361,14 @@ class MainActivity : ComponentActivity() {
                             cambiar = { t -> cambiarAjustes(t) },
                             alVolver = volver,
                             obraPrevia = ResumenInicio.de(cat, p).tapa,
+                            galeriaPrevia = ResumenInicio.de(cat, p).tapaGaleriaId,
+                            reserva = estadoReserva,
                             sync = if (grupo == GrupoAjustes.CONEXION) DatosSync(sincronizando, mensajeSync, cat?.ultimaSincronizacionBuena) else null,
                             alSincronizar = { sincronizarAhora() },
                         )
                     }
                     PantallaApp.PROTECTOR -> PantallaProtector(activa = true, alVolver = volver)
-                    PantallaApp.ESTADO -> PantallaEstado(cat, p, sincronizando, alVolver = volver)
+                    PantallaApp.ESTADO -> PantallaEstado(cat, p, sincronizando, alVolver = volver, reserva = estadoReserva)
                 }
             }
         }

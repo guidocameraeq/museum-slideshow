@@ -54,6 +54,40 @@ class ProcesadorImagenAndroid : ProcesadorImagen {
         }
     }
 
+    /**
+     * La tapa: se decodifica con el `inSampleSize` más grande que no baje del lado pedido (nunca la imagen entera) y se
+     * achica al tamaño justo. JPEG calidad 85.
+     */
+    override fun tapa(origen: File, destino: File, ladoLargo: Int): Boolean {
+        val opt = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(origen.path, opt)
+        val w = opt.outWidth
+        val h = opt.outHeight
+        if (w <= 0 || h <= 0) return false
+        var muestra = 1
+        while (max(w, h) / (muestra * 2) >= ladoLargo) muestra *= 2
+        var grande: Bitmap? = null
+        var chica: Bitmap? = null
+        try {
+            grande = BitmapFactory.decodeFile(origen.path, BitmapFactory.Options().apply { inSampleSize = muestra }) ?: return false
+            val factor = min(1.0, ladoLargo.toDouble() / max(grande.width, grande.height))
+            val cw = max(1, (grande.width * factor).roundToInt())
+            val ch = max(1, (grande.height * factor).roundToInt())
+            val salida = if (cw == grande.width && ch == grande.height) grande else Bitmap.createScaledBitmap(grande, cw, ch, true)
+            chica = salida
+            FileOutputStream(destino).use { return salida.compress(Bitmap.CompressFormat.JPEG, CALIDAD_TAPA, it) }
+        } catch (e: OutOfMemoryError) {
+            Log.w(Registro.TAG, "Sin memoria al armar una tapa")
+            return false
+        } catch (e: Exception) {
+            Log.w(Registro.TAG, "No se pudo armar una tapa (${e.javaClass.simpleName})")
+            return false
+        } finally {
+            if (chica != null && chica !== grande) chica.recycle()
+            grande?.recycle()
+        }
+    }
+
     /** Franjas horizontales decodificadas con el inSampleSize más grande que no baje del tamaño final. */
     private fun porFranjas(origen: File, w: Int, h: Int, destino: Bitmap): Boolean {
         var decoder: BitmapRegionDecoder? = null
@@ -142,6 +176,7 @@ class ProcesadorImagenAndroid : ProcesadorImagen {
         const val MAX_ANCHO = 3840
         const val MAX_ALTO = 2160
         private const val CALIDAD = 95
+        private const val CALIDAD_TAPA = 85
         private const val LADO_CHICA = 64
         private const val FRANJA_FILAS = 1024
     }

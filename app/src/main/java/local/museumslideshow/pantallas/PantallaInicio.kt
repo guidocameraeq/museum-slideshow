@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import local.museumslideshow.R
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.catalogo.CatalogoCargado
+import local.museumslideshow.reserva.EstadoReserva
 
 /**
  * Inicio ("Inicio A" del borrador 4): la obra de la galería actual de fondo con un velo a la izquierda, el nombre de la
@@ -52,11 +53,12 @@ fun PantallaInicio(
     alCambiarFoco: (Int) -> Unit,
     alAbrir: (DestinoInicio) -> Unit,
     alSalir: () -> Unit,
+    reserva: EstadoReserva? = null,
     modifier: Modifier = Modifier,
 ) {
     val res = LocalContext.current.resources
-    val resumen = ResumenInicio.de(cat, prefs)
-    val fondo by rememberTapa(resumen.tapa, 1920)
+    val resumen = ResumenInicio.de(cat, prefs, reserva)
+    val fondo by rememberTapa(resumen.tapa, resumen.tapaGaleriaId, 1920)
 
     Escenario1080 {
         Box(
@@ -159,7 +161,7 @@ private fun datosDe(res: Resources, r: ResumenInicio): List<DatoInicio> {
         ?: res.getString(R.string.inicio_sync_nunca)
     return listOf(
         DatoInicio(res.getString(R.string.estado_resumen, g, o), false),
-        DatoInicio(res.getString(R.string.inicio_obras_listas, r.obrasListas), r.obrasListas > 0),
+        DatoInicio(res.getString(R.string.inicio_obras_listas, r.obrasListas, r.obrasListasDe), r.obrasListas > 0),
         DatoInicio(sync, false),
     )
 }

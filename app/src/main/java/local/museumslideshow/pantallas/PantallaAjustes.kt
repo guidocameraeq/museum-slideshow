@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -45,6 +47,7 @@ import local.museumslideshow.ajustes.ItemInfo
 import local.museumslideshow.ajustes.ListaAjustes
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.catalogo.Obra
+import local.museumslideshow.reserva.EstadoReserva
 
 @Composable
 fun Etiqueta.texto(): String = when (this) {
@@ -71,6 +74,8 @@ fun PantallaAjustesGrupo(
     alVolver: () -> Unit,
     modifier: Modifier = Modifier,
     obraPrevia: Obra? = null,
+    galeriaPrevia: String? = null,
+    reserva: EstadoReserva? = null,
     sync: DatosSync? = null,
     alSincronizar: () -> Unit = {},
 ) {
@@ -78,7 +83,6 @@ fun PantallaAjustesGrupo(
     val syncActual by rememberUpdatedState(alSincronizar)
     val cambiarActual by rememberUpdatedState(cambiar)
     val volverActual by rememberUpdatedState(alVolver)
-    // Parte 2: acá se agrega la fila "Reserva de obras" y su barrita (todavía no se muestra).
     val filaSincronizar = if (sync != null) items.size else -1
     val cantidad = items.size + (if (sync != null) 1 else 0)
     var foco by remember { mutableIntStateOf(0) }
@@ -132,9 +136,12 @@ fun PantallaAjustesGrupo(
             }
             if (grupo == GrupoAjustes.APARIENCIA) {
                 VistaPrevia(
-                    prefs, items, obraPrevia, ayudaDe(items.getOrNull(foco)?.id),
+                    prefs, items, obraPrevia, galeriaPrevia, ayudaDe(items.getOrNull(foco)?.id),
                     Modifier.align(Alignment.TopEnd).padding(end = 120.dp, top = 158.dp),
                 )
+            }
+            if (grupo == GrupoAjustes.CONEXION) {
+                BarraReserva(reserva, prefs.reservaObras, Modifier.align(Alignment.BottomCenter).padding(start = 120.dp, end = 120.dp, bottom = 110.dp))
             }
             val ayudas = buildList {
                 add(Ayudas.recorrer())
@@ -245,10 +252,10 @@ private fun FilaSincronizar(sync: DatosSync, conFoco: Boolean) {
 
 /** La vista previa chiquita: la pared del color elegido con una obra con su marco, y qué hace el ajuste enfocado. */
 @Composable
-private fun VistaPrevia(prefs: Preferencias, items: List<ItemAjuste>, obra: Obra?, @StringRes ayuda: Int?, modifier: Modifier) {
+private fun VistaPrevia(prefs: Preferencias, items: List<ItemAjuste>, obra: Obra?, galeriaId: String?, @StringRes ayuda: Int?, modifier: Modifier) {
     val ahora = Calendar.getInstance()
     val d = DatosVistaPrevia.de(prefs, ahora.get(Calendar.HOUR_OF_DAY) * 60 + ahora.get(Calendar.MINUTE))
-    val imagen by rememberTapa(obra, 520)
+    val imagen by rememberTapa(obra, galeriaId, 520)
     val tema = items.firstOrNull { it.id == IdAjuste.TEMA }?.valor(prefs)?.texto().orEmpty()
     val tamano = items.firstOrNull { it.id == IdAjuste.TAMANO }?.valor(prefs)?.texto().orEmpty()
     val pared = ListaAjustes.nombreColor(d.idColor)?.let { stringResource(it) } ?: d.idColor
@@ -283,4 +290,58 @@ private fun VistaPrevia(prefs: Preferencias, items: List<ItemAjuste>, obra: Obra
             }
         }
     }
+}
+
+/**
+ * La barrita de la Reserva de obras (Conexión y espacio): cuántas de las próximas ya están bajadas (dorado) y cuántas de las
+ * ya vistas se guardan para volver (gris), sobre el total que se guarda como máximo (N + las 10 vistas).
+ */
+@Composable
+private fun BarraReserva(reserva: EstadoReserva?, ajusteN: Int, modifier: Modifier) {
+    val res = LocalContext.current.resources
+    val conPedido = reserva?.conPedido == true
+    val de = if (conPedido) reserva!!.porDelante else ajusteN
+    val listas = if (conPedido) reserva!!.listasPorDelante else minOf(reserva?.obrasGuardadas ?: 0, de)
+    val vistas = if (conPedido) reserva!!.vistasGuardadas else 0
+    val total = (de + local.museumslideshow.reserva.Reserva.VISTAS).coerceAtLeast(1)
+    val bytes = reserva?.bytes ?: 0L
+    Column(
+        modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(16.dp)).background(Paleta.Panel).padding(horizontal = 30.dp, vertical = 22.dp),
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+            BasicText(stringResource(R.string.aj_reserva), style = estiloTexto(34, Paleta.Texto, 600))
+            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                BasicText(
+                    res.getString(R.string.reserva_listas, listas, de, tamano(res, bytes)),
+                    style = estiloTexto(34, Paleta.Dorado, 600), maxLines = 1,
+                )
+            }
+        }
+        Row(
+            Modifier.padding(top = 20.dp).fillMaxWidth().height(30.dp).clip(RoundedCornerShape(15.dp)).background(Color(0xFF0A0A0B)),
+        ) {
+            if (listas > 0) Box(Modifier.weight(listas.toFloat()).fillMaxHeight().background(Brush.horizontalGradient(listOf(Color(0xFF9A7C36), Paleta.Dorado))))
+            if (vistas > 0) Box(Modifier.weight(vistas.toFloat()).fillMaxHeight().background(Color(0xFF5D5A52)))
+            val resto = total - listas - vistas
+            if (resto > 0) Box(Modifier.weight(resto.toFloat()).fillMaxHeight())
+        }
+        Row(Modifier.padding(top = 20.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Cuadradito(Paleta.Dorado)
+            BasicText(stringResource(R.string.reserva_leyenda_proximas), Modifier.padding(start = 10.dp), style = estiloTexto(24, Paleta.Tenue, 400), maxLines = 1)
+            Box(Modifier.width(44.dp))
+            Cuadradito(Color(0xFF5D5A52))
+            BasicText(
+                res.getString(R.string.reserva_leyenda_vistas, local.museumslideshow.reserva.Reserva.VISTAS),
+                Modifier.padding(start = 10.dp), style = estiloTexto(24, Paleta.Tenue, 400), maxLines = 1,
+            )
+            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                BasicText(stringResource(R.string.reserva_leyenda_internet), style = estiloTexto(24, Paleta.Tenue, 400), maxLines = 1)
+            }
+        }
+    }
+}
+
+@Composable
+private fun Cuadradito(color: Color) {
+    Box(Modifier.size(18.dp).clip(RoundedCornerShape(4.dp)).background(color))
 }

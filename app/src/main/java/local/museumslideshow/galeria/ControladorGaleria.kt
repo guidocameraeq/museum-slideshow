@@ -20,9 +20,12 @@ import local.museumslideshow.Registro
 import local.museumslideshow.acomodo.Texto
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.ajustes.Transicion
+import local.museumslideshow.ajustes.estaTildada
 import local.museumslideshow.ajustes.modoEfectivo
 import local.museumslideshow.ajustes.paraEscena
 import local.museumslideshow.catalogo.CatalogoCargado
+import local.museumslideshow.reserva.EnlaceReserva
+import local.museumslideshow.reserva.ObraRef
 import local.museumslideshow.temas.RegistroTemas
 
 /**
@@ -34,6 +37,8 @@ class ControladorGaleria(
     private val scope: CoroutineScope,
     private val constructor: ConstructorEscena,
     private val alSalir: () -> Unit,
+    /** La reserva de obras: dice cuáles están bajadas y recibe el orden del pase y dónde va. Sin ella todas cuentan como bajadas. */
+    private val reserva: EnlaceReserva? = null,
 ) {
     val superficie = SuperficieObra()
 
@@ -54,7 +59,7 @@ class ControladorGaleria(
     private var catalogo: CatalogoCargado? = null
     private var prefs = Preferencias()
     private var pase: Pase? = null
-    private val semilla = System.nanoTime()
+    private val semilla = Pase.SEMILLA_SESION
 
     /** Pantalla completa y Explicación pedidas con el control o con la Barra (la Barra muestra su estado). */
     var pantallaCompleta by mutableStateOf(false)
@@ -85,7 +90,8 @@ class ControladorGaleria(
     /** Cambió el catálogo o los ajustes: se rearma el pase conservando la obra actual y se ve si hay que redibujar. */
     fun configurar(cat: CatalogoCargado, p: Preferencias) {
         catalogo = cat
-        val cambioTema = p.tema != prefs.tema || p.pared != prefs.pared || p.orden != prefs.orden || p.galeria != prefs.galeria
+        val cambioTema = p.tema != prefs.tema || p.pared != prefs.pared || p.orden != prefs.orden || p.galeria != prefs.galeria ||
+            p.seleccionGalerias != prefs.seleccionGalerias || p.galeriasNuevas != prefs.galeriasNuevas
         val cambioTiempo = p.tiempoPorObraSeg != prefs.tiempoPorObraSeg
         prefs = p
         val tema = RegistroTemas.de(p.tema)
@@ -97,9 +103,42 @@ class ControladorGaleria(
         if (cambioTema) descartarPrecarga()
         if (nuevo == null) {
             Log.w(Registro.TAG, "Galería: no hay obras para mostrar")
+            // Hay obras tildadas pero ninguna con medidas todavía: "Preparando obras…" mientras la reserva las baja.
+            preparando = actual == null && cat.galerias.any { prefs.estaTildada(it.driveId) && it.obras.isNotEmpty() }
+            notificarReserva()
             return
         }
         if (cambioTiempo && timer?.isActive == true) arrancarTimer()   // la obra que sigue ya dura el tiempo nuevo
+        nuevo.asegurarLista(::escenaLista)
+        notificarReserva()
+        pendRelay = true
+        despertar.trySend(Unit)
+    }
+
+    /** Una escena se puede mostrar si todas sus obras ya están bajadas (sin reserva, siempre). */
+    private fun escenaLista(e: EscenaDef): Boolean =
+        e.obras.all { reserva?.estaBajada(it.driveId) ?: it.bajada }
+
+    /** Le cuenta a la reserva el orden de todo el pase y dónde va, para que tenga bajado lo que viene. */
+    private fun notificarReserva() {
+        val r = reserva ?: return
+        val cat = catalogo ?: return
+        val extras = Pase.obrasSinMedidas(cat.galerias, prefs).take(ConstantesGaleria.MAX_SIN_MEDIDAS).map { ObraRef(it.driveId, it.archivo) }
+        val p = pase
+        if (p == null) {
+            if (extras.isNotEmpty()) r.actualizar(emptyList(), 0, extras)
+            return
+        }
+        r.actualizar(p.ordenDeObras().map { ObraRef(it.driveId, it.archivo) }, p.posicionDeObra(), extras)
+    }
+
+    /** "Preparando obras…": todavía no hay ninguna obra del pase bajada. */
+    var preparando by mutableStateOf(false)
+        private set
+
+    /** Llegó una obra nueva a la reserva: si se estaba esperando la primera, se vuelve a intentar. */
+    fun reintentar() {
+        if (pase == null) return
         pendRelay = true
         despertar.trySend(Unit)
     }
@@ -248,7 +287,15 @@ class ControladorGaleria(
 
     private suspend fun procesar(delta: Int, ir: Int?) {
         val p = pase ?: return
-        if (ir != null) p.irA(ir) else if (delta != 0) p.mover(delta)
+        if (ir != null) p.irA(ir) else if (delta != 0) p.moverSaltando(delta, ::escenaLista)
+        val hayLista = p.asegurarLista(::escenaLista)
+        if (ir != null || delta != 0) notificarReserva()
+        if (!hayLista) {
+            // Ninguna obra del pase está bajada todavía: "Preparando obras…" hasta que llegue la primera (reintentar()).
+            if (actual == null) preparando = true
+            return
+        }
+        preparando = false
         val previa = actual
         val cambioEscena = previa == null || previa.def != p.actual
         if (cambioEscena) {
@@ -392,7 +439,9 @@ class ControladorGaleria(
         if (p.escenas.size <= 1) return
         val a = actual ?: return
         if (a.esVista) return
-        val sig = p.escenas[p.indiceRelativo(1)]
+        val siguiente = p.indiceSaltando(1, ::escenaLista)
+        if (siguiente == p.indice) return
+        val sig = p.escenas[siguiente]
         val clave = ClaveEscena(sig, pantallaCompleta, EstadoExplicacion.AUTO, 0, claveActual(p).modo, prefs.paraEscena())
         precargaClave = clave
         precarga = scope.async {

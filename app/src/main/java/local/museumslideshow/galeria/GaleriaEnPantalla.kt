@@ -35,11 +35,15 @@ import local.museumslideshow.R
 import local.museumslideshow.acomodo.Constantes
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.ajustes.Tema
+import local.museumslideshow.ajustes.estaTildada
+import local.museumslideshow.reserva.GestorReserva
+import androidx.compose.runtime.collectAsState
 import local.museumslideshow.pantallas.Barra
 import local.museumslideshow.pantallas.DatosBarra
 import local.museumslideshow.pantallas.EventoBarra
 import local.museumslideshow.pantallas.FocoBarra
 import local.museumslideshow.pantallas.IndicadorSincronizando
+import local.museumslideshow.pantallas.PantallaPreparando
 import local.museumslideshow.pantallas.NavegacionBarra
 import local.museumslideshow.pantallas.teclaDe
 import local.museumslideshow.catalogo.CatalogoCargado
@@ -73,6 +77,8 @@ fun GaleriaEnPantalla(
     mensajeSync: String? = null,
     /** false mientras otra pantalla (Ajustes, Estado) está encima: el pase se pausa y las teclas no son de la galería. */
     teclasActivas: Boolean = true,
+    /** La reserva de obras (null = sin reserva: todas las obras cuentan como bajadas). */
+    reserva: GestorReserva? = null,
 ) {
     val ctx = LocalContext.current.applicationContext
     val resolver = LocalFontFamilyResolver.current
@@ -83,7 +89,7 @@ fun GaleriaEnPantalla(
         val textMeasurer = TextMeasurer(resolver, Density(1f, 1f), LayoutDirection.Ltr, 8)
         val composicion = ComposicionTexto(textMeasurer, FuentesTexto(), formatosDe(ctx), ctx.getString(R.string.aviso_ok))
         val medidor = MedidorTextoCompose(composicion)
-        ControladorGaleria(scope, ConstructorEscena(ctx, Sincronizacion.dirBase(ctx), medidor, composicion)) { salir() }
+        ControladorGaleria(scope, ConstructorEscena(ctx, Sincronizacion.dirBase(ctx), medidor, composicion), { salir() }, reserva)
     }
     val control = remember { ControlGaleria({ controlador.estadoControl() }, { controlador.alAccion(it) }) }
     val pintor = remember { PintorInterfaz() }
@@ -92,11 +98,14 @@ fun GaleriaEnPantalla(
     LaunchedEffect(controlador) { controlador.correr() }
     LaunchedEffect(catalogo, preferencias) { controlador.configurar(catalogo, preferencias) }
     LaunchedEffect(salto) { if (salto != null) controlador.saltarA(salto.indice) }
+    // Cada vez que la reserva termina una obra, la galería reintenta (por si estaba esperando la primera).
+    val versionReserva = reserva?.estado?.collectAsState()?.value?.version ?: 0
+    LaunchedEffect(versionReserva) { controlador.reintentar() }
     LaunchedEffect(teclasActivas) { if (teclasActivas) try { foco.requestFocus() } catch (e: Exception) { /* todavía no está listo */ } }
 
     // La Barra
     controlador.barraDisponible = app != null
-    val galeriasBarra = catalogo.galerias.map { it.driveId to it.titulo }
+    val galeriasBarra = catalogo.galerias.filter { preferencias.estaTildada(it.driveId) }.map { it.driveId to it.titulo }
     val indiceGaleria = galeriasBarra.indexOfFirst { (id, titulo) -> preferencias.galeria != null && (id == preferencias.galeria || titulo.equals(preferencias.galeria, ignoreCase = true)) }
     val datosBarra = DatosBarra(
         galerias = galeriasBarra,
@@ -196,6 +205,7 @@ fun GaleriaEnPantalla(
                 }
             }
         }
+        if (controlador.preparando && controlador.actual == null) PantallaPreparando()
         if (sincronizando && !controlador.barraAbierta) IndicadorSincronizando(Modifier.align(Alignment.TopEnd))
         if (controlador.barraAbierta) Barra(datosBarra, focoBarra, Modifier.align(Alignment.BottomCenter))
     }

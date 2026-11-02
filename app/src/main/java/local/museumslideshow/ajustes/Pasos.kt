@@ -8,6 +8,9 @@ object Pasos {
     /** Duración de la transición: 0,5 a 3 s de a 0,5. */
     val DURACION_MS = listOf(500, 1000, 1500, 2000, 2500, 3000)
 
+    /** Reserva de obras: cuántas obras próximas guarda la tele. */
+    val RESERVA_OBRAS = listOf(20, 50, 100, 200)
+
     /** Horario del Automático: de a 30 minutos. */
     const val PASO_HORA_MIN = 30
     const val MINUTOS_DEL_DIA = 24 * 60

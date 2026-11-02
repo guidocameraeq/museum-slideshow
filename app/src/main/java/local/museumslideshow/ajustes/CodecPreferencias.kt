@@ -31,10 +31,14 @@ object CodecPreferencias {
         const val SINCRONIZAR_CADA = "sincronizar_cada"
         const val ESPACIO_MAXIMO = "espacio_maximo"
         const val CARPETA = "carpeta"
+        const val GALERIAS_SELECCION = "galerias_seleccion"
+        const val GALERIAS_NUEVAS = "galerias_nuevas"
+        const val RESERVA = "reserva"
 
         val TODAS = listOf(
             TEMA, MODO, HORA_DIA, HORA_NOCHE, PARED_CLARO, PARED_OSCURO, MARCO, TAMANO, COMPLETA_CON_MARCO, EXPLICACION,
             SALA, CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, TRANSICION, DURACION, SINCRONIZAR_CADA, ESPACIO_MAXIMO, CARPETA,
+            GALERIAS_SELECCION, GALERIAS_NUEVAS, RESERVA,
         )
     }
 
@@ -73,6 +77,9 @@ object CodecPreferencias {
         m[K.SINCRONIZAR_CADA] = p.sincronizarCada.name
         m[K.ESPACIO_MAXIMO] = p.espacioMaximo.name
         p.carpetaDrive?.let { m[K.CARPETA] = it }
+        if (p.seleccionGalerias.isNotEmpty()) m[K.GALERIAS_SELECCION] = codificarSeleccion(p.seleccionGalerias)
+        m[K.GALERIAS_NUEVAS] = p.galeriasNuevas.name
+        m[K.RESERVA] = p.reservaObras.toString()
         return m
     }
 
@@ -106,8 +113,32 @@ object CodecPreferencias {
             sincronizarCada = enum<SincronizarCada>(m[K.SINCRONIZAR_CADA]) ?: d.sincronizarCada,
             espacioMaximo = enum<EspacioMaximo>(m[K.ESPACIO_MAXIMO]) ?: d.espacioMaximo,
             carpetaDrive = CarpetaDrive.extraerId(m[K.CARPETA]),
+            seleccionGalerias = decodificarSeleccion(m[K.GALERIAS_SELECCION]),
+            galeriasNuevas = enum<GaleriasNuevas>(m[K.GALERIAS_NUEVAS]) ?: d.galeriasNuevas,
+            reservaObras = m[K.RESERVA]?.toIntOrNull()?.takeIf { it in Preferencias.RESERVA_OBRAS } ?: d.reservaObras,
         )
     }
+
+    /** La selección de galerías como un solo texto: `id:1,id:0` (los ids de Drive son [A-Za-z0-9_-]: nunca traen ':' ni ','). */
+    fun codificarSeleccion(sel: Map<String, Boolean>): String =
+        sel.entries.filter { idValido(it.key) }.joinToString(",") { it.key + ":" + (if (it.value) "1" else "0") }
+
+    fun decodificarSeleccion(texto: String?): Map<String, Boolean> {
+        if (texto.isNullOrBlank()) return emptyMap()
+        val salida = LinkedHashMap<String, Boolean>()
+        for (par in texto.split(',')) {
+            val partes = par.split(':')
+            if (partes.size != 2 || !idValido(partes[0])) continue
+            when (partes[1]) {
+                "1" -> salida[partes[0]] = true
+                "0" -> salida[partes[0]] = false
+            }
+        }
+        return salida
+    }
+
+    private fun idValido(id: String) =
+        id.isNotEmpty() && id.length <= 200 && id.all { it.isLetterOrDigit() && it.code < 128 || it == '_' || it == '-' }
 
     private inline fun <reified E : Enum<E>> enum(nombre: String?): E? =
         if (nombre == null) null else enumValues<E>().firstOrNull { it.name == nombre }

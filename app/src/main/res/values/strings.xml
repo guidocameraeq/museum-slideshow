@@ -57,6 +57,10 @@
     <string name="vacio_sin_clave_texto">Esta versión de la app no tiene la clave de acceso a Drive o la carpeta. Se carga desde la PC al armar la app.</string>
     <string name="vacio_carpeta_vacia_titulo">La carpeta de Drive no tiene obras</string>
     <string name="vacio_carpeta_vacia_texto">Agregá imágenes en una subcarpeta de la carpeta de Drive y la app las baja sola.</string>
+    <string name="preparando_titulo">Preparando obras…</string>
+    <string name="preparando_texto">La tele está bajando las primeras obras. En un momento empieza.</string>
+    <string name="vacio_ninguna_tildada_titulo">No hay galerías tildadas</string>
+    <string name="vacio_ninguna_tildada_texto">Todas las galerías están destildadas. Tildá al menos una en Galerías para que empiece el pase.</string>
     <string name="vacio_ver_estado">Ver Estado</string>
 
     <!-- Ajustes (nombres y valores) -->
@@ -81,6 +85,11 @@
     <string name="aj_duracion">Duración de la transición</string>
     <string name="aj_sincronizar">Sincronizar cada</string>
     <string name="aj_espacio">Espacio máximo</string>
+    <string name="aj_reserva">Reserva de obras</string>
+    <string name="aj_galerias_nuevas">Galerías nuevas</string>
+    <string name="v_tildadas">Tildadas</string>
+    <string name="v_destildadas">Destildadas</string>
+    <string name="formato_reserva_obras">%1$d obras</string>
     <string name="aj_carpeta">Carpeta de Drive</string>
     <string name="aj_protector">Usar como protector</string>
     <string name="aj_estado">Estado</string>
@@ -161,6 +170,18 @@
     <string name="est_sin_conexion_sin_obras">No se pudo conectar con Drive (%1$s) y todavía no hay obras guardadas.</string>
     <string name="est_sec_obras">Obras bajadas</string>
     <string name="est_sin_obras">No hay obras bajadas.</string>
+    <string name="est_sec_reserva">Reserva de obras</string>
+    <string name="est_reserva_sin_pedido">Todavía no se armó la reserva (%1$d obras guardadas). Se arma al abrir la galería.</string>
+    <string name="est_reserva_guardadas">%1$d obras guardadas en la tele (%2$s)</string>
+    <string name="est_reserva_por_delante">Por delante: %1$d de %2$d ya bajadas</string>
+    <string name="est_reserva_vistas">Ya vistas, guardadas para volver: %1$d</string>
+    <string name="est_reserva_bajando">Bajando ahora: %1$d obras</string>
+    <string name="est_reserva_sin_internet">Sin internet: el pase gira con las obras que ya están en la tele.</string>
+    <string name="est_reserva_error_internet">Última bajada: falló por falta de internet.</string>
+    <string name="est_reserva_error_espacio">Última bajada: no entra más en el espacio máximo (se bajaron menos obras).</string>
+    <string name="est_reserva_error_imagen">Última bajada: una imagen no se pudo abrir.</string>
+    <string name="est_reserva_error_grande">Última bajada: una imagen es demasiado grande.</string>
+    <string name="est_reserva_error_drive">Última bajada: Drive respondió con error (%1$s).</string>
     <string name="est_sec_espacio">Espacio</string>
     <string name="est_espacio_usado">Usado: %1$s de %2$s</string>
     <string name="est_espacio_lleno">El espacio está lleno: no se bajan más obras. Podés subir el espacio máximo en Ajustes.</string>
@@ -212,7 +233,7 @@
     <string name="inicio_ver_sub">%1$s · %2$s</string>
     <string name="inicio_todas_galerias">Todas las galerías</string>
     <string name="inicio_sin_obras">Todavía no hay obras</string>
-    <string name="inicio_obras_listas">Obras listas: %1$d</string>
+    <string name="inicio_obras_listas">Obras listas: %1$d de %2$d</string>
     <string name="inicio_sync">Sincronizado: %1$s</string>
     <string name="inicio_sync_nunca">Todavía sin sincronizar</string>
     <string name="menu_galerias">Galerías</string>
@@ -244,6 +265,10 @@
     <string name="pie_galerias">Elegir qué galerías se muestran</string>
     <string name="galerias_proximamente">Acá vas a elegir qué galerías se muestran. Llega en la próxima versión.</string>
     <string name="conexion_ultima_vez">Última vez: %1$s</string>
+    <string name="reserva_listas">%1$d de %2$d obras listas · %3$s</string>
+    <string name="reserva_leyenda_proximas">Próximas, ya bajadas</string>
+    <string name="reserva_leyenda_vistas">%1$d ya vistas, para volver atrás</string>
+    <string name="reserva_leyenda_internet">Con internet, siempre hay obras por delante</string>
     <string name="conexion_nunca">Todavía no se sincronizó</string>
     <string name="vista_previa">Vista previa</string>
     <string name="vista_previa_texto">Tema %1$s · pared %2$s · obra %3$s.</string>

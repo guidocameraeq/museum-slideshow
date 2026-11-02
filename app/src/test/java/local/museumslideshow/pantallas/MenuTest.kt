@@ -117,7 +117,8 @@ class ResumenInicioTest {
         assertEquals(8, r.obrasDelPase)
         assertEquals(2, r.galerias)
         assertEquals(8, r.obras)
-        assertEquals(8, r.obrasListas)
+        assertEquals(0, r.obrasListas) // todavía sin reserva
+        assertEquals(8, r.obrasListasDe)
         assertEquals(123L, r.ultimaSincronizacion)
     }
 
@@ -176,5 +177,49 @@ class VistaPreviaTest {
         assertEquals("fino", DatosVistaPrevia.de(Preferencias(), 0).marco)
         assertEquals("sin", DatosVistaPrevia.de(Preferencias(marco = MarcoElegido.FIJO("sin")), 0).marco)
         assertEquals("sin", DatosVistaPrevia.de(Preferencias(tema = Tema.INMERSIVO), 0).marco)
+    }
+}
+
+class ResumenInicioConReservaTest {
+    private fun obra(id: String) = Obra(id, "$id.jpg", 100, 100, null)
+    private fun galeria(id: String, titulo: String, n: Int) = Galeria(id, titulo, null, (1..n).map { obra("$id-$it") })
+    private fun cat(vararg g: Galeria) = CatalogoCargado(g.toList(), emptyList(), 123L)
+
+    @Test
+    fun soloCuentanLasGaleriasTildadas() {
+        val c = cat(galeria("A", "Barroco", 3), galeria("B", "Impresionismo", 5))
+        val r = ResumenInicio.de(c, Preferencias(seleccionGalerias = mapOf("B" to false)))
+        assertEquals(1, r.galerias)
+        assertEquals(3, r.obras)
+        assertEquals(3, r.obrasDelPase)
+        assertEquals("A-1", r.tapa?.driveId)
+        assertEquals("A", r.tapaGaleriaId)
+    }
+
+    @Test
+    fun conLaReservaMuestraLasListasDeLasProximas() {
+        val c = cat(galeria("A", "Barroco", 80))
+        val estado = local.museumslideshow.reserva.EstadoReserva(listasPorDelante = 38, porDelante = 50, vistasGuardadas = 10, conPedido = true)
+        val r = ResumenInicio.de(c, Preferencias(), estado)
+        assertEquals(38, r.obrasListas)
+        assertEquals(50, r.obrasListasDe)
+    }
+
+    @Test
+    fun sinPedidoTodaviaUsaLoQueHayGuardadoYElAjuste() {
+        val c = cat(galeria("A", "Barroco", 80))
+        val estado = local.museumslideshow.reserva.EstadoReserva(obrasGuardadas = 12)
+        val r = ResumenInicio.de(c, Preferencias(reservaObras = 20), estado)
+        assertEquals(12, r.obrasListas)
+        assertEquals(20, r.obrasListasDe)
+    }
+
+    @Test
+    fun todasDestildadasDejaInicioEnCero() {
+        val c = cat(galeria("A", "Barroco", 3))
+        val r = ResumenInicio.de(c, Preferencias(galeriasNuevas = local.museumslideshow.ajustes.GaleriasNuevas.DESTILDADAS))
+        assertEquals(0, r.galerias)
+        assertEquals(0, r.obras)
+        assertNull(r.tapa)
     }
 }

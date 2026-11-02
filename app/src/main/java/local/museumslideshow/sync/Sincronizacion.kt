@@ -25,15 +25,14 @@ object Sincronizacion {
             Log.w(Registro.TAG, "No se pudieron leer los ajustes (${e.javaClass.simpleName}); se usan los de fábrica")
             Preferencias()
         }
-        return ejecutar(ctx, carpetaEfectiva(p, CarpetaDrive.extraerId(BuildConfig.DRIVE_CARPETA) ?: BuildConfig.DRIVE_CARPETA), p.espacioMaximo.bytes)
+        return ejecutar(ctx, carpetaEfectiva(p, CarpetaDrive.extraerId(BuildConfig.DRIVE_CARPETA) ?: BuildConfig.DRIVE_CARPETA))
     }
 
-    fun ejecutar(context: Context, carpeta: String, topeBytes: Long): ResultadoSync {
+    fun ejecutar(context: Context, carpeta: String): ResultadoSync {
         val s = Sincronizador(
             api = DriveApiHttp(BuildConfig.DRIVE_API_KEY),
             dirBase = dirBase(context),
             procesador = ProcesadorImagenAndroid(),
-            topeBytes = topeBytes,
             ahora = { System.currentTimeMillis() },
         )
         val r = try {

@@ -21,6 +21,9 @@ object ConstantesGaleria {
     /** Una imagen que ya nadie dibuja se recicla recién pasado este tiempo (el dibujo en la GPU es asincrónico). */
     const val RECICLADO_DEMORA_MS = 1500L
 
+    /** Cuántas obras sin medidas (Drive no las dio) se piden a la reserva a la vez para poder medirlas. */
+    const val MAX_SIN_MEDIDAS = 10
+
     /** La pre-carga de la escena siguiente espera esto después de reciclar la anterior (para respetar las 2 pantallas). */
     const val PRECARGA_DEMORA_MS = 500L
 

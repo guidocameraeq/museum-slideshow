@@ -51,6 +51,7 @@ fun PantallaSinObras(
             MotivoSinObras.SIN_CONEXION -> R.string.vacio_sin_conexion_titulo
             MotivoSinObras.SIN_CLAVE -> R.string.vacio_sin_clave_titulo
             MotivoSinObras.CARPETA_VACIA -> R.string.vacio_carpeta_vacia_titulo
+            MotivoSinObras.NINGUNA_TILDADA -> R.string.vacio_ninguna_tildada_titulo
         },
     )
     val explicacion = stringResource(
@@ -59,6 +60,7 @@ fun PantallaSinObras(
             MotivoSinObras.SIN_CONEXION -> R.string.vacio_sin_conexion_texto
             MotivoSinObras.SIN_CLAVE -> R.string.vacio_sin_clave_texto
             MotivoSinObras.CARPETA_VACIA -> R.string.vacio_carpeta_vacia_texto
+            MotivoSinObras.NINGUNA_TILDADA -> R.string.vacio_ninguna_tildada_texto
         },
     )
     Escenario1080 {
@@ -109,6 +111,26 @@ fun IndicadorSincronizando(modifier: Modifier = Modifier) {
                 .padding(horizontal = 18.dp, vertical = 8.dp),
         ) {
             BasicText(stringResource(R.string.estado_sincronizando), style = estiloTexto(20, androidx.compose.ui.graphics.Color(0xCCFFFFFF), 500), maxLines = 1)
+        }
+    }
+}
+
+/** "Preparando obras…": la galería se abrió pero todavía no llegó la primera obra de la reserva. Nunca una pantalla negra a secas. */
+@Composable
+fun PantallaPreparando(modifier: Modifier = Modifier) {
+    Escenario1080 {
+        Column(
+            modifier.fillMaxSize().background(Paleta.Fondo).padding(120.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            BasicText(stringResource(R.string.app_name), style = estiloTexto(32, Paleta.Dorado, 600))
+            Box(Modifier.padding(top = 40.dp)) {
+                BasicText(stringResource(R.string.preparando_titulo), style = estiloTexto(60, Paleta.Texto, 600).copy(textAlign = TextAlign.Center))
+            }
+            Box(Modifier.padding(top = 24.dp).widthIn(max = 1200.dp)) {
+                BasicText(stringResource(R.string.preparando_texto), style = estiloTexto(32, Paleta.Tenue, 400).copy(textAlign = TextAlign.Center))
+            }
         }
     }
 }

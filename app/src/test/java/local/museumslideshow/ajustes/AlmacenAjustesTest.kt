@@ -40,6 +40,9 @@ class CodecPreferenciasTest {
         sincronizarCada = SincronizarCada.SOLO_A_MANO,
         espacioMaximo = EspacioMaximo.DOS_GB,
         carpetaDrive = "1CarpetaDeDriveLarga123",
+        seleccionGalerias = mapOf("G-1" to false, "G_2" to true),
+        galeriasNuevas = GaleriasNuevas.DESTILDADAS,
+        reservaObras = 100,
     )
 
     @Test

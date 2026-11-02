@@ -5,7 +5,9 @@ import local.museumslideshow.ajustes.MarcoElegido
 import local.museumslideshow.ajustes.Modo
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.ajustes.Tamano
+import local.museumslideshow.ajustes.estaTildada
 import local.museumslideshow.ajustes.modoEfectivo
+import local.museumslideshow.reserva.EstadoReserva
 import local.museumslideshow.catalogo.CatalogoCargado
 import local.museumslideshow.catalogo.Obra
 import local.museumslideshow.galeria.Pase
@@ -74,35 +76,45 @@ object NavegacionInicio {
     private fun esColumnaIzquierda(f: Int) = f % 2 == 1
 }
 
-/** Los datos que muestra Inicio, sacados del catálogo y los ajustes. */
+/** Los datos que muestra Inicio, sacados del catálogo, los ajustes y la reserva. Solo cuentan las galerías tildadas. */
 data class ResumenInicio(
-    /** El título de la galería elegida, o null si el pase recorre todas. */
+    /** El título de la galería elegida, o null si el pase recorre todas las tildadas. */
     val galeriaElegida: String?,
     /** Las obras que pasarían con la elección actual. */
     val obrasDelPase: Int,
     val galerias: Int,
     val obras: Int,
-    /** Hoy = las obras bajadas; en la parte 2 (reserva) pasa a ser las de la reserva. */
+    /** Cuántas de las próximas obras de la reserva ya están bajadas. */
     val obrasListas: Int,
-    /** La obra de fondo: la primera bajada de la galería elegida, o la primera del catálogo. */
+    /** De cuántas se compone la reserva (N, o menos si el pase tiene menos obras). */
+    val obrasListasDe: Int,
+    /** La obra de fondo: la primera de la galería elegida (con su ficha), o la primera del catálogo tildado. */
     val tapa: Obra?,
+    /** La galería de esa obra: su tapa guardada (`tapas/<id>.jpg`) es el fondo cuando la obra todavía no está bajada. */
+    val tapaGaleriaId: String?,
     val ultimaSincronizacion: Long?,
 ) {
     companion object {
-        fun de(cat: CatalogoCargado?, prefs: Preferencias): ResumenInicio {
-            val todas = cat?.galerias.orEmpty()
+        fun de(cat: CatalogoCargado?, prefs: Preferencias, reserva: EstadoReserva? = null): ResumenInicio {
+            val todas = cat?.galerias.orEmpty().filter { prefs.estaTildada(it.driveId) }
             val elegidas = Pase.galeriasElegidas(todas, prefs.galeria)
             val unaSola = elegidas.size == 1
             val deLaElegida = elegidas.firstOrNull { it.obras.isNotEmpty() }
             val gTapa = (if (unaSola) deLaElegida else null) ?: todas.firstOrNull { it.obras.isNotEmpty() }
             val total = todas.sumOf { it.obras.size }
+            val delPase = elegidas.sumOf { it.obras.size }
+            val conPedido = reserva?.conPedido == true
+            val de = if (conPedido) reserva!!.porDelante else minOf(prefs.reservaObras, delPase)
+            val listas = if (conPedido) reserva!!.listasPorDelante else minOf(reserva?.obrasGuardadas ?: 0, de)
             return ResumenInicio(
                 galeriaElegida = if (unaSola) elegidas.first().titulo else null,
-                obrasDelPase = elegidas.sumOf { it.obras.size },
+                obrasDelPase = delPase,
                 galerias = todas.size,
                 obras = total,
-                obrasListas = total,
+                obrasListas = listas,
+                obrasListasDe = de,
                 tapa = gTapa?.obras?.firstOrNull(),
+                tapaGaleriaId = gTapa?.driveId,
                 ultimaSincronizacion = cat?.ultimaSincronizacionBuena,
             )
         }

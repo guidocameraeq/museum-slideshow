@@ -109,3 +109,124 @@ class PaseTest {
         assertTrue(Pase.debeAvanzar(60_000, 60_000, false))
     }
 }
+
+class PaseConReservaTest {
+    private fun h(id: String) = Datos.obra(id, 1000, 600)
+    private val gm = Datos.tema(Tema.GALERIA_MODERNA)
+    private val g = Galeria("g", "Galería", null, (1..6).map { h("o$it") })
+    private val prefs = Preferencias(pared = Pared.APAGADA)
+
+    private fun pase(p: Preferencias = prefs, galerias: List<Galeria> = listOf(g)) = Pase.armar(galerias, p, gm, 1L)!!
+
+    private fun lista(vararg ids: String): (EscenaDef) -> Boolean = { e -> e.obras.all { it.driveId in ids } }
+
+    @Test
+    fun elPaseSeArmaConTodasLasObrasAunqueNoEstenBajadas() {
+        val p = pase()
+        assertEquals(6, p.escenas.size)
+        assertEquals(listOf(1, 2, 3, 4, 5, 6), p.escenas.map { it.posicion })
+    }
+
+    @Test
+    fun avanzarSalteaLasNoBajadasSinPerderElContador() {
+        val p = pase()
+        val l = lista("o1", "o2", "o5")
+        p.moverSaltando(1, l)
+        assertEquals("o2", p.actual.obras[0].driveId)
+        p.moverSaltando(1, l)
+        assertEquals("o5", p.actual.obras[0].driveId)
+        assertEquals(5, p.actual.posicion) // sigue siendo la quinta de la galería
+        assertEquals(6, p.actual.total)
+        p.moverSaltando(1, l)
+        assertEquals("o1", p.actual.obras[0].driveId) // da la vuelta
+        assertEquals(1, p.actual.posicion)
+    }
+
+    @Test
+    fun retrocederTambienSaltea() {
+        val p = pase()
+        val l = lista("o1", "o2", "o5")
+        p.moverSaltando(-1, l)
+        assertEquals("o5", p.actual.obras[0].driveId)
+        p.moverSaltando(-1, l)
+        assertEquals("o2", p.actual.obras[0].driveId)
+    }
+
+    @Test
+    fun siNoHayNingunaListaNoSeMueveYAvisa() {
+        val p = pase()
+        val ninguna = lista()
+        assertEquals(0, p.indiceSaltando(1, ninguna))
+        assertFalse(p.asegurarLista(ninguna))
+        assertEquals(0, p.indice)
+    }
+
+    @Test
+    fun siSoloLaActualEstaListaSeQuedaEnEsa() {
+        val p = pase()
+        val l = lista("o1")
+        p.moverSaltando(3, l)
+        assertEquals(0, p.indice)
+    }
+
+    @Test
+    fun alArrancarSiLaPrimeraNoEstaBajadaPasaALaPrimeraQueSi() {
+        val p = pase()
+        assertTrue(p.asegurarLista(lista("o4", "o6")))
+        assertEquals("o4", p.actual.obras[0].driveId)
+        assertEquals(4, p.actual.posicion)
+        // y si la actual ya está lista no se mueve
+        assertTrue(p.asegurarLista(lista("o4")))
+        assertEquals(3, p.indice)
+    }
+
+    @Test
+    fun conMezclarYElSaltoSigueElOrdenMezclado() {
+        val p = pase(prefs.copy(orden = Orden.MEZCLAR))
+        val orden = p.ordenDeObras().map { it.driveId }
+        val l = lista(orden[0], orden[2], orden[4])
+        p.moverSaltando(1, l)
+        assertEquals(orden[2], p.actual.obras[0].driveId)
+        assertEquals(2, p.posicionDeObra())
+    }
+
+    @Test
+    fun soloEntranAlPaseLasGaleriasTildadas() {
+        val b = Galeria("gb", "Otra", null, listOf(h("b1"), h("b2")))
+        val sinB = prefs.copy(seleccionGalerias = mapOf("gb" to false))
+        val p = pase(sinB, listOf(g, b))
+        assertEquals(setOf("g"), p.escenas.map { it.galeriaId }.toSet())
+        // con "Galerías nuevas" destildadas, solo las que figuran tildadas
+        val soloB = prefs.copy(galeriasNuevas = local.museumslideshow.ajustes.GaleriasNuevas.DESTILDADAS, seleccionGalerias = mapOf("gb" to true))
+        assertEquals(setOf("gb"), pase(soloB, listOf(g, b)).escenas.map { it.galeriaId }.toSet())
+        // "Todas" = todas las tildadas; sin ninguna tildada no hay pase
+        val ninguna = prefs.copy(galeriasNuevas = local.museumslideshow.ajustes.GaleriasNuevas.DESTILDADAS)
+        assertNull(Pase.armar(listOf(g, b), ninguna, gm, 1L))
+        // una galería elegida en la Barra que está destildada cae en Todas las tildadas
+        val elegidaDestildada = sinB.copy(galeria = "gb")
+        assertEquals(setOf("g"), pase(elegidaDestildada, listOf(g, b)).escenas.map { it.galeriaId }.toSet())
+    }
+
+    @Test
+    fun lasObrasSinMedidasNoEntranHastaTenerlas() {
+        val sin = local.museumslideshow.catalogo.Obra("sm", "sm.jpg", 0, 0, null).conBajada(false)
+        val gal = Galeria("g", "G", null, listOf(h("a"), sin, h("b")))
+        val p = pase(galerias = listOf(gal))
+        assertEquals(listOf("a", "b"), p.escenas.map { it.obras[0].driveId })
+        assertEquals(listOf(2, 2), p.escenas.map { it.total })
+        assertEquals(listOf("sm"), Pase.obrasSinMedidas(listOf(gal), prefs).map { it.driveId })
+        // si todas están sin medidas no hay pase todavía
+        assertNull(Pase.armar(listOf(Galeria("g", "G", null, listOf(sin))), prefs, gm, 1L))
+    }
+
+    @Test
+    fun laPosicionYElOrdenParaLaReservaSumanLasObrasDeUnaPared() {
+        fun v(id: String) = Datos.obra(id, 600, 1000)
+        val gal = Galeria("g", "G", null, listOf(v("v1"), v("v2"), v("v3"), h("h1")))
+        val p = Pase.armar(listOf(gal), Preferencias(), gm, 1L)!!
+        assertEquals(listOf("v1", "v2", "v3", "h1"), p.ordenDeObras().map { it.driveId })
+        assertEquals(0, p.posicionDeObra())
+        p.mover(1)
+        assertEquals(3, p.posicionDeObra()) // la segunda escena arranca después de las 3 de la Pared
+    }
+}

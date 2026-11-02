@@ -29,6 +29,9 @@ enum class NombreSala { SIEMPRE, UNOS_SEGUNDOS, SOLO_CONTADOR, NUNCA }
 enum class Calidad { K4, HD1080 }
 enum class Orden { GALERIA, MEZCLAR }
 
+/** Qué pasa con una galería que no figura en la selección (la que el curador sube después). */
+enum class GaleriasNuevas { TILDADAS, DESTILDADAS }
+
 /** `maximo` = cuántas verticales cuelgan juntas como mucho (1 = de a una). */
 enum class Pared(val maximo: Int) { APAGADA(1), HASTA_2(2), HASTA_3(3) }
 enum class CartelObra { SIEMPRE, UNOS_SEGUNDOS, NUNCA }
@@ -69,10 +72,16 @@ data class Preferencias(
     val espacioMaximo: EspacioMaximo = EspacioMaximo.UN_GB,
     /** null = el de `local.properties` al compilar. */
     val carpetaDrive: String? = null,
+    /** Id de carpeta -> tildada. Lo que falta toma el valor de [galeriasNuevas]. */
+    val seleccionGalerias: Map<String, Boolean> = emptyMap(),
+    val galeriasNuevas: GaleriasNuevas = GaleriasNuevas.TILDADAS,
+    /** Cuántas obras próximas guarda la tele (20 / 50 / 100 / 200; por adb se acepta cualquier valor para probar). */
+    val reservaObras: Int = 50,
 ) {
     companion object {
         val TIEMPO_POR_OBRA_SEG = 10..600
         val DURACION_TRANSICION_MS = 500..3000
+        val RESERVA_OBRAS = 1..1000
     }
 }
 
@@ -89,6 +98,9 @@ fun Preferencias.paraEscena(): Preferencias {
         sincronizarCada = d.sincronizarCada,
         espacioMaximo = d.espacioMaximo,
         carpetaDrive = d.carpetaDrive,
+        seleccionGalerias = d.seleccionGalerias,
+        galeriasNuevas = d.galeriasNuevas,
+        reservaObras = d.reservaObras,
     )
 }
 

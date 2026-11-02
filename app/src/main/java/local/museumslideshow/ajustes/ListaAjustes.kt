@@ -21,7 +21,8 @@ class Opcion(
 /** Los ajustes de la pantalla, en el orden de la tabla del SPEC-0 (y al final, la entrada que abre Estado). */
 enum class IdAjuste {
     TEMA, MODO, HORA_DIA, HORA_NOCHE, PARED_CLARO, PARED_OSCURO, MARCO, TAMANO, COMPLETA_CON_MARCO, EXPLICACION, SALA,
-    CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, TRANSICION, DURACION, SINCRONIZAR, ESPACIO, CARPETA, PROTECTOR, ESTADO,
+    CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, TRANSICION, DURACION, SINCRONIZAR, RESERVA, ESPACIO, CARPETA, GALERIAS_NUEVAS,
+    PROTECTOR, ESTADO,
 }
 
 /** Una galería bajada, para armar las opciones del ajuste "Galería". */
@@ -246,6 +247,9 @@ object ListaAjustes {
                     SincronizarCada.SOLO_A_MANO -> R.string.sinc_mano
                 })
             },
+            ItemPasos(IdAjuste.RESERVA, R.string.aj_reserva, Pasos.RESERVA_OBRAS, { it.reservaObras }, { p, v -> p.copy(reservaObras = v) }) {
+                Etiqueta.Res(R.string.formato_reserva_obras, listOf(it))
+            },
             lista(IdAjuste.ESPACIO, R.string.aj_espacio, EspacioMaximo.values().toList(), { it.espacioMaximo }, { p, v -> p.copy(espacioMaximo = v) }) {
                 res(when (it) { EspacioMaximo.MEDIO_GB -> R.string.espacio_medio; EspacioMaximo.UN_GB -> R.string.espacio_1; EspacioMaximo.DOS_GB -> R.string.espacio_2 })
             },
@@ -254,6 +258,9 @@ object ListaAjustes {
                 { p -> p.carpetaDrive?.let { Etiqueta.Texto(CarpetaDrive.abreviar(it)) } ?: res(R.string.carpeta_de_fabrica) },
                 R.string.carpeta_ayuda, habilitado = true,
             ),
+            lista(IdAjuste.GALERIAS_NUEVAS, R.string.aj_galerias_nuevas, GaleriasNuevas.values().toList(), { it.galeriasNuevas }, { p, v -> p.copy(galeriasNuevas = v) }) {
+                res(if (it == GaleriasNuevas.TILDADAS) R.string.v_tildadas else R.string.v_destildadas)
+            },
             ItemInfo(IdAjuste.PROTECTOR, R.string.aj_protector, { res(R.string.protector_proximamente) }, null, habilitado = false),
             ItemAbrirEstado(),
         ).also { check(it.map { i -> i.id } == IdAjuste.values().toList()) { "Falta o sobra un ajuste en la lista" } }
@@ -280,12 +287,12 @@ enum class GrupoAjustes(val ids: List<IdAjuste>) {
             IdAjuste.TIEMPO, IdAjuste.ORDEN, IdAjuste.GALERIA, IdAjuste.PARED, IdAjuste.TRANSICION, IdAjuste.DURACION, IdAjuste.CALIDAD,
         ),
     ),
-    CONEXION(listOf(IdAjuste.CARPETA, IdAjuste.SINCRONIZAR, IdAjuste.ESPACIO)),
+    CONEXION(listOf(IdAjuste.CARPETA, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO)),
     ;
 
     companion object {
-        /** Los ajustes que no están en ningún grupo: tienen su propia pantalla. */
-        val APARTE: List<IdAjuste> = listOf(IdAjuste.PROTECTOR, IdAjuste.ESTADO)
+        /** Los ajustes que no están en ningún grupo: tienen su propia pantalla (Galerías nuevas vive en la pantalla Galerías). */
+        val APARTE: List<IdAjuste> = listOf(IdAjuste.GALERIAS_NUEVAS, IdAjuste.PROTECTOR, IdAjuste.ESTADO)
     }
 }
 

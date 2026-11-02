@@ -54,11 +54,12 @@ object TextosProblemas {
 }
 
 /** Por qué no hay obras para mostrar (para elegir el mensaje de la pantalla vacía). */
-enum class MotivoSinObras { SINCRONIZANDO, SIN_CLAVE, SIN_CONEXION, CARPETA_VACIA }
+enum class MotivoSinObras { SINCRONIZANDO, SIN_CLAVE, SIN_CONEXION, CARPETA_VACIA, NINGUNA_TILDADA }
 
 object SinObras {
     /** Sin obras: si se está sincronizando, la espera; si falló la red o falta la clave, eso; si no, la carpeta está vacía. */
-    fun motivo(sincronizando: Boolean, cat: CatalogoCargado?): MotivoSinObras = when {
+    fun motivo(sincronizando: Boolean, cat: CatalogoCargado?, hayTildadas: Boolean = true): MotivoSinObras = when {
+        !sincronizando && cat != null && !hayTildadas && cat.galerias.any { it.obras.isNotEmpty() } -> MotivoSinObras.NINGUNA_TILDADA
         sincronizando -> MotivoSinObras.SINCRONIZANDO
         cat == null -> MotivoSinObras.SINCRONIZANDO
         cat.problemaUltimoIntento?.tipo == TipoProblema.SIN_CLAVE -> MotivoSinObras.SIN_CLAVE

@@ -28,7 +28,7 @@ class DriveApiHttp(
         var pagina: String? = null
         do {
             val q = URLEncoder.encode("'$carpetaId' in parents and trashed=false", "UTF-8")
-            val campos = URLEncoder.encode("nextPageToken,files(id,name,mimeType,md5Checksum,modifiedTime,size)", "UTF-8")
+            val campos = URLEncoder.encode("nextPageToken,files(id,name,mimeType,md5Checksum,modifiedTime,size,imageMediaMetadata(width,height,rotation))", "UTF-8")
             val url = StringBuilder("$BASE?q=$q&fields=$campos&pageSize=1000")
             if (pagina != null) url.append("&pageToken=").append(URLEncoder.encode(pagina, "UTF-8"))
             url.append("&key=").append(URLEncoder.encode(clave, "UTF-8"))
@@ -41,6 +41,7 @@ class DriveApiHttp(
             (raiz["files"] as? JsonArray)?.forEach { el ->
                 val o = el as? JsonObject ?: return@forEach
                 val id = cadena(o, "id") ?: return@forEach
+                val meta = o["imageMediaMetadata"] as? JsonObject
                 salida += ArchivoDrive(
                     id = id,
                     nombre = cadena(o, "name") ?: id,
@@ -48,6 +49,9 @@ class DriveApiHttp(
                     md5 = cadena(o, "md5Checksum"),
                     modificado = cadena(o, "modifiedTime"),
                     tamano = (o["size"] as? JsonPrimitive)?.longOrNull,
+                    ancho = entero(meta, "width"),
+                    alto = entero(meta, "height"),
+                    rotacion = entero(meta, "rotation"),
                 )
             }
             pagina = cadena(raiz, "nextPageToken")
@@ -131,6 +135,8 @@ class DriveApiHttp(
             }
         }
     }
+
+    private fun entero(o: JsonObject?, k: String): Int? = (o?.get(k) as? JsonPrimitive)?.longOrNull?.takeIf { it in Int.MIN_VALUE..Int.MAX_VALUE }?.toInt()
 
     private fun cadena(o: JsonObject, k: String): String? = (o[k] as? JsonPrimitive)?.takeIf { it.isString }?.content
 

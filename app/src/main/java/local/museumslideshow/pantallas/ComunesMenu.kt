@@ -103,27 +103,34 @@ object Ayudas {
 }
 
 /**
- * La imagen de una obra para mostrar como tapa o vista previa: abre la copia guardada sin pasarse del `ancho` pedido
- * (primero las medidas, después `inSampleSize`), en un hilo de fondo. null mientras carga o si no hay obra.
+ * La imagen de una obra para mostrar como tapa o vista previa: abre la copia guardada de la obra sin pasarse del `ancho`
+ * pedido (primero las medidas, después `inSampleSize`), en un hilo de fondo. Si la obra todavía no está bajada usa la tapa
+ * guardada de su galería (`tapas/<id>.jpg`). null mientras carga o si no hay nada.
  */
 @Composable
-fun rememberTapa(obra: Obra?, ancho: Int): State<ImageBitmap?> {
+fun rememberTapa(obra: Obra?, galeriaId: String?, ancho: Int): State<ImageBitmap?> {
     val ctx = LocalContext.current
-    return produceState<ImageBitmap?>(null, obra?.driveId, ancho) {
-        value = if (obra == null) null else withContext(Dispatchers.IO) {
-            try {
-                val f = Catalogo.archivoObra(Sincronizacion.dirBase(ctx), obra.driveId)
-                if (!f.isFile) return@withContext null
-                val medidas = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeFile(f.absolutePath, medidas)
-                if (medidas.outWidth <= 0 || medidas.outHeight <= 0) return@withContext null
-                val m = Decodificacion.muestreo(medidas.outWidth, medidas.outHeight, ancho, ancho * 9 / 16)
-                BitmapFactory.decodeFile(f.absolutePath, BitmapFactory.Options().apply { inSampleSize = m })?.asImageBitmap()
-            } catch (e: Exception) {
-                null
-            } catch (e: OutOfMemoryError) {
-                null
-            }
+    return produceState<ImageBitmap?>(null, obra?.driveId, galeriaId, ancho) {
+        value = withContext(Dispatchers.IO) {
+            val dir = Sincronizacion.dirBase(ctx)
+            val copia = obra?.let { Catalogo.archivoObra(dir, it.driveId) }?.takeIf { it.isFile }
+            val tapa = galeriaId?.let { Catalogo.archivoTapa(dir, it) }?.takeIf { it.isFile }
+            abrirAjustada(copia ?: tapa, ancho)
         }
+    }
+}
+
+private fun abrirAjustada(f: java.io.File?, ancho: Int): ImageBitmap? {
+    if (f == null) return null
+    return try {
+        val medidas = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(f.absolutePath, medidas)
+        if (medidas.outWidth <= 0 || medidas.outHeight <= 0) return null
+        val m = Decodificacion.muestreo(medidas.outWidth, medidas.outHeight, ancho, ancho * 9 / 16)
+        BitmapFactory.decodeFile(f.absolutePath, BitmapFactory.Options().apply { inSampleSize = m })?.asImageBitmap()
+    } catch (e: Exception) {
+        null
+    } catch (e: OutOfMemoryError) {
+        null
     }
 }

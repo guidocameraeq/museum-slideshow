@@ -2,6 +2,8 @@ package local.museumslideshow.pantallas
 
 import android.view.KeyEvent
 import local.museumslideshow.catalogo.CatalogoCargado
+import local.museumslideshow.catalogo.Galeria
+import local.museumslideshow.catalogo.Obra
 import local.museumslideshow.catalogo.Problema
 import local.museumslideshow.catalogo.TipoProblema
 import org.junit.Assert.assertEquals
@@ -175,6 +177,10 @@ class SinObrasTest {
         assertEquals(MotivoSinObras.SIN_CONEXION, SinObras.motivo(false, cat(problemas = listOf(Problema("G", null, TipoProblema.ERROR_RED, "503")))))
         assertEquals(MotivoSinObras.SIN_CLAVE, SinObras.motivo(false, cat(problemaIntento = Problema("", null, TipoProblema.SIN_CLAVE, "clave"))))
         assertEquals(MotivoSinObras.CARPETA_VACIA, SinObras.motivo(false, cat()))
-        assertTrue(MotivoSinObras.values().size == 4)
+        assertTrue(MotivoSinObras.values().size == 5)
+        // todas destildadas (hay obras, pero ninguna galería en el pase)
+        val conObras = CatalogoCargado(listOf(Galeria("G", "G", null, listOf(Obra("O", "o.jpg", 10, 10, null)))), emptyList(), 1L, 1L, true)
+        assertEquals(MotivoSinObras.NINGUNA_TILDADA, SinObras.motivo(false, conObras, hayTildadas = false))
+        assertEquals(MotivoSinObras.CARPETA_VACIA, SinObras.motivo(false, conObras, hayTildadas = true))
     }
 }

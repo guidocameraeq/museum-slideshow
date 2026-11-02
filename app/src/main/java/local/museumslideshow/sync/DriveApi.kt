@@ -9,8 +9,21 @@ data class ArchivoDrive(
     val md5: String?,
     val modificado: String?,
     val tamano: Long?,
+    /** Medidas de la imagen según Drive (`imageMediaMetadata`); null si no las dio. `rotacion` en grados. */
+    val ancho: Int? = null,
+    val alto: Int? = null,
+    val rotacion: Int? = null,
 ) {
     val esCarpeta: Boolean get() = mimeType == MIME_CARPETA
+
+    /** Las medidas como se ve la imagen: con rotación de 90 o 270 grados el ancho y el alto se intercambian. Null si Drive no las dio. */
+    fun medidasVistas(): Medidas? {
+        val a = ancho ?: return null
+        val h = alto ?: return null
+        if (a <= 0 || h <= 0) return null
+        val r = Math.floorMod(rotacion ?: 0, 360)
+        return if (r == 90 || r == 270) Medidas(h, a) else Medidas(a, h)
+    }
 
     companion object {
         const val MIME_CARPETA = "application/vnd.google-apps.folder"
