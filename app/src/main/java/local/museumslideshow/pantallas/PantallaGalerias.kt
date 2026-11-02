@@ -53,6 +53,7 @@ import local.museumslideshow.ajustes.VistaGalerias
 import local.museumslideshow.ajustes.estaTildada
 import local.museumslideshow.catalogo.Arbol
 import local.museumslideshow.catalogo.CatalogoCargado
+import local.museumslideshow.catalogo.DisposicionMosaico
 import local.museumslideshow.catalogo.FilaLista
 import local.museumslideshow.catalogo.NodoArbol
 
@@ -126,11 +127,14 @@ fun PantallaGalerias(
             Encabezado(arbol, prefs, e, vista, enGrupo)
             if (enGrupo) {
                 val todas = arbol.estadoGrupo(grupoId!!, prefs) == EstadoGrupo.TODAS
-                BotonTildarTodas(
-                    stringResource(if (todas) R.string.galerias_destildar_todas else R.string.galerias_tildar_todas),
-                    e.foco.zona == ZonaGalerias.TODAS,
-                    Modifier.offset(Medidas.MARGEN.dp, 106.dp),
-                )
+                // A la derecha, debajo del resumen dorado: lejos del título y sin tapar la grilla.
+                Box(Modifier.fillMaxWidth().padding(end = Medidas.MARGEN.dp, top = 104.dp), contentAlignment = Alignment.TopEnd) {
+                    BotonTildarTodas(
+                        stringResource(if (todas) R.string.galerias_destildar_todas else R.string.galerias_tildar_todas),
+                        e.foco.zona == ZonaGalerias.TODAS,
+                        Modifier,
+                    )
+                }
             }
 
             val vacio = if (vista == VistaGalerias.TARJETAS) NavegacionGalerias.tarjetas(arbol, e).isEmpty() else filas.isEmpty()
@@ -353,27 +357,28 @@ private fun ImagenTapa(galeriaId: String?, ancho: Int, alto: Int, apagada: Boole
     }
 }
 
-/** El mosaico 2 x 2 de un grupo: las tapas de sus primeras galerías; lo que sobra queda en fondo oscuro. */
+/**
+ * El mosaico de un grupo: las tapas de sus primeras galerías según cuántas haya (1 llena todo, 2 mitades, 3 una grande
+ * y dos apiladas, 4 en 2 x 2). Las posiciones salen de [DisposicionMosaico].
+ */
 @Composable
 private fun Mosaico(arbol: Arbol, prefs: Preferencias, grupoId: String) {
     val tapas = remember(arbol, grupoId) { arbol.mosaico(grupoId) }
-    val ancho = (Medidas.TARJETA_ANCHO - 4) / 2
-    val alto = (Medidas.IMAGEN_ALTO - 4) / 2
-    Column(
-        Modifier.fillMaxWidth().height(Medidas.IMAGEN_ALTO.dp).background(Paleta.Fondo),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        for (fila in 0..1) {
-            Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                for (col in 0..1) {
-                    val g = tapas.getOrNull(fila * 2 + col)
-                    if (g != null) {
-                        ImagenTapa(g.driveId, ancho, alto, !prefs.estaTildada(g.driveId), Modifier.weight(1f).fillMaxSize())
-                    } else {
-                        Box(Modifier.weight(1f).fillMaxSize())
-                    }
-                }
-            }
+    val celdas = DisposicionMosaico.celdas(tapas.size)
+    val w = Medidas.TARJETA_ANCHO.toFloat()
+    val h = Medidas.IMAGEN_ALTO.toFloat()
+    val hueco = 2f
+    Box(Modifier.fillMaxWidth().height(Medidas.IMAGEN_ALTO.dp).background(Paleta.Fondo)) {
+        celdas.forEachIndexed { i, c ->
+            val izq = c.x0 * w + (if (c.x0 > 0f) hueco else 0f)
+            val der = c.x1 * w - (if (c.x1 < 1f) hueco else 0f)
+            val arr = c.y0 * h + (if (c.y0 > 0f) hueco else 0f)
+            val aba = c.y1 * h - (if (c.y1 < 1f) hueco else 0f)
+            val g = tapas[i]
+            ImagenTapa(
+                g.driveId, (der - izq).toInt(), (aba - arr).toInt(), !prefs.estaTildada(g.driveId),
+                Modifier.offset(izq.dp, arr.dp).size((der - izq).dp, (aba - arr).dp),
+            )
         }
     }
 }

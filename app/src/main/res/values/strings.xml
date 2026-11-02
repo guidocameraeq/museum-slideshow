@@ -270,7 +270,7 @@
         <item quantity="other">%d galerías tildadas</item>
     </plurals>
     <string name="galerias_resumen_grupo">%1$d de %2$d galerías tildadas · %3$s</string>
-    <string name="galerias_miga_separador">  ›  </string>
+    <string name="galerias_miga_separador">"  ›  "</string>
     <string name="galerias_tildar_todas">Tildar todas</string>
     <string name="galerias_destildar_todas">Destildar todas</string>
     <string name="galerias_grupo_todas">Grupo · todas</string>

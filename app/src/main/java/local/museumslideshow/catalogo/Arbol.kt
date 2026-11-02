@@ -145,3 +145,20 @@ object Tildes {
         else -> EstadoGrupo.ALGUNAS
     }
 }
+
+/** Un lugar del mosaico, en fracciones (0 a 1) del alto y ancho de la imagen. */
+data class CeldaMosaico(val x0: Float, val y0: Float, val x1: Float, val y1: Float)
+
+/** Cómo se reparten las tapas de un grupo según cuántas son: 1 llena todo, 2 mitades, 3 una grande y dos apiladas, 4 en 2 x 2. */
+object DisposicionMosaico {
+    fun celdas(n: Int): List<CeldaMosaico> = when {
+        n <= 0 -> emptyList()
+        n == 1 -> listOf(CeldaMosaico(0f, 0f, 1f, 1f))
+        n == 2 -> listOf(CeldaMosaico(0f, 0f, .5f, 1f), CeldaMosaico(.5f, 0f, 1f, 1f))
+        n == 3 -> listOf(CeldaMosaico(0f, 0f, .5f, 1f), CeldaMosaico(.5f, 0f, 1f, .5f), CeldaMosaico(.5f, .5f, 1f, 1f))
+        else -> listOf(
+            CeldaMosaico(0f, 0f, .5f, .5f), CeldaMosaico(.5f, 0f, 1f, .5f),
+            CeldaMosaico(0f, .5f, .5f, 1f), CeldaMosaico(.5f, .5f, 1f, 1f),
+        )
+    }
+}

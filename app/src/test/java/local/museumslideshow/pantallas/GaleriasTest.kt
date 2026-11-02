@@ -12,6 +12,8 @@ import local.museumslideshow.ajustes.estaTildada
 import local.museumslideshow.ajustes.paraEscena
 import local.museumslideshow.catalogo.Arbol
 import local.museumslideshow.catalogo.CatalogoCargado
+import local.museumslideshow.catalogo.CeldaMosaico
+import local.museumslideshow.catalogo.DisposicionMosaico
 import local.museumslideshow.catalogo.FilaLista
 import local.museumslideshow.catalogo.Galeria
 import local.museumslideshow.catalogo.Grupo
@@ -120,6 +122,19 @@ class ArbolParaGaleriasTest {
         // una galería sin obras no ocupa casilla
         val conVacia = Arbol(listOf(Grupo("G", "G")), listOf(galeria("V", "v", "G", 0), galeria("A", "a", "G")))
         assertEquals(listOf("A"), conVacia.mosaico("G").map { it.driveId })
+    }
+
+    @Test
+    fun elMosaicoSeAcomodaSegunCuantasTapasHay() {
+        assertEquals(emptyList<CeldaMosaico>(), DisposicionMosaico.celdas(0))
+        assertEquals(listOf(CeldaMosaico(0f, 0f, 1f, 1f)), DisposicionMosaico.celdas(1))
+        assertEquals(listOf(CeldaMosaico(0f, 0f, .5f, 1f), CeldaMosaico(.5f, 0f, 1f, 1f)), DisposicionMosaico.celdas(2))
+        val tres = DisposicionMosaico.celdas(3)
+        assertEquals(CeldaMosaico(0f, 0f, .5f, 1f), tres[0]) // una grande a la izquierda
+        assertEquals(CeldaMosaico(.5f, 0f, 1f, .5f), tres[1]) // dos apiladas a la derecha
+        assertEquals(CeldaMosaico(.5f, .5f, 1f, 1f), tres[2])
+        assertEquals(4, DisposicionMosaico.celdas(4).size)
+        assertEquals(DisposicionMosaico.celdas(4), DisposicionMosaico.celdas(9).also { assertEquals(4, it.size) })
     }
 
     @Test
