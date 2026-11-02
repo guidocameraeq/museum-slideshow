@@ -1,0 +1,121 @@
+package local.museumslideshow.ajustes
+
+import local.museumslideshow.temas.CatalogoColores
+import local.museumslideshow.temas.CatalogoMarcos
+import java.text.Normalizer
+
+/**
+ * Para probar en la tele por adb: `am start ... --es tema sala-oscura --es tam maximo`.
+ * Claves: tema, modo, pared-claro, pared-oscuro, marco, tam, completa-con-marco, expl, sala, calidad,
+ * tiempo, orden, galeria, pared, cartel, transicion, duracion. Un valor inválido se ignora.
+ */
+object PreferenciasDesdeTexto {
+    private val MARCOS get() = CatalogoMarcos.ids
+    private val PAREDES_CLARAS get() = CatalogoColores.claros.map { it.id }.toSet()
+    private val PAREDES_OSCURAS get() = CatalogoColores.oscuros.map { it.id }.toSet()
+
+    fun normalizar(s: String): String =
+        Normalizer.normalize(s.trim(), Normalizer.Form.NFD)
+            .replace(Regex("\\p{M}+"), "")
+            .lowercase()
+            .replace('_', '-')
+            .replace(Regex("\\s+"), "-")
+
+    fun aplicar(base: Preferencias, valores: Map<String, String>): Preferencias {
+        var p = base
+        for ((clave, crudo) in valores) {
+            val v = normalizar(crudo)
+            p = when (normalizar(clave)) {
+                "tema" -> Tema.deId(v)?.let { p.copy(tema = it) } ?: p
+                "modo" -> when (v) {
+                    "claro" -> p.copy(modo = Modo.CLARO)
+                    "oscuro" -> p.copy(modo = Modo.OSCURO)
+                    "automatico" -> p.copy(modo = Modo.AUTOMATICO)
+                    else -> p
+                }
+                "pared-claro" -> when {
+                    v == "tema" -> p.copy(colorParedClaro = null)
+                    v in PAREDES_CLARAS -> p.copy(colorParedClaro = v)
+                    else -> p
+                }
+                "pared-oscuro" -> when {
+                    v == "tema" -> p.copy(colorParedOscuro = null)
+                    v in PAREDES_OSCURAS -> p.copy(colorParedOscuro = v)
+                    else -> p
+                }
+                "marco" -> when {
+                    v == "tema" -> p.copy(marco = MarcoElegido.DEL_TEMA)
+                    v == "azar" -> p.copy(marco = MarcoElegido.AL_AZAR)
+                    v == "galeria" -> p.copy(marco = MarcoElegido.DE_LA_GALERIA)
+                    v in MARCOS -> p.copy(marco = MarcoElegido.FIJO(v))
+                    else -> p
+                }
+                "tam" -> when (v) {
+                    "normal" -> p.copy(tamano = Tamano.NORMAL)
+                    "grande" -> p.copy(tamano = Tamano.GRANDE)
+                    "maximo" -> p.copy(tamano = Tamano.MAXIMO)
+                    "completa" -> p.copy(tamano = Tamano.PANTALLA_COMPLETA)
+                    else -> p
+                }
+                "completa-con-marco" -> booleano(v)?.let { p.copy(pantallaCompletaConMarco = it) } ?: p
+                "expl" -> when (v) {
+                    "entra", "cuando-entra" -> p.copy(explicacionEnPantalla = ExplicacionEnPantalla.CUANDO_ENTRA)
+                    "nunca" -> p.copy(explicacionEnPantalla = ExplicacionEnPantalla.NUNCA)
+                    else -> p
+                }
+                "sala" -> when (v) {
+                    "siempre" -> p.copy(nombreSala = NombreSala.SIEMPRE)
+                    "segundos", "unos-segundos" -> p.copy(nombreSala = NombreSala.UNOS_SEGUNDOS)
+                    "contador", "solo-contador" -> p.copy(nombreSala = NombreSala.SOLO_CONTADOR)
+                    "nunca" -> p.copy(nombreSala = NombreSala.NUNCA)
+                    else -> p
+                }
+                "calidad" -> when (v) {
+                    "4k" -> p.copy(calidad = Calidad.K4)
+                    "1080" -> p.copy(calidad = Calidad.HD1080)
+                    else -> p
+                }
+                "tiempo" -> v.toIntOrNull()?.takeIf { it in Preferencias.TIEMPO_POR_OBRA_SEG }
+                    ?.let { p.copy(tiempoPorObraSeg = it) } ?: p
+                "orden" -> when (v) {
+                    "galeria" -> p.copy(orden = Orden.GALERIA)
+                    "mezclar" -> p.copy(orden = Orden.MEZCLAR)
+                    else -> p
+                }
+                // El id de la galería se respeta tal cual (puede tener mayúsculas); "todas" = ninguna en particular.
+                "galeria" -> when {
+                    crudo.isBlank() -> p
+                    v == "todas" -> p.copy(galeria = null)
+                    else -> p.copy(galeria = crudo.trim())
+                }
+                "pared" -> when (v) {
+                    "apagada" -> p.copy(pared = Pared.APAGADA)
+                    "2", "hasta-2" -> p.copy(pared = Pared.HASTA_2)
+                    "3", "hasta-3" -> p.copy(pared = Pared.HASTA_3)
+                    else -> p
+                }
+                "cartel" -> when (v) {
+                    "siempre" -> p.copy(cartelObra = CartelObra.SIEMPRE)
+                    "segundos", "unos-segundos" -> p.copy(cartelObra = CartelObra.UNOS_SEGUNDOS)
+                    "nunca" -> p.copy(cartelObra = CartelObra.NUNCA)
+                    else -> p
+                }
+                "transicion" -> when (v) {
+                    "fundido" -> p.copy(transicion = Transicion.FUNDIDO)
+                    "ninguna" -> p.copy(transicion = Transicion.NINGUNA)
+                    else -> p
+                }
+                "duracion" -> v.toIntOrNull()?.takeIf { it in Preferencias.DURACION_TRANSICION_MS }
+                    ?.let { p.copy(duracionTransicionMs = it) } ?: p
+                else -> p
+            }
+        }
+        return p
+    }
+
+    private fun booleano(v: String): Boolean? = when (v) {
+        "si", "true", "1", "yes" -> true
+        "no", "false", "0" -> false
+        else -> null
+    }
+}
