@@ -7,7 +7,8 @@
 
 Museum Slideshow es la galería de arte de la tele de Guido. Lee una carpeta de Google Drive llamada **"Galerías"**. Cada **subcarpeta** de esa carpeta es **una galería**: un pintor, una época, un tema. Adentro de cada subcarpeta van:
 
-- **Las imágenes de las obras**: JPG, PNG o WebP, de hasta 50 MB cada una. Conviene que el lado largo tenga 2000 px o más; la app las achica sola.
+- **Las imágenes de las obras**: JPG, PNG o WebP, de hasta 50 MB cada una. Conviene que el lado largo tenga 2000 px o más (ideal 4K); la app las achica sola. Se aceptan desde 1000 px para obras que no se consiguen más grandes: se ven, pero menos nítidas en la tele 4K.
+- **Nombres de archivo** sin espacios ni caracteres raros, estilo `autor-titulo-anio.jpg`.
 - **Un archivo `galeria.json`**, con los datos de la galería y de cada obra.
 
 ```
@@ -46,7 +47,10 @@ Reglas del archivo:
       "ubicacion": "Musée Marmottan Monet, París",
       "forma": "rectangular",
       "explicacion": "El puerto de Le Havre al amanecer, pintado en pocas horas.\n\nUn crítico usó el título de este cuadro para burlarse del grupo, y así nació la palabra «impresionismo».",
-      "credito": "Dominio público, vía Wikimedia Commons"
+      "credito": "Dominio público, vía Wikimedia Commons",
+      "licencia": "Dominio público",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Monet_-_Impression,_Sunrise.jpg",
+      "id": "Q123456"
     },
     {
       "archivo": "botticelli-madonna-granada.jpg",
@@ -84,9 +88,12 @@ Todos son texto entre comillas.
 | `medidas` | no | Por ejemplo, `"77 × 53 cm"`. |
 | `ubicacion` | no | Dónde está hoy: museo y ciudad. |
 | `forma` | no | `"rectangular"` (el valor por defecto), `"redonda"` u `"ovalada"`. Ponela **siempre** en las obras redondas u ovaladas (tondos, medallones): la app no las puede adivinar por los píxeles, y con este dato les pone un marco redondo. |
-| `explicacion` | no | El texto tipo cartel de museo: qué muestra la obra, por qué importa, qué mirar. Entre 80 y 150 palabras es lo ideal: así entra al lado de la obra en la mayoría de los casos (si no entra, la app la muestra aparte con el botón OK). Los párrafos se separan con `\n\n`. Texto plano, sin Markdown ni HTML. |
+| `explicacion` | no | El texto tipo cartel de museo: qué muestra la obra, por qué importa, qué mirar. Entre 80 y 150 palabras es el objetivo: así entra al lado de la obra en la mayoría de los casos (si no entra, la app la muestra aparte con el botón OK). Más corta también vale: la app la muestra igual. Los párrafos se separan con `\n\n`. Texto plano, sin Markdown ni HTML. |
 | `marco` | no | El marco que sugiere el agente para esta obra. La app lo usa solo si Guido elige "el que diga la galería". El catálogo de nombres se define cuando estén los marcos reales; un nombre desconocido se ignora. |
 | `credito` | no | De dónde sale la imagen o su licencia. Se muestra chico. |
+| `licencia` | no | La licencia de la imagen, por ejemplo `"Dominio público"`. Se guarda aparte de `credito` para poder revisarla. |
+| `fuente` | no | El link de donde salen la imagen y la ficha (Wikimedia, el museo…). Para auditar; la tele no lo muestra. |
+| `id` | no | Un identificador fijo de la obra (el QID de Wikidata, por ejemplo `"Q123456"`, u otro código estable). Si después se reemplaza la imagen por una mejor, con el mismo `id` la app sabe que es la misma obra y no pierde favoritos ni orden. No se repite dentro de una galería. |
 
 ## Qué hace la app si algo no está perfecto
 
@@ -103,7 +110,7 @@ Nada se rompe: la galería se muestra igual y cada problema queda anotado en la 
 
 ## Antes de entregar una galería (chequeo para el agente)
 1. `galeria.json` pasa un validador de JSON y pesa menos de 1 MB.
-2. Cada `archivo` coincide letra por letra con una imagen de la subcarpeta, y no hay dos obras con el mismo `archivo`.
+2. Cada `archivo` coincide letra por letra con una imagen de la subcarpeta, y no hay dos obras con el mismo `archivo` ni con el mismo `id`.
 3. Las obras redondas u ovaladas tienen su `forma`.
 4. `obras` está en el orden en que conviene verlas.
 5. Los textos están en el idioma que eligió Guido, sin Markdown.

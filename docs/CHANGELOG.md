@@ -2,6 +2,18 @@
 
 > Historia permanente. `/cierre` agrega una entrada AL TOPE en cada sesión. Orden descendente estricto, sin excepciones. Nada de versiones duplicadas en otros docs.
 
+## 2026-11-02 (16:20) — Sesión 1: sincronizador + lector, y la clave de Drive
+
+### Added
+- `catalogo/` (lector de galerías) y `sync/` (sincronizador de Drive, copia 4K por franjas, copia chica, tope de espacio, Worker cada 6 h). Pantalla provisoria con el resumen de galerías, obras y problemas. 31 tests.
+- `Registro.limpiar()`: borra cualquier `key=` de lo que se loguea.
+- Dependencia `kotlinx-serialization-json` 1.7.3 (JSON estricto: el de Android acepta JSON rotos).
+- Clave de Drive en la cuenta guido.camera12 y carpeta "Galerías-prueba" del curador. Probado en la TV: 3 galerías, 9 obras, 2 problemas esperados.
+
+### Changed
+- `docs/formato-galeria.md`: campos opcionales `licencia`, `fuente` e `id`; imágenes desde 1000 px; explicación corta aceptada (acordado con el agente curador).
+- SPEC-0, supuesto de la clave sin login: verificado.
+
 ## 2026-11-02 (tarde) — SPEC-0 re-sellado y sesión 0
 
 ### Added

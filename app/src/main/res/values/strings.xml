@@ -2,4 +2,20 @@
 <resources>
     <string name="app_name">Museum Slideshow</string>
     <string name="estado_sin_obras">Todavía no hay obras. Falta sincronizar con Drive.</string>
+    <string name="estado_sincronizando">Sincronizando…</string>
+    <string name="estado_resumen">%1$s · %2$s</string>
+    <string name="estado_galeria_linea">%1$s — %2$s</string>
+
+    <plurals name="cantidad_galerias">
+        <item quantity="one">%d galería</item>
+        <item quantity="other">%d galerías</item>
+    </plurals>
+    <plurals name="cantidad_obras">
+        <item quantity="one">%d obra</item>
+        <item quantity="other">%d obras</item>
+    </plurals>
+    <plurals name="cantidad_problemas">
+        <item quantity="one">%d problema</item>
+        <item quantity="other">%d problemas</item>
+    </plurals>
 </resources>

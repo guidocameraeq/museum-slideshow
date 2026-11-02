@@ -1,0 +1,9 @@
+{
+  "formato": 1,
+  "titulo": "Prueba rota (JSON inválido)",
+  // comentario no permitido
+  "obras": [
+    { "archivo": "monet-impresion-sol-naciente.jpg", "titulo": "Impresión, sol naciente", },
+    { "archivo": "vermeer-joven-perla.jpg", "titulo": "La joven de la perla" },
+  ]
+}

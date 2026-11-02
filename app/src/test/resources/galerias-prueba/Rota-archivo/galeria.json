@@ -1,0 +1,27 @@
+{
+  "formato": 1,
+  "titulo": "Prueba rota (archivo faltante)",
+  "descripcion": "Una obra apunta a una imagen que no existe; otra imagen no figura en la lista.",
+  "obras": [
+    {
+      "archivo": "monet-impresion-sol-naciente.jpg",
+      "titulo": "Impresión, sol naciente",
+      "autor": "Claude Monet",
+      "anio": "1872",
+      "movimiento": "Impresionismo",
+      "ubicacion": "Museo Marmottan Monet, París",
+      "forma": "rectangular",
+      "explicacion": "Impresión, sol naciente, pintado por Monet en 1872, representa el puerto de Le Havre, en Francia, con muy pocos toques de pincel. La obra dio su nombre al movimiento impresionista, que buscaba captar la luz y el instante efímero en lugar de la representación detallada.\n\nSe caracteriza por pinceladas rápidas, colores puros y pintura al aire libre, y con ello rompió con el arte académico tradicional. Los pintores impresionistas ya no se limitaban a trabajar en sus talleres: salían al exterior para captar escenas y cambios de luz. Hoy se conserva en el Museo Marmottan Monet de París.",
+      "licencia": "Dominio público",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Monet_-_Impression,_Sunrise.jpg",
+      "id": "File:Monet - Impression, Sunrise.jpg",
+      "credito": "Dominio público, vía Wikimedia Commons"
+    },
+    {
+      "archivo": "no-existe-esta-imagen.jpg",
+      "titulo": "Obra fantasma",
+      "autor": "Nadie",
+      "anio": "1900"
+    }
+  ]
+}
