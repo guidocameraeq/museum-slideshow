@@ -6,6 +6,14 @@
     <string name="estado_resumen">%1$s · %2$s</string>
     <string name="estado_galeria_linea">%1$s — %2$s</string>
 
+    <!-- Galería en pantalla -->
+    <string name="aviso_ok">Mantener OK: leer sobre la obra</string>
+    <string name="formato_autor_vida">%1$s (%2$s)</string>
+    <string name="formato_autor_anio">%1$s, %2$s</string>
+    <string name="formato_tecnica_medidas">%1$s · %2$s</string>
+    <string name="formato_contador">%1$d / %2$d</string>
+    <string name="formato_sala_contador">%1$s · %2$s</string>
+
     <plurals name="cantidad_galerias">
         <item quantity="one">%d galería</item>
         <item quantity="other">%d galerías</item>
