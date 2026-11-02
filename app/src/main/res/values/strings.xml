@@ -59,9 +59,7 @@
     <string name="vacio_carpeta_vacia_texto">Agregá imágenes en una subcarpeta de la carpeta de Drive y la app las baja sola.</string>
     <string name="vacio_ver_estado">Ver Estado</string>
 
-    <!-- Pantalla de Ajustes -->
-    <string name="ajustes_titulo">Ajustes</string>
-    <string name="ajustes_pie">↑ ↓ moverse · ← → cambiar el valor · OK avanza al siguiente valor · Atrás vuelve</string>
+    <!-- Ajustes (nombres y valores) -->
     <string name="aj_tema">Tema</string>
     <string name="aj_modo">Modo</string>
     <string name="aj_hora_dia">Empieza el día</string>
@@ -206,4 +204,59 @@
     <string name="problema_sin_clave">Falta la clave de acceso a Drive en esta versión de la app.</string>
     <string name="detalle_sin_conexion">sin conexión</string>
     <string name="detalle_error_http">error %1$s</string>
+
+    <!-- Inicio -->
+    <string name="inicio_sobre">GALERÍA DE ARTE</string>
+    <string name="inicio_titulo">Museum\nSlideshow</string>
+    <string name="inicio_ver">Ver la galería</string>
+    <string name="inicio_ver_sub">%1$s · %2$s</string>
+    <string name="inicio_todas_galerias">Todas las galerías</string>
+    <string name="inicio_sin_obras">Todavía no hay obras</string>
+    <string name="inicio_obras_listas">Obras listas: %1$d</string>
+    <string name="inicio_sync">Sincronizado: %1$s</string>
+    <string name="inicio_sync_nunca">Todavía sin sincronizar</string>
+    <string name="menu_galerias">Galerías</string>
+    <string name="menu_apariencia">Apariencia</string>
+    <string name="menu_pase">Pase</string>
+    <string name="menu_conexion">Conexión y espacio</string>
+    <string name="menu_protector">Protector</string>
+    <string name="menu_estado">Estado</string>
+
+    <!-- Barra de ayuda de teclas -->
+    <string name="tecla_flechas">▲ ▼ ◄ ►</string>
+    <string name="tecla_arriba_abajo">▲ ▼</string>
+    <string name="tecla_izq_der">◄ ►</string>
+    <string name="tecla_ok">OK</string>
+    <string name="tecla_atras">Atrás</string>
+    <string name="ayuda_moverse">Moverse</string>
+    <string name="ayuda_recorrer">Recorrer</string>
+    <string name="ayuda_cambiar">Cambiar el valor</string>
+    <string name="ayuda_elegir">Elegir</string>
+    <string name="ayuda_sincronizar">Sincronizar</string>
+    <string name="ayuda_volver">Volver</string>
+    <string name="ayuda_salir_app">Salir de la app</string>
+
+    <!-- Pantallas de ajustes agrupados -->
+    <string name="pie_apariencia">Arriba y Abajo recorren · Izquierda y Derecha cambian el valor</string>
+    <string name="pie_pase">Cómo pasan las obras · Izquierda y Derecha cambian el valor</string>
+    <string name="pie_conexion">Cómo y cuánto baja la tele de tu carpeta de Drive</string>
+    <string name="pie_protector">Lo que el sistema dice del protector de pantalla</string>
+    <string name="pie_galerias">Elegir qué galerías se muestran</string>
+    <string name="galerias_proximamente">Acá vas a elegir qué galerías se muestran. Llega en la próxima versión.</string>
+    <string name="conexion_ultima_vez">Última vez: %1$s</string>
+    <string name="conexion_nunca">Todavía no se sincronizó</string>
+    <string name="vista_previa">Vista previa</string>
+    <string name="vista_previa_texto">Tema %1$s · pared %2$s · obra %3$s.</string>
+    <string name="ayuda_tema">Cada tema es una forma distinta de mostrar la obra.</string>
+    <string name="ayuda_modo">Automático: claro de día, oscuro de noche.</string>
+    <string name="ayuda_hora_dia">A qué hora pasa de oscuro a claro.</string>
+    <string name="ayuda_hora_noche">A qué hora pasa de claro a oscuro.</string>
+    <string name="ayuda_pared_claro">El color de la pared en modo claro.</string>
+    <string name="ayuda_pared_oscuro">El color de la pared en modo oscuro.</string>
+    <string name="ayuda_marco">El del tema, uno fijo, al azar o el que diga la galería.</string>
+    <string name="ayuda_tamano">Grande es el equilibrio entre la obra y la información.</string>
+    <string name="ayuda_completa_con_marco">La obra entera, con su marco, al apretar OK.</string>
+    <string name="ayuda_explicacion">Si entra al lado de la obra, o nunca.</string>
+    <string name="ayuda_sala">Cuándo se ve el nombre de la sala.</string>
+    <string name="ayuda_cartel">Cuándo se ve el cartel de cada obra.</string>
 </resources>

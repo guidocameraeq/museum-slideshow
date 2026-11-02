@@ -37,9 +37,11 @@ fun PantallaSinObras(
     motivo: MotivoSinObras,
     activa: Boolean,
     alVerEstado: () -> Unit,
+    alVolver: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val verEstado by rememberUpdatedState(alVerEstado)
+    val volver by rememberUpdatedState(alVolver)
     val activaActual by rememberUpdatedState(activa)
     val pedirFoco = remember { FocusRequester() }
     LaunchedEffect(activa) { if (activa) try { pedirFoco.requestFocus() } catch (e: Exception) { /* todavía no está listo */ } }
@@ -70,8 +72,11 @@ fun PantallaSinObras(
                 .onPreviewKeyEvent { ev ->
                     val n = ev.nativeKeyEvent
                     if (!activaActual || esTeclaVolumen(n.keyCode)) return@onPreviewKeyEvent false
-                    if (teclaDe(n.keyCode) == Tecla.OK) {
-                        if (n.action == KeyEvent.ACTION_DOWN && n.repeatCount == 0) verEstado()
+                    val tecla = teclaDe(n.keyCode)
+                    if (tecla == Tecla.OK || tecla == Tecla.ATRAS) {
+                        if (n.action == KeyEvent.ACTION_DOWN && n.repeatCount == 0) {
+                            if (tecla == Tecla.OK) verEstado() else volver()
+                        }
                         true
                     } else false
                 },

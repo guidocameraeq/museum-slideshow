@@ -55,9 +55,9 @@ private const val PERMISO_PROTECTOR = "android.permission.WRITE_SECURE_SETTINGS"
 private const val AJUSTE_PROTECTOR = "screensaver_components"
 
 /** Lo que el sistema dice del protector: nada se escribe acá, solo se lee. */
-private class DatosProtector(val permisoOtorgado: Boolean, val activo: String?)
+internal class DatosProtector(val permisoOtorgado: Boolean, val activo: String?)
 
-private fun leerProtector(ctx: Context): DatosProtector {
+internal fun leerProtector(ctx: Context): DatosProtector {
     val permiso = try {
         ctx.checkSelfPermission(PERMISO_PROTECTOR) == PackageManager.PERMISSION_GRANTED
     } catch (e: Exception) {
@@ -77,7 +77,7 @@ private fun tamanoCarpeta(f: File): Long =
 private val ES_AR = Locale("es", "AR")
 
 /** "2 de noviembre, 18:43"; con el año solo si no es el actual. */
-private fun fechaHora(res: android.content.res.Resources, ms: Long): String {
+internal fun fechaHora(res: android.content.res.Resources, ms: Long): String {
     val d = Date(ms)
     val actual = Calendar.getInstance().get(Calendar.YEAR)
     val anio = Calendar.getInstance().also { it.time = d }.get(Calendar.YEAR)
@@ -95,7 +95,7 @@ private fun tamano(res: android.content.res.Resources, bytes: Long): String {
     else res.getString(R.string.formato_tamano_mb, Math.round(bytes / (1024.0 * 1024)).toInt())
 }
 
-private fun nombreProtector(ctx: Context, componente: String?): String {
+internal fun nombreProtector(ctx: Context, componente: String?): String {
     val res = ctx.resources
     return when {
         componente == null -> res.getString(R.string.est_protector_ninguno)

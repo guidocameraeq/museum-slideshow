@@ -181,3 +181,49 @@ class ListaAjustesTest {
         assertTrue(items.last() is ItemAbrirEstado)
     }
 }
+
+class GruposAjustesTest {
+    private val items = ListaAjustes.construir(listOf(GaleriaOpcion("ID1", "Impresionismo")))
+
+    @Test
+    fun estanTodosLosAjustesDeAntesEnAlgunGrupoSinRepetir() {
+        val repartidos = GrupoAjustes.values().flatMap { it.ids }
+        assertEquals("sin repetidos", repartidos.size, repartidos.toSet().size)
+        assertEquals(IdAjuste.values().toSet(), (repartidos + GrupoAjustes.APARTE).toSet())
+        assertTrue(GrupoAjustes.APARTE.none { it in repartidos })
+    }
+
+    @Test
+    fun cadaAjusteEstaEnElGrupoCorrecto() {
+        assertEquals(
+            listOf(
+                IdAjuste.TEMA, IdAjuste.MODO, IdAjuste.HORA_DIA, IdAjuste.HORA_NOCHE, IdAjuste.PARED_CLARO, IdAjuste.PARED_OSCURO,
+                IdAjuste.MARCO, IdAjuste.TAMANO, IdAjuste.COMPLETA_CON_MARCO, IdAjuste.EXPLICACION, IdAjuste.SALA, IdAjuste.CARTEL,
+            ),
+            items.delGrupo(GrupoAjustes.APARIENCIA).map { it.id },
+        )
+        assertEquals(
+            listOf(IdAjuste.TIEMPO, IdAjuste.ORDEN, IdAjuste.GALERIA, IdAjuste.PARED, IdAjuste.TRANSICION, IdAjuste.DURACION, IdAjuste.CALIDAD),
+            items.delGrupo(GrupoAjustes.PASE).map { it.id },
+        )
+        assertEquals(
+            listOf(IdAjuste.CARPETA, IdAjuste.SINCRONIZAR, IdAjuste.ESPACIO),
+            items.delGrupo(GrupoAjustes.CONEXION).map { it.id },
+        )
+    }
+
+    @Test
+    fun losItemsDeUnGrupoSonLosMismosDeLaListaCompleta() {
+        // No se duplica la lógica: el grupo reusa los mismos ItemAjuste de ListaAjustes.construir.
+        for (g in GrupoAjustes.values()) for (item in items.delGrupo(g)) {
+            assertTrue(item === items.first { it.id == item.id })
+        }
+    }
+
+    @Test
+    fun laCarpetaSigueSiendoSoloDeLectura() {
+        val carpeta = items.delGrupo(GrupoAjustes.CONEXION).first { it.id == IdAjuste.CARPETA } as ItemInfo
+        assertEquals(R.string.carpeta_ayuda, carpeta.ayuda)
+        assertFalse(carpeta.editable)
+    }
+}

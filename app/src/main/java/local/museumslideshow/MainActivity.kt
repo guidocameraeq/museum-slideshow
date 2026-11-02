@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -23,7 +25,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import local.museumslideshow.ajustes.AlmacenAjustes
 import local.museumslideshow.ajustes.GaleriaOpcion
+import local.museumslideshow.ajustes.GrupoAjustes
 import local.museumslideshow.ajustes.ListaAjustes
+import local.museumslideshow.ajustes.delGrupo
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.ajustes.PreferenciasDesdeTexto
 import local.museumslideshow.ajustes.SincronizarCada
@@ -32,16 +36,20 @@ import local.museumslideshow.catalogo.CatalogoCargado
 import local.museumslideshow.galeria.AccionesApp
 import local.museumslideshow.galeria.GaleriaEnPantalla
 import local.museumslideshow.galeria.SaltoEscena
-import local.museumslideshow.pantallas.PantallaAjustes
+import local.museumslideshow.pantallas.DatosSync
+import local.museumslideshow.pantallas.DestinoInicio
+import local.museumslideshow.pantallas.PantallaAjustesGrupo
+import local.museumslideshow.pantallas.PantallaApp
+import local.museumslideshow.pantallas.PantallaGalerias
+import local.museumslideshow.pantallas.PantallaInicio
+import local.museumslideshow.pantallas.PantallaProtector
+import local.museumslideshow.pantallas.ResumenInicio
 import local.museumslideshow.pantallas.PantallaEstado
 import local.museumslideshow.pantallas.PantallaSinObras
 import local.museumslideshow.pantallas.SinObras
 import local.museumslideshow.sync.ResultadoSync
 import local.museumslideshow.sync.Sincronizacion
 import local.museumslideshow.sync.SincronizarWorker
-
-/** Qué pantalla de la app está al frente. La Barra no cuenta: vive dentro de la galería. */
-private enum class Pantalla { GALERIA, AJUSTES, ESTADO }
 
 class MainActivity : ComponentActivity() {
     private var catalogo by mutableStateOf<CatalogoCargado?>(null)
@@ -51,8 +59,16 @@ class MainActivity : ComponentActivity() {
     /** null hasta que se leen los ajustes guardados (un instante al abrir). */
     private var preferencias by mutableStateOf<Preferencias?>(null)
     private var salto by mutableStateOf<SaltoEscena?>(null)
-    private var pantalla by mutableStateOf(Pantalla.GALERIA)
-    private var estadoDesdeAjustes by mutableStateOf(false)
+
+    /** La pantalla al frente (la Barra no cuenta: vive dentro de la galería). Al abrir la app es Inicio. */
+    private var pantalla by mutableStateOf(PantallaApp.INICIO)
+
+    /** A dónde vuelve Atrás desde las pantallas de ajustes, Protector, Galerías y Estado. */
+    private var atras by mutableStateOf(PantallaApp.INICIO)
+
+    /** La galería está armada (se entró con "Ver la galería"). Sale de Inicio => se libera. */
+    private var galeriaAbierta by mutableStateOf(false)
+    private var focoInicio by mutableIntStateOf(0)
 
     private val almacen by lazy { AlmacenAjustes.de(applicationContext) }
     private var cadaProgramada: SincronizarCada? = null
@@ -63,8 +79,20 @@ class MainActivity : ComponentActivity() {
     private val acciones = AccionesApp(
         cambiar = { t -> cambiarAjustes(t) },
         sincronizar = { sincronizarAhora() },
-        abrirAjustes = { pantalla = Pantalla.AJUSTES },
+        // El botón "Ajustes" de la Barra abre Apariencia (lo que se toca mirando la obra); Atrás vuelve a la galería.
+        abrirAjustes = { irA(PantallaApp.APARIENCIA, atrasA = PantallaApp.GALERIA) },
     )
+
+    /** Cambia de pantalla. La galería se arma al entrar y se suelta al volver a Inicio; los ajustes abiertos desde ella la dejan viva. */
+    private fun irA(destino: PantallaApp, atrasA: PantallaApp = PantallaApp.INICIO) {
+        when {
+            destino == PantallaApp.GALERIA -> galeriaAbierta = true
+            destino == PantallaApp.INICIO -> { galeriaAbierta = false; salto = null }
+            atrasA != PantallaApp.GALERIA -> galeriaAbierta = false
+        }
+        atras = atrasA
+        pantalla = destino
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,21 +125,27 @@ class MainActivity : ComponentActivity() {
     /**
      * Los extras del intent son cambios de ajustes (mismas claves que [PreferenciasDesdeTexto]) y se GUARDAN;
      * `reset` vuelve todo a los valores por defecto (también guardado). `escena` = índice (desde 0) donde arrancar.
+     * `pantalla` = inicio, galeria, galerias, apariencia, pase, conexion, protector o estado: abre esa pantalla directo.
+     * Sin ningún extra (abrir desde Google TV) abre Inicio.
      */
     private suspend fun aplicarIntent(i: Intent?) {
-        val extras = i?.extras ?: return
+        val extras = i?.extras
         val texto = HashMap<String, String>()
-        for (k in extras.keySet()) {
-            @Suppress("DEPRECATION")
-            extras.get(k)?.toString()?.let { texto[k] = it }
+        if (extras != null) {
+            for (k in extras.keySet()) {
+                @Suppress("DEPRECATION")
+                extras.get(k)?.toString()?.let { texto[k] = it }
+            }
         }
-        if (texto.isEmpty()) return
-        val reset = texto.containsKey("reset")
-        almacen.cambiar { actual -> PreferenciasDesdeTexto.aplicar(if (reset) Preferencias() else actual, texto) }
-        texto["escena"]?.toIntOrNull()?.let {
-            salto = SaltoEscena(it)
-            Log.i(Registro.TAG, "Salto a la escena $it")
+        if (texto.isNotEmpty()) {
+            val reset = texto.containsKey("reset")
+            almacen.cambiar { actual -> PreferenciasDesdeTexto.aplicar(if (reset) Preferencias() else actual, texto) }
+            texto["escena"]?.toIntOrNull()?.let {
+                salto = SaltoEscena(it)
+                Log.i(Registro.TAG, "Salto a la escena $it")
+            }
         }
+        PantallaApp.deIntent(texto)?.let { irA(it) }
     }
 
     /** Un ajuste cambió (o se leyeron al abrir): reprograma la sincronización o sincroniza si cambió la carpeta. */
@@ -186,48 +220,73 @@ class MainActivity : ComponentActivity() {
         }
         val cat = catalogo
         val hayObras = (cat?.galerias?.sumOf { it.obras.size } ?: 0) > 0
-        val items = remember(cat) { ListaAjustes.construir(cat?.galerias.orEmpty().map { GaleriaOpcion(it.driveId, it.titulo) }) }
-        val ajustesVisible = pantalla == Pantalla.AJUSTES || (pantalla == Pantalla.ESTADO && estadoDesdeAjustes)
+        val todos = remember(cat) { ListaAjustes.construir(cat?.galerias.orEmpty().map { GaleriaOpcion(it.driveId, it.titulo) }) }
+        val volver = { irA(atras) }
         Box(Modifier.fillMaxSize()) {
-            if (cat != null && hayObras) {
-                GaleriaEnPantalla(
-                    cat, p,
-                    alSalir = { finish() },
-                    salto = salto,
-                    app = acciones,
-                    sincronizando = sincronizando,
-                    mensajeSync = mensajeSync,
-                    teclasActivas = pantalla == Pantalla.GALERIA,
-                )
-            } else {
-                PantallaSinObras(
-                    SinObras.motivo(sincronizando, cat),
-                    activa = pantalla == Pantalla.GALERIA,
-                    alVerEstado = { abrirEstado(desdeAjustes = false) },
-                )
+            if (galeriaAbierta) {
+                if (cat != null && hayObras) {
+                    GaleriaEnPantalla(
+                        cat, p,
+                        alSalir = { irA(PantallaApp.INICIO) },
+                        salto = salto,
+                        app = acciones,
+                        sincronizando = sincronizando,
+                        mensajeSync = mensajeSync,
+                        teclasActivas = pantalla == PantallaApp.GALERIA,
+                    )
+                } else {
+                    PantallaSinObras(
+                        SinObras.motivo(sincronizando, cat),
+                        activa = pantalla == PantallaApp.GALERIA,
+                        alVerEstado = { irA(PantallaApp.ESTADO, atrasA = PantallaApp.GALERIA) },
+                        alVolver = { irA(PantallaApp.INICIO) },
+                    )
+                }
             }
-            if (ajustesVisible) {
-                PantallaAjustes(
-                    items, p,
-                    activa = pantalla == Pantalla.AJUSTES,
-                    cambiar = { t -> cambiarAjustes(t) },
-                    alAbrirEstado = { abrirEstado(desdeAjustes = true) },
-                    alVolver = { pantalla = Pantalla.GALERIA },
-                )
-            }
-            if (pantalla == Pantalla.ESTADO) {
-                PantallaEstado(
-                    cat, p, sincronizando,
-                    alVolver = { pantalla = if (estadoDesdeAjustes) Pantalla.AJUSTES else Pantalla.GALERIA },
-                )
+            key(pantalla) {
+                when (pantalla) {
+                    PantallaApp.INICIO -> PantallaInicio(
+                        cat, p, focoInicio,
+                        alCambiarFoco = { focoInicio = it },
+                        alAbrir = { destino -> abrirDesdeInicio(destino) },
+                        alSalir = { finish() },
+                    )
+                    PantallaApp.GALERIA -> Unit
+                    PantallaApp.GALERIAS -> PantallaGalerias(activa = true, alVolver = volver)
+                    PantallaApp.APARIENCIA, PantallaApp.PASE, PantallaApp.CONEXION -> {
+                        val grupo = when (pantalla) {
+                            PantallaApp.APARIENCIA -> GrupoAjustes.APARIENCIA
+                            PantallaApp.PASE -> GrupoAjustes.PASE
+                            else -> GrupoAjustes.CONEXION
+                        }
+                        PantallaAjustesGrupo(
+                            grupo, todos.delGrupo(grupo), p,
+                            activa = true,
+                            cambiar = { t -> cambiarAjustes(t) },
+                            alVolver = volver,
+                            obraPrevia = ResumenInicio.de(cat, p).tapa,
+                            sync = if (grupo == GrupoAjustes.CONEXION) DatosSync(sincronizando, mensajeSync, cat?.ultimaSincronizacionBuena) else null,
+                            alSincronizar = { sincronizarAhora() },
+                        )
+                    }
+                    PantallaApp.PROTECTOR -> PantallaProtector(activa = true, alVolver = volver)
+                    PantallaApp.ESTADO -> PantallaEstado(cat, p, sincronizando, alVolver = volver)
+                }
             }
         }
     }
 
-    private fun abrirEstado(desdeAjustes: Boolean) {
-        estadoDesdeAjustes = desdeAjustes
-        pantalla = Pantalla.ESTADO
-    }
+    private fun abrirDesdeInicio(destino: DestinoInicio) = irA(
+        when (destino) {
+            DestinoInicio.VER_GALERIA -> PantallaApp.GALERIA
+            DestinoInicio.GALERIAS -> PantallaApp.GALERIAS
+            DestinoInicio.APARIENCIA -> PantallaApp.APARIENCIA
+            DestinoInicio.PASE -> PantallaApp.PASE
+            DestinoInicio.CONEXION -> PantallaApp.CONEXION
+            DestinoInicio.PROTECTOR -> PantallaApp.PROTECTOR
+            DestinoInicio.ESTADO -> PantallaApp.ESTADO
+        },
+    )
 
     private companion object {
         /** Cuánto queda en la Barra el resultado de la última sincronización. */

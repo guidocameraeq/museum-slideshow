@@ -154,7 +154,7 @@ object ListaAjustes {
         else -> null
     }
 
-    @StringRes private fun nombreColor(id: String): Int? = when (id) {
+    @StringRes fun nombreColor(id: String): Int? = when (id) {
         "blanco-galeria" -> R.string.color_blanco_galeria
         "gris-calido" -> R.string.color_gris_calido
         "piedra" -> R.string.color_piedra
@@ -263,3 +263,32 @@ object ListaAjustes {
     private fun coincide(g: GaleriaOpcion, eleccion: String?): Boolean =
         eleccion != null && (g.id == eleccion || g.titulo.equals(eleccion, ignoreCase = true))
 }
+
+/**
+ * Cómo se reparten los ajustes en las pantallas del menú. Cada uno vive en UN grupo; Protector y Estado son pantallas
+ * aparte (no tienen valor para cambiar acá). Las claves guardadas no cambian: esto es solo dónde se muestra cada fila.
+ */
+enum class GrupoAjustes(val ids: List<IdAjuste>) {
+    APARIENCIA(
+        listOf(
+            IdAjuste.TEMA, IdAjuste.MODO, IdAjuste.HORA_DIA, IdAjuste.HORA_NOCHE, IdAjuste.PARED_CLARO, IdAjuste.PARED_OSCURO,
+            IdAjuste.MARCO, IdAjuste.TAMANO, IdAjuste.COMPLETA_CON_MARCO, IdAjuste.EXPLICACION, IdAjuste.SALA, IdAjuste.CARTEL,
+        ),
+    ),
+    PASE(
+        listOf(
+            IdAjuste.TIEMPO, IdAjuste.ORDEN, IdAjuste.GALERIA, IdAjuste.PARED, IdAjuste.TRANSICION, IdAjuste.DURACION, IdAjuste.CALIDAD,
+        ),
+    ),
+    CONEXION(listOf(IdAjuste.CARPETA, IdAjuste.SINCRONIZAR, IdAjuste.ESPACIO)),
+    ;
+
+    companion object {
+        /** Los ajustes que no están en ningún grupo: tienen su propia pantalla. */
+        val APARTE: List<IdAjuste> = listOf(IdAjuste.PROTECTOR, IdAjuste.ESTADO)
+    }
+}
+
+/** Las filas de esta lista que son de ese grupo, en el orden del grupo. */
+fun List<ItemAjuste>.delGrupo(grupo: GrupoAjustes): List<ItemAjuste> =
+    grupo.ids.map { id -> first { it.id == id } }
