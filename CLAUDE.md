@@ -20,8 +20,8 @@ Repo hermano: `../volumen-maestro` (Volumen Maestro) es **la casa de la tele**: 
 |---|---|
 | TV | TCL "Smart TV Pro" (G09), Google TV, Android TV 12, 2 GB RAM, chip Amlogic T963D4. Las apps dibujan a 1920×1080; una superficie de 3840×2160 sale a 4K real (probado 02/11) |
 | IP / puerto ADB | `192.168.0.219:5555`, Wi-Fi "Yulius". Si no conecta, mirar que la PC esté en esa red (a veces queda en "Domotics3") |
-| adb | El primero que exista: `%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe` · `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Google.PlatformTools_Microsoft.Winget.Source_8wekyb3d8bbwe\platform-tools\adb.exe` · `%APPDATA%\SideQuest\platform-tools\adb.exe` (el único en la PC de `C:\Users\guido` al 02/11) |
-| JDK / SDK | Temurin 17 en `C:\Program Files\Eclipse Adoptium\jdk-17*` · SDK en `%LOCALAPPDATA%\Android\Sdk` (platform 34). **Faltan en la PC de `C:\Users\guido` (02/11)** |
+| adb | El primero que exista: `%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe` · `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Google.PlatformTools_Microsoft.Winget.Source_8wekyb3d8bbwe\platform-tools\adb.exe` · `%APPDATA%\SideQuest\platform-tools\adb.exe` |
+| JDK / SDK | Temurin 17 en `C:\Program Files\Eclipse Adoptium\jdk-17*` (no deja `JAVA_HOME` puesto: setearlo en cada comando) · SDK en `%LOCALAPPDATA%\Android\Sdk` (platform 34, build-tools 34.0.0). En el `sdkmanager.bat` el `;` de los paquetes se rompe: pasarlos con `--package_file=` |
 | Firma | `keystore.jks` en la raíz, **versionado a propósito** (repo privado; Guido no guarda nada en la PC). Se crea en la sesión 0 |
 
 Pasos: `adb connect 192.168.0.219:5555` → `adb devices` debe decir `device`. Si dice `unauthorized`, Guido acepta el cartel en la TV.

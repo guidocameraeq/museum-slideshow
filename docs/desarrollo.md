@@ -5,7 +5,7 @@ Lo mismo que Volumen Maestro (ver la tabla de conexión en `CLAUDE.md`): JDK 17 
 
 ## `local.properties` (no se versiona)
 ```
-sdk.dir=C\:\\Users\\Usuario\\AppData\\Local\\Android\\Sdk
+sdk.dir=C\:\\Users\\<usuario>\\AppData\\Local\\Android\\Sdk
 drive.apiKey=<la clave>
 drive.carpeta=<ID de la carpeta "Galerías">
 ```

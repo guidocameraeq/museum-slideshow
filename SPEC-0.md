@@ -1,11 +1,9 @@
 # SPEC-0: Museum Slideshow
 Galería de arte para la tele de Guido: una app navegable que también es el protector de pantalla, con las obras enmarcadas como cuadros y su ficha para aprender.
 - Estado: READY
-- Fecha: 2026-11-01
-- Sello del Arquitecto: `arquitecto: 2026-11-01 · kit 2.4.3 · chequeos: tamaño ✅ · entorno — (sin ficha del kit) · tope ✅ · hash b277ed91c561`
-- Enmiendas 2026-11-02 (sin re-sellar todavía):
-  - **La obra se muestra a 4K real**, probado en la TV ese día. Ver "Pantalla 4K" en la pieza 5, el ajuste "Calidad de la obra" y el supuesto verificado.
-  - **Diseño visual aprobado por Guido** mirando los borradores en la tele. Los temas, modos, colores, marcos, tamaños, el acomodador inteligente y los botones salen de `docs/diseno/decisiones.md`. Cómo se ve: `docs/diseno/03-temas-v3.html`.
+- Fecha: 2026-11-02
+- Sello del Arquitecto: `arquitecto: 2026-11-02 · kit 2.4.3 · chequeos: tamaño ✅ · entorno — (sin ficha del kit) · tope ✅ · hash 41981de51d76`
+- Historia: sellado el 01/11; re-sellado el 02/11 con la obra a 4K real (probado en la TV) y el diseño visual aprobado por Guido (`docs/diseno/decisiones.md`; cómo se ve: `docs/diseno/03-temas-v3.html`).
 
 ## Por qué (el dolor)
 Guido arma colecciones de obras de arte (un pintor, una época) y las usa de protector en su TCL Google TV, que está siempre prendida. El Ambient de Google las muestra mal: recorta, achica, pone tres verticales juntas con bordes feos y nunca dice qué obra es, de quién ni de qué año. Cuando esto funcione, la tele es una galería de museo de la que se aprende: cada obra colgada como un cuadro de verdad, con su cartel y su explicación, y navegable con el control.
@@ -26,7 +24,7 @@ Kotlin + Jetpack Compose for TV + Gradle, igual que Volumen Maestro (repo herman
 
 ### Las piezas (cada una con una sola responsabilidad, sin conocer las tripas de las otras)
 1. **Sincronizador** (`sync/`): lista la carpeta pública de Drive (Drive API v3 con una clave de API, sin login), baja solo lo nuevo o cambiado (por `md5Checksum`/`modifiedTime`) y borra de la tele lo que se borró de Drive. Corre al abrir la app, a mano desde la Barra y, con la app cerrada, con WorkManager (Jetpack) según el ajuste "Sincronizar cada". Sin internet, se usa lo guardado.
-   - **Imágenes seguras**: solo archivos `image/*` de hasta 50 MB; se leen primero solo las medidas (`inJustDecodeBounds`) y, al sincronizar, se guarda una **copia lista para la pantalla** que entra en 3840×2160 (o en 1920×1080 si "Calidad de la obra" es 1080), armada por partes (`BitmapRegionDecoder` + `inSampleSize`) para no tener nunca la imagen original entera en memoria. La pantalla solo abre esa copia. Cada archivo se guarda en el almacenamiento interno con su **ID de Drive** como nombre (nunca con el nombre que trae, para que un `../` no escriba fuera de la carpeta). `galeria.json` con tope de 1 MB. Lo salteado va a Estado con su motivo.
+   - **Imágenes seguras**: solo archivos `image/*` de hasta 50 MB; se leen primero solo las medidas (`inJustDecodeBounds`) y, al sincronizar, se guarda una **copia lista para la pantalla** que entra en 3840×2160, en JPEG calidad 95, armada por partes (`BitmapRegionDecoder` + `inSampleSize`) para no tener nunca la imagen original entera en memoria. La pantalla solo abre esa copia; con "Calidad de la obra: 1080" la abre a la mitad (`inSampleSize` 2), así cambiar la calidad es instantáneo y no obliga a bajar nada de nuevo. Cada archivo se guarda en el almacenamiento interno con su **ID de Drive** como nombre (nunca con el nombre que trae, para que un `../` no escriba fuera de la carpeta). `galeria.json` con tope de 1 MB. Lo salteado va a Estado con su motivo.
    - **Espacio máximo**: al llegar al tope, deja de bajar y Estado lo avisa (no borra obras para hacer lugar).
    - **La clave no se filtra**: ninguna URL que lleve `key=` se escribe en el registro, en Estado ni en un mensaje de error; se registran solo el ID de la carpeta o archivo y el código HTTP.
 2. **Lector de galerías** (`catalogo/`): lee cada `galeria.json` (formato en `docs/formato-galeria.md`) y arma Galerías, Obras y Fichas. Un error en el JSON no tumba nada: la Obra va sin Ficha y el problema queda anotado para la pantalla de Estado. Los campos desconocidos se ignoran (así el formato puede crecer).
@@ -38,9 +36,13 @@ Kotlin + Jetpack Compose for TV + Gradle, igual que Volumen Maestro (repo herman
    - Se adapta a lo que trae cada Obra: los campos que faltan (por ejemplo, sin explicación) no dejan huecos.
    - Nombre de la sala ("Impresionismo · 3 / 24"): solo donde no tapa; si no hay lugar, queda un contador chico ("3 / 24") en un rincón libre.
 4. **Temas** (`temas/`): cada tema recibe "esta Obra (o Pared), con esta Ficha, en los lugares que decidió el Acomodador, con este Modo, Color de pared y Marco, en este momento de la transición" y la dibuja: fondo, marco, paspartú, cartel. Sin estado propio ni allocations por cuadro (mismo contrato que los temas de Volumen Maestro). Un tema nuevo = un archivo nuevo + una línea en el registro de temas. Cada tema declara si admite Pared. **Marcos y colores de pared** son catálogos aparte (un marco nuevo = sus imágenes + una línea en el registro de marcos), así cambiar un tema, un marco o un color no obliga a tocar lo demás.
+   - Los 4 temas (aprobados el 02/11): **Galería moderna** (marco negro fino con paspartú blanco) · **Sala oscura** (marco negro con filete dorado, cartel con ficha completa) · **Inmersivo** (la obra enorme sobre un fondo desenfocado de sí misma, **sin degradado** encima, cartel a los costados) · **Libro de arte** (obra a la izquierda, texto a la derecha; **no hace Paredes**; el Tamaño agranda la obra dentro de su mitad y Pantalla completa la muestra sola). El "marco del tema" de Inmersivo y de Libro de arte es "sin marco".
+   - Catálogo de marcos v1: negro fino, negro con filete dorado, madera con adornos, dorado, **dorado redondo** (Guido, 02/11), sin marco. Salvo "sin marco", cada uno es **una foto de un marco real libre de derechos** que se estira por partes (las esquinas quedan intactas); nunca líneas y degradados dibujados con código. Su nombre corto (por ejemplo `madera`) es el que acepta el campo `marco` de `galeria.json`. Las obras con `forma` redonda u ovalada siempre llevan el dorado redondo (estirado a su óvalo), elija lo que elija el ajuste Marco; mientras no esté su foto, van sin marco.
 5. **Galería en pantalla** (`galeria/`): pasa las Obras según orden y tiempo, maneja la transición y responde al control. **Es la misma pieza para la app y para el protector.**
-   - **Pantalla 4K**: en esta tele todo lo que dibuja una app sale a 1920×1080 (`ro.surface_flinger.max_graphics_*` = 1920×1080), pero el panel trabaja a 3840×2160. La obra se dibuja en una **superficie propia de 3840×2160** (`SurfaceView` con `holder.setFixedSize(3840, 2160)`), que la tele compone directo a 4K (composición `DEVICE`), igual que el visor del chip `com.droidlogic.imageplayer`. Pared, marco, paspartú y cartel van en la interfaz normal a 1080, con el hueco donde se ve la obra. En la Pared, cada obra va en su lugar dentro de la misma superficie 4K.
-   - Memoria: una obra a 4K ocupa ~33 MB (ARGB_8888); en el fundido hay dos. Nunca más de 2 obras 4K en memoria a la vez.
+   - **Pantalla 4K**: en esta tele todo lo que dibuja una app sale a 1920×1080 (`ro.surface_flinger.max_graphics_*` = 1920×1080), pero el panel trabaja a 3840×2160. La obra se dibuja en una **superficie propia de 3840×2160** (`SurfaceView` con `holder.setFixedSize(3840, 2160)`), que la tele compone directo a 4K (composición `DEVICE`), igual que el visor del chip `com.droidlogic.imageplayer`. Pared, marco, paspartú y cartel van en la interfaz normal a 1080, con el hueco donde se ve la obra. En la Pared, cada obra va en su lugar dentro de la misma superficie 4K. El fondo desenfocado de Inmersivo también va en esa superficie, estirado de una **copia chica ya desenfocada** que arma el Sincronizador junto con la copia para la pantalla (no se desenfoca en cada cuadro).
+   - **Una sola medida para las dos capas**: el Acomodador calcula el rectángulo de cada obra una vez, en unidades de 1080; la interfaz lo usa tal cual (dejando ese hueco transparente, con la superficie detrás) y la superficie 4K lo usa ×2, así obra y paspartú nunca se desfasan.
+   - **El fundido mueve las dos capas con el mismo avance**: obra, marco y cartel entran y salen juntos; nunca se ve marco nuevo con obra vieja.
+   - Memoria: una pantalla 4K de imagen ocupa ~33 MB (ARGB_8888). **Presupuesto fijo: como mucho 2 pantallas 4K de imágenes de obra a la vez (~66 MB)**, contando el fundido. Cada obra se abre al tamaño de su lugar, no más: las 2-3 obras de una Pared se reparten una pantalla. Más las copias chicas desenfocadas de Inmersivo.
 6. **Ajustes** (`ajustes/`): los de la tabla de abajo, guardados con DataStore. Toda decisión nueva que pueda ser opción se suma como ajuste con su valor por defecto (regla de Guido).
 7. **Interruptor del protector** (`protector/`): el `DreamService` que muestra la Galería en pantalla, y el botón "Usar como protector / Volver al anterior", que escribe `screensaver_components` (requiere `WRITE_SECURE_SETTINGS`, otorgado una vez por adb). **Una sola función** escribe ajustes del sistema, y la clave `screensaver_components` está fija en ella. Al activar, guarda el valor actual como "el anterior" **solo si no es el nuestro**; al volver, si no hay nada guardado, pone el Ambient de Google (`com.google.android.apps.tv.dreamx/.service.Backdrop`). La app **no trae cliente ADB** (a diferencia de Volumen Maestro): no ejecuta comandos de sistema.
 
@@ -52,8 +54,8 @@ Kotlin + Jetpack Compose for TV + Gradle, igual que Volumen Maestro (repo herman
 
 ### El control (en app y en protector, igual)
 - Izquierda / Derecha: obra anterior / siguiente (reinicia el tiempo de la obra).
-- OK: Pantalla completa sí/no (pasa del Tamaño elegido a Pantalla completa y vuelve). **En el protector, OK no lo cierra.**
-- Mantener OK apretado: Explicación sí/no. Si la explicación no entra al lado de la obra, abre la vista Explicación; OK o Atrás la cierra.
+- OK: Pantalla completa sí/no (pasa del Tamaño elegido a Pantalla completa y vuelve; si el Tamaño elegido ya es Pantalla completa, OK pasa a Grande y vuelve). En una Pared, la Pantalla completa muestra sola la obra elegida con Arriba/Abajo. **En el protector, OK no lo cierra.**
+- Mantener OK apretado: Explicación sí/no, aunque el ajuste "Explicación en pantalla" esté en Nunca (ese ajuste solo decide si aparece sola). Si la explicación no entra al lado de la obra, abre la vista Explicación; OK o Atrás la cierra.
 - Arriba / Abajo en una Pared: elegir cuál de las obras colgadas; Abajo fuera de una Pared: abre la Barra.
 - Play/Pausa (si el control lo trae): pausa o sigue el pase.
 - Atrás: cierra lo abierto; sin nada abierto, sale (en el protector, vuelve a la tele). Home sale siempre (es del sistema).
@@ -64,11 +66,13 @@ Kotlin + Jetpack Compose for TV + Gradle, igual que Volumen Maestro (repo herman
 |---|---|---|
 | Tema | Galería moderna / Sala oscura / Inmersivo / Libro de arte (+ los que se agreguen) | Galería moderna |
 | Modo | Claro / Oscuro / Automático (claro de día, oscuro de noche) | Automático |
-| Color de pared | Del tema / variantes del modo (claros: blanco galería, gris cálido, piedra; oscuros: carbón, negro, azul noche, bordó) | Del tema |
+| Horario del Automático | Hora en que empieza el día y hora en que empieza la noche | Día 7:00 · noche 19:00 |
+| Color de pared claro | Del tema / blanco galería / gris cálido / piedra | Del tema |
+| Color de pared oscuro | Del tema / carbón / negro / azul noche / bordó | Del tema |
 | Marco | Del tema / uno fijo del catálogo / al azar por obra (cada obra conserva el suyo) / el que diga la galería | Del tema |
 | Tamaño de la obra | Normal / Grande / Máximo / Pantalla completa | Grande |
 | Pantalla completa con marco | Sí / No | No |
-| Explicación en pantalla | Cuando entra / Nunca (también con "mantener OK") | Cuando entra |
+| Explicación en pantalla | Cuando entra / Nunca ("mantener OK" la muestra igual) | Cuando entra |
 | Nombre de la sala | Siempre que entre / Unos segundos / Solo el contador / Nunca | Siempre que entre |
 | Calidad de la obra | 4K / 1080 (por si hace falta aliviar la tele) | 4K |
 | Tiempo por obra | 10 s a 10 min | 60 s |
@@ -124,7 +128,9 @@ Kotlin + Jetpack Compose for TV + Gradle, igual que Volumen Maestro (repo herman
 - SI la galería trae una imagen de 15.000×15.000 px, ENTONCES la app NO DEBE cerrarse y la obra DEBE verse achicada (o figurar en Estado como salteada).
 - CUANDO se borra una obra de la carpeta de Drive, DEBE desaparecer de la tele en la siguiente sincronización.
 - SI se llega al espacio máximo, ENTONCES la app DEBE dejar de bajar y Estado DEBE decirlo.
-- CUANDO "Calidad de la obra" es 4K, `dumpsys SurfaceFlinger` DEBE mostrar la capa de la obra con `sourceCrop` de 3840×2160 y composición `DEVICE`, y una grilla de rayas de 1 px mostrada por la app DEBE verse con rayas de cerca (ojos de Guido; NO VERIFICADO hasta que lo confirme).
+- CUANDO "Calidad de la obra" es 4K, en la app **y en el protector**, `dumpsys SurfaceFlinger` DEBE mostrar la capa de la obra con `sourceCrop` de 3840×2160 y composición `DEVICE`, y la obra "grilla" de la galería de prueba (rayas de 1 px a 3840×2160) DEBE verse con rayas de cerca (ojos de Guido; NO VERIFICADO hasta que lo confirme).
+- CUANDO pasan obras con fundido a 4K (también en una Pared de 3), el registro DEBE mostrar 24 cuadros por segundo o más en promedio durante la transición.
+- CUANDO se aprieta Abajo, mantener OK y Arriba/Abajo en una Pared, DEBEN abrir la Barra, la Explicación y cambiar la obra elegida (captura de cada una).
 - Ninguna obra se recorta ni se deforma: en la captura, la proporción de la obra dibujada coincide con la del archivo (±1%), en los 4 temas, los 4 tamaños y la Pared.
 - En ningún tema ni tamaño el texto pisa la obra si hay lugar libre, y ningún texto sale cortado (captura). Una obra sin explicación muestra su ficha sin huecos.
 - CUANDO "Usar como protector" está en Sí y la tele queda quieta el tiempo configurado en Android, DEBE arrancar sola la galería (`dumpsys dreams` muestra el componente de Museum Slideshow) e Izquierda/Derecha y OK (Pantalla completa) DEBEN funcionar sin cerrarla.
@@ -132,18 +138,18 @@ Kotlin + Jetpack Compose for TV + Gradle, igual que Volumen Maestro (repo herman
 - CUANDO se cambia el Tiempo por obra, la obra siguiente DEBE durar el tiempo nuevo (medido en el registro), sin reinstalar.
 - CUANDO se cambia el Tema, la Galería o la Pared, la pantalla DEBE cambiar en ese momento (captura antes y después), y el cambio DEBE seguir después de reiniciar la tele.
 - Con la galería en pantalla (app o protector), los botones de volumen DEBEN seguir manejando el equipo de audio: el cartel de Volumen Maestro aparece (captura) y el volumen cambia (`service call media.audio_flinger 9`).
-- Después de 2 horas pasando obras cada 10 s, la memoria del proceso (`dumpsys meminfo`, PSS total) DEBE crecer menos de 15 MB entre la hora 1 y la hora 2.
+- Después de 2 horas pasando obras cada 10 s a 4K, con Paredes de 3 y fundido, la memoria del proceso (`dumpsys meminfo`, PSS total y la línea Graphics) DEBE crecer menos de 15 MB entre la hora 1 y la hora 2, y el registro NO DEBE mostrar cierres de la app ni que Android la mató por falta de memoria.
 - Ningún renglón del registro (`logcat -d -s MuseumSlideshow`) DEBE contener `key=`.
 
 ## Ejecución
 Tamaño: módulo solo
-- Sesiones: varias seguidas, en este orden: (0) armar el proyecto Gradle copiando de `../volumen-maestro` **solo** el andamiaje (wrapper, versiones, `build.gradle.kts` sin su código: ni `AdbClient.java` ni `engine/Shell.kt`), crear una firma propia nueva y verificar la lectura de Drive con la clave; (1) sincronizador + lector; (2) acomodador + temas + galería en pantalla; (3) ajustes, barra y estado; (4) protector e interruptor; (5) prueba de las 2 horas y los criterios en la TV.
-- Para abrir: `inicio — ejecutá el SPEC-0 (SPEC-0.md, está READY)` en un chat nuevo en `C:\Users\Usuario\Desktop\Proyectos\museum-slideshow`.
+- Sesiones: varias seguidas, en este orden: (0) armar el proyecto Gradle copiando de `../volumen-maestro` **solo** el andamiaje (wrapper, versiones, `build.gradle.kts` sin su código: ni `AdbClient.java` ni `engine/Shell.kt`), crear una firma propia nueva y verificar la lectura de Drive con la clave; (1) sincronizador + lector; (2) acomodador + temas + marcos + galería en pantalla; (3) ajustes, barra y estado; (4) protector e interruptor; (5) prueba de las 2 horas y los criterios en la TV.
+- Para abrir: `inicio — ejecutá el SPEC-0 (SPEC-0.md, está READY)` en un chat nuevo en la carpeta del proyecto (en esta PC, `C:\Users\guido\Desktop\(1) Claude\museum-slideshow`).
 - Cómo se prueba: ver "Entorno de prueba".
 
 ## Entorno de prueba
 - Cómo se levanta: `.\gradlew.bat assembleRelease testDebugUnitTest` (JDK 17 en `JAVA_HOME`) y `/instalar` (compila, instala en la TV por adb y abre la app).
-- Datos semilla: carpeta de Drive "Galerías-prueba" pública de solo lectura, con 2 galerías: una con 6 obras (horizontales, verticales y una redonda) y su `galeria.json` válido, y otra con un JSON roto a propósito y una imagen faltante. La arma Guido con su agente siguiendo `docs/formato-galeria.md` (**necesita a Guido de día**). Cómo se resetea: **primero** "Volver al anterior" en la app (o `settings put secure screensaver_components com.google.android.apps.tv.dreamx/.service.Backdrop`), y recién ahí borrar los datos de la app (`pm clear local.museumslideshow`: es nuestra app, no un dato de Guido), volver a dar el permiso y sincronizar de nuevo.
+- Datos semilla: carpeta de Drive "Galerías-prueba" pública de solo lectura, con 2 galerías: una con 7 obras (horizontales, verticales, una redonda y la "grilla": rayas blancas y negras de 1 px a 3840×2160, que armo yo) y su `galeria.json` válido, y otra con un JSON roto a propósito y una imagen faltante. La arma Guido con su agente siguiendo `docs/formato-galeria.md` (**necesita a Guido de día**). Cómo se resetea: **primero** "Volver al anterior" en la app (o `settings put secure screensaver_components com.google.android.apps.tv.dreamx/.service.Backdrop`), y recién ahí borrar los datos de la app (`pm clear local.museumslideshow`: es nuestra app, no un dato de Guido), volver a dar el permiso y sincronizar de nuevo.
 - Chequeo base (verde antes de tocar código): `.\gradlew.bat assembleRelease testDebugUnitTest` en verde y `adb -s 192.168.0.219:5555 shell pidof local.volumenmaestro:motor` devuelve un número (la TV está conectada y Volumen Maestro anda).
 - Compartido: la única TV. El chequeo base es de solo lectura; el protector de Guido se restaura siempre al terminar cada prueba.
 - Herramientas, cada una con su chequeo:
@@ -157,6 +163,10 @@ Tamaño: módulo solo
 - [ALTO] [VERIFICADO 2026-11-02] La tele muestra a 4K real una imagen dibujada en una superficie de 3840×2160. Evidencia: TCL con chip Amlogic T963D4, panel en modo 3840×2160 a 60 Hz; el visor `com.droidlogic.imageplayer` usa un `SurfaceView` de 3840×2160 en composición `DEVICE` (`dumpsys SurfaceFlinger`); Guido vio de cerca las rayas de 1 px de una grilla y eligió a ciegas la mitad 4K de un Bruegel partido 1080 | 4K ("el derecho se ve mil veces mejor"). Falta repetirlo con la app propia (criterio de aceptación).
 - [ALTO] [SIN CONTRASTAR] Drive API v3 lista y baja archivos de una carpeta compartida "cualquiera con el link" usando solo una clave de API, sin login. (Si está mal, hace falta iniciar sesión con la cuenta de Google en la tele: cambia la pieza 1.) Se verifica en la sesión 0 con `curl`.
 - [ALTO] [SIN CONTRASTAR] Un `DreamService` con Compose e interactivo funciona en esta TCL y la tele lo arranca sola al quedar quieta. (El de colores de Android arrancó a mano el 01/11; Jellyfin trae uno; Aerial Views avisa que en TCL puede hacer falta el permiso "Inicio automático".) Si no arranca solo, se busca ese permiso en los ajustes de TCL.
+- [ALTO] [SIN CONTRASTAR] La superficie de 3840×2160 sale a 4K también dentro del protector (`DreamService`); lo probado el 02/11 fue el visor del chip. Se mira en la sesión 4 con `dumpsys SurfaceFlinger`; si no, el protector usa 1080 y Estado lo dice.
+- [MEDIO] [SIN CONTRASTAR] `screencap` captura la superficie 4K (podría salir negra, como con DRM). Se prueba en la sesión 2; si sale negra, la proporción y el texto se verifican con `dumpsys SurfaceFlinger` (rectángulo de la capa) más una captura de la interfaz, y lo visual queda a los ojos de Guido.
+- [MEDIO] [SIN CONTRASTAR] El fundido entre dos obras se dibuja fluido en la superficie de 3840×2160 (`lockHardwareCanvas`). Lo probado el 02/11 fue una imagen quieta. Se mide en la sesión 2 (cuadros por segundo en el registro); si se traba, las salidas ya son ajustes: "Transición: Ninguna" o "Calidad de la obra: 1080".
+- [BAJO] Si al llegar a la sesión 2 todavía no están las fotos de los marcos reales, se construye con "sin marco" y un negro fino provisorio, y el catálogo se completa cuando lleguen (es sumar imágenes y una línea por marco, sin tocar los temas).
 - [BAJO] El orden de la galería es el orden de las obras en el JSON; las imágenes que no figuran en el JSON van al final, por nombre de archivo.
 - [BAJO] Una obra es "vertical" para la Pared si su ancho/alto es menor a 0,8; la redonda se toma del campo `forma` del JSON (detectarla por los píxeles no es confiable).
 - [BAJO] La Pared se arma con verticales consecutivas en el orden actual; si no hay otra vertical a mano, la obra va sola.

@@ -2,6 +2,16 @@
 
 > Historia permanente. `/cierre` agrega una entrada AL TOPE en cada sesión. Orden descendente estricto, sin excepciones. Nada de versiones duplicadas en otros docs.
 
+## 2026-11-02 (tarde) — SPEC-0 re-sellado y sesión 0
+
+### Added
+- Proyecto Gradle (andamiaje de Volumen Maestro sin su cliente ADB), firma propia `keystore.jks`, pantalla mínima, ícono y banner provisorios. Instalada y probada en la TV.
+- En el SPEC-0: presupuesto de memoria, copia 4K siempre (1080 = a la mitad), una medida para las dos capas, ajustes "Horario del Automático" y color de pared claro/oscuro, marco dorado redondo, criterios de 4K en el protector, fluidez y botones.
+
+### Changed
+- `SPEC-0.md` re-sellado y READY con las enmiendas del 02/11 integradas (red team breve).
+- `CLAUDE.md`: la PC de `C:\Users\guido` ya tiene JDK 17 y Android SDK.
+
 ## 2026-11-02 — Diseño visual cerrado y 4K probado
 
 ### Added
