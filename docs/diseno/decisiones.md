@@ -46,3 +46,7 @@
 - **En el protector, los mismos botones**: OK **no** lo cierra. Atrás y Home sí.
 - **Todo modular y parametrizable**: cada tema, marco, color y nivel de información es una pieza aparte. El acomodador se adapta a lo que trae cada obra: sin explicación, el cartel se acomoda sin dejar huecos; con explicación, la usa si entra y si el ajuste lo permite.
 - Guido da el diseño por bueno para construir: lo fino se ajusta usándola.
+
+## Menú de inicio y Galerías (borrador 4, 02/11)
+- **Inicio A** (la obra de la galería actual de fondo con velo a la izquierda, nombre grande, tres datos chicos, botón principal "Ver la galería" y seis botones) → aprobado. El B (tarjetas) queda descartado.
+- **Galerías**: tarjetas con la **tapa** (primera obra de cada galería) y tilde; los grupos con mosaico de tapas, OK entra. La lista con tildes queda como **segunda vista** (ajuste Tarjetas / Lista, por defecto Tarjetas).
