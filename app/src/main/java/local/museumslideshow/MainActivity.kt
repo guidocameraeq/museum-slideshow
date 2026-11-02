@@ -348,7 +348,7 @@ class MainActivity : ComponentActivity() {
                         reserva = estadoReserva,
                     )
                     PantallaApp.GALERIA -> Unit
-                    PantallaApp.GALERIAS -> PantallaGalerias(activa = true, alVolver = volver)
+                    PantallaApp.GALERIAS -> PantallaGalerias(cat, p, cambiar = { t -> cambiarAjustes(t) }, activa = true, alVolver = volver)
                     PantallaApp.APARIENCIA, PantallaApp.PASE, PantallaApp.CONEXION -> {
                         val grupo = when (pantalla) {
                             PantallaApp.APARIENCIA -> GrupoAjustes.APARIENCIA

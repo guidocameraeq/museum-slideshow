@@ -34,11 +34,12 @@ object CodecPreferencias {
         const val GALERIAS_SELECCION = "galerias_seleccion"
         const val GALERIAS_NUEVAS = "galerias_nuevas"
         const val RESERVA = "reserva"
+        const val VISTA_GALERIAS = "vista_galerias"
 
         val TODAS = listOf(
             TEMA, MODO, HORA_DIA, HORA_NOCHE, PARED_CLARO, PARED_OSCURO, MARCO, TAMANO, COMPLETA_CON_MARCO, EXPLICACION,
             SALA, CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, TRANSICION, DURACION, SINCRONIZAR_CADA, ESPACIO_MAXIMO, CARPETA,
-            GALERIAS_SELECCION, GALERIAS_NUEVAS, RESERVA,
+            GALERIAS_SELECCION, GALERIAS_NUEVAS, RESERVA, VISTA_GALERIAS,
         )
     }
 
@@ -80,6 +81,7 @@ object CodecPreferencias {
         if (p.seleccionGalerias.isNotEmpty()) m[K.GALERIAS_SELECCION] = codificarSeleccion(p.seleccionGalerias)
         m[K.GALERIAS_NUEVAS] = p.galeriasNuevas.name
         m[K.RESERVA] = p.reservaObras.toString()
+        m[K.VISTA_GALERIAS] = p.vistaGalerias.name
         return m
     }
 
@@ -116,6 +118,7 @@ object CodecPreferencias {
             seleccionGalerias = decodificarSeleccion(m[K.GALERIAS_SELECCION]),
             galeriasNuevas = enum<GaleriasNuevas>(m[K.GALERIAS_NUEVAS]) ?: d.galeriasNuevas,
             reservaObras = m[K.RESERVA]?.toIntOrNull()?.takeIf { it in Preferencias.RESERVA_OBRAS } ?: d.reservaObras,
+            vistaGalerias = enum<VistaGalerias>(m[K.VISTA_GALERIAS]) ?: d.vistaGalerias,
         )
     }
 

@@ -288,11 +288,13 @@ enum class GrupoAjustes(val ids: List<IdAjuste>) {
         ),
     ),
     CONEXION(listOf(IdAjuste.CARPETA, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO)),
+    /** La pantalla Galerías lleva su propia fila "Galerías nuevas" al pie. */
+    GALERIAS(listOf(IdAjuste.GALERIAS_NUEVAS)),
     ;
 
     companion object {
-        /** Los ajustes que no están en ningún grupo: tienen su propia pantalla (Galerías nuevas vive en la pantalla Galerías). */
-        val APARTE: List<IdAjuste> = listOf(IdAjuste.GALERIAS_NUEVAS, IdAjuste.PROTECTOR, IdAjuste.ESTADO)
+        /** Los ajustes que no están en ningún grupo: tienen su propia pantalla. */
+        val APARTE: List<IdAjuste> = listOf(IdAjuste.PROTECTOR, IdAjuste.ESTADO)
     }
 }
 

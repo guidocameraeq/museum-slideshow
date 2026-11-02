@@ -43,6 +43,7 @@ class CodecPreferenciasTest {
         seleccionGalerias = mapOf("G-1" to false, "G_2" to true),
         galeriasNuevas = GaleriasNuevas.DESTILDADAS,
         reservaObras = 100,
+        vistaGalerias = VistaGalerias.LISTA,
     )
 
     @Test

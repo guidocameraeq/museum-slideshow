@@ -32,6 +32,9 @@ enum class Orden { GALERIA, MEZCLAR }
 /** Qué pasa con una galería que no figura en la selección (la que el curador sube después). */
 enum class GaleriasNuevas { TILDADAS, DESTILDADAS }
 
+/** Cómo se ven las galerías en la pantalla Galerías: tarjetas con tapa o lista con tildes. */
+enum class VistaGalerias { TARJETAS, LISTA }
+
 /** `maximo` = cuántas verticales cuelgan juntas como mucho (1 = de a una). */
 enum class Pared(val maximo: Int) { APAGADA(1), HASTA_2(2), HASTA_3(3) }
 enum class CartelObra { SIEMPRE, UNOS_SEGUNDOS, NUNCA }
@@ -77,6 +80,8 @@ data class Preferencias(
     val galeriasNuevas: GaleriasNuevas = GaleriasNuevas.TILDADAS,
     /** Cuántas obras próximas guarda la tele (20 / 50 / 100 / 200; por adb se acepta cualquier valor para probar). */
     val reservaObras: Int = 50,
+    /** Cómo se ve la pantalla Galerías (no cambia cómo se ve una escena). */
+    val vistaGalerias: VistaGalerias = VistaGalerias.TARJETAS,
 ) {
     companion object {
         val TIEMPO_POR_OBRA_SEG = 10..600
@@ -101,6 +106,7 @@ fun Preferencias.paraEscena(): Preferencias {
         seleccionGalerias = d.seleccionGalerias,
         galeriasNuevas = d.galeriasNuevas,
         reservaObras = d.reservaObras,
+        vistaGalerias = d.vistaGalerias,
     )
 }
 

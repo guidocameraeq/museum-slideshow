@@ -158,12 +158,14 @@ fun PantallaAjustesGrupo(
     GrupoAjustes.APARIENCIA -> R.string.menu_apariencia
     GrupoAjustes.PASE -> R.string.menu_pase
     GrupoAjustes.CONEXION -> R.string.menu_conexion
+    GrupoAjustes.GALERIAS -> R.string.menu_galerias
 }
 
 @StringRes private fun pie(g: GrupoAjustes): Int = when (g) {
     GrupoAjustes.APARIENCIA -> R.string.pie_apariencia
     GrupoAjustes.PASE -> R.string.pie_pase
     GrupoAjustes.CONEXION -> R.string.pie_conexion
+    GrupoAjustes.GALERIAS -> R.string.pie_galerias
 }
 
 /** El texto de ayuda que acompaña a cada ajuste de Apariencia en la vista previa. */

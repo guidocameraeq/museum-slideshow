@@ -132,6 +132,11 @@ object PreferenciasDesdeTexto {
                     "destildadas" -> p.copy(galeriasNuevas = GaleriasNuevas.DESTILDADAS)
                     else -> p
                 }
+                "vista", "vista-galerias" -> when (v) {
+                    "tarjetas" -> p.copy(vistaGalerias = VistaGalerias.TARJETAS)
+                    "lista" -> p.copy(vistaGalerias = VistaGalerias.LISTA)
+                    else -> p
+                }
                 // Solo para probar por adb (la pantalla de Ajustes ofrece 20 / 50 / 100 / 200).
                 "reserva" -> v.toIntOrNull()?.takeIf { it in Preferencias.RESERVA_OBRAS }?.let { p.copy(reservaObras = it) } ?: p
                 else -> p

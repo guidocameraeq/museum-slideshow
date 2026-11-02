@@ -88,7 +88,10 @@ data class ResumenInicio(
     val obrasListas: Int,
     /** De cuántas se compone la reserva (N, o menos si el pase tiene menos obras). */
     val obrasListasDe: Int,
-    /** La obra de fondo: la primera de la galería elegida (con su ficha), o la primera del catálogo tildado. */
+    /**
+     * La obra de fondo (con su ficha): la primera ya bajada de la galería elegida o, si no, de las tildadas, así se ve con su
+     * copia 4K. Si ninguna está bajada, la primera de la galería (y se usa su tapa chica).
+     */
     val tapa: Obra?,
     /** La galería de esa obra: su tapa guardada (`tapas/<id>.jpg`) es el fondo cuando la obra todavía no está bajada. */
     val tapaGaleriaId: String?,
@@ -101,6 +104,10 @@ data class ResumenInicio(
             val unaSola = elegidas.size == 1
             val deLaElegida = elegidas.firstOrNull { it.obras.isNotEmpty() }
             val gTapa = (if (unaSola) deLaElegida else null) ?: todas.firstOrNull { it.obras.isNotEmpty() }
+            // El fondo es una obra que ya está en la tele (su copia 4K); si ninguna lo está, la primera y se usa la tapa chica.
+            val fondoBajada = (listOfNotNull(gTapa) + elegidas + todas).firstNotNullOfOrNull { g ->
+                g.obras.firstOrNull { it.bajada }?.let { it to g }
+            }
             val total = todas.sumOf { it.obras.size }
             val delPase = elegidas.sumOf { it.obras.size }
             val conPedido = reserva?.conPedido == true
@@ -113,8 +120,8 @@ data class ResumenInicio(
                 obras = total,
                 obrasListas = listas,
                 obrasListasDe = de,
-                tapa = gTapa?.obras?.firstOrNull(),
-                tapaGaleriaId = gTapa?.driveId,
+                tapa = fondoBajada?.first ?: gTapa?.obras?.firstOrNull(),
+                tapaGaleriaId = fondoBajada?.second?.driveId ?: gTapa?.driveId,
                 ultimaSincronizacion = cat?.ultimaSincronizacionBuena,
             )
         }

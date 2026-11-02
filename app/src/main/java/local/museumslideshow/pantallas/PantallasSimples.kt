@@ -86,11 +86,3 @@ fun PantallaProtector(activa: Boolean, alVolver: () -> Unit, modifier: Modifier 
         )
     }
 }
-
-/** Galerías: elegir cuáles se muestran llega en la próxima parte del menú. Por ahora solo avisa. */
-@Composable
-fun PantallaGalerias(activa: Boolean, alVolver: () -> Unit, modifier: Modifier = Modifier) {
-    PantallaSimple(R.string.menu_galerias, R.string.pie_galerias, activa, alVolver, modifier) {
-        BasicText(stringResource(R.string.galerias_proximamente), style = estiloTexto(32, Paleta.Tenue, 400))
-    }
-}
