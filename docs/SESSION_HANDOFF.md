@@ -13,7 +13,7 @@
 - Imágenes de prueba en Drive "Galerías-prueba/Sana": `grilla-4k.png` (la sumó el curador) y `prueba-1080-vs-4k.jpg` (la puso Opus, fuera del JSON; avisarle al curador, su sesión no respondía).
 
 ## Estado
-- TV: versión de la sesión 2 instalada. Protector = `com.google.android.apps.tv.dreamx/.service.Backdrop` (sin tocar).
+- TV: versión de la sesión 3 instalada, con los ajustes de fábrica (`reset`). Protector = `com.google.android.apps.tv.dreamx/.service.Backdrop` (sin tocar).
 - Probar por adb: `am start -n local.museumslideshow/.MainActivity --es tema sala-oscura --es tam maximo --es galeria "'Prueba sana'" --ei escena 2` (`--es reset si` = defaults; claves en `ajustes/PreferenciasDesdeTexto.kt`). Registro: escenas con `interiores=` y `Transición: N cuadros…`.
 
 ## En curso
