@@ -8,8 +8,10 @@
 - (nada)
 
 ## 🟠 Importante
-- [ ] Probar en la TV lo de la sesión 3 que no se probó: Estado sin internet ("No se pudo conectar con Drive"), "Sincronizar cada: Solo a mano" (el trabajo desaparece de `dumpsys jobscheduler`), cambiar Tiempo por obra desde Ajustes (la obra siguiente dura lo nuevo), reinicio real de la tele (no solo force-stop).
-- [ ] Guido mira a ojo la Barra, Ajustes y Estado (no había diseño visual; se hizo un estilo sobrio).
+- [ ] Probar en la TV lo que falta: sin internet (el pase sigue con la reserva y Estado dice "No se pudo conectar con Drive"; criterio del SPEC de menú y reserva), "Sincronizar cada: Solo a mano" (desaparece de `dumpsys jobscheduler`), cambiar Tiempo por obra (la obra siguiente dura lo nuevo), reinicio real de la tele.
+- [ ] Guido mira a ojo la Barra, las pantallas de ajustes y Estado (Inicio y Galerías ya tienen diseño aprobado).
+- [ ] Avisarle al curador: `Sana/prueba-1080-vs-4k.jpg` (fuera del JSON) y `Grupo prueba/{Uno,Dos}` en "Galerías-prueba" los puso Opus para probar.
+- [ ] Reserva: la sincronización del Worker en segundo plano no dispara la reserva (se rearma al abrir la app o la galería); revisar en la sesión 4 que el protector la dispare.
 - [ ] Conseguir fotos de marcos reales libres de derechos (negro fino, negro con filete dorado, madera con adornos, dorado, **dorado redondo**) y fijar sus nombres cortos para el campo `marco` de `docs/formato-galeria.md`. El código ya está listo (`MarcoImagen`, `res/drawable-nodpi/marco_<id>.png`); cuidar que `shrinkResources` no los borre.
 - [ ] Sesión 4: protector (`DreamService`) e interruptor "Usar como protector / Volver al anterior". Reusar `GaleriaEnPantalla` y las dos superficies; verificar 4K y fundido también en el protector.
 - [ ] Sesión 5: prueba de 2 horas y todos los criterios del SPEC-0 en la TV.

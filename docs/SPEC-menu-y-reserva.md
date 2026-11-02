@@ -1,6 +1,6 @@
 # SPEC: Menú de inicio, elegir galerías y reserva de obras — Museum Slideshow
 La app abierta a mano es una app con menú; las galerías se eligen recorriendo las carpetas de Drive; la tele guarda solo una reserva de las próximas obras.
-- Estado: READY
+- Estado: COMPLETO 2026-11-02
 - Fecha: 2026-11-02
 - Sello del Arquitecto: `arquitecto: 2026-11-02 · kit 2.4.3 · chequeos: tamaño ✅ · entorno — (sin ficha del kit) · tope ✅ · hash 30d31a437577`
 

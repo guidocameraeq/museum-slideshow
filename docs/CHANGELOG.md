@@ -2,6 +2,19 @@
 
 > Historia permanente. `/cierre` agrega una entrada AL TOPE en cada sesión. Orden descendente estricto, sin excepciones. Nada de versiones duplicadas en otros docs.
 
+## 2026-11-02 (20:40) — Menú de inicio, elegir galerías y reserva de obras
+
+### Added
+- `docs/SPEC-menu-y-reserva.md` (SPEC delta, COMPLETO) y borrador `docs/diseno/04-menu-y-galerias.html`.
+- Pantalla Inicio (al abrir la app a mano) y ajustes agrupados: Apariencia (con vista previa), Pase, Conexión y espacio, Protector.
+- Pantalla Galerías: tarjetas con tapa y tilde, grupos con mosaico, vista Lista (ajuste), "Galerías nuevas".
+- Catálogo en árbol (grupos de carpetas), tapas de cada galería y medidas desde Drive.
+- Reserva de obras: la tele guarda las próximas N + 10 vistas y baja de a tandas (ajuste 20/50/100/200).
+
+### Changed
+- El sincronizador ya no baja todas las obras: baja el catálogo, los JSON y las tapas; las obras las baja la reserva.
+- Atrás en la galería vuelve a Inicio. 335 tests.
+
 ## 2026-11-02 (19:00) — Sesión 3: ajustes, Barra y Estado
 
 ### Added
