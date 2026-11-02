@@ -1,0 +1,21 @@
+# Gradle / Android
+.gradle/
+build/
+app/build/
+*.apk
+*.aab
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Clave de Drive y rutas de esta PC: nunca al repo
+local.properties
+
+# Capturas de la TV y otros archivos privados
+.local-privado/
+
+# Claude Code: ajustes personales de esta máquina
+.claude/settings.local.json
+.claude/launch.json

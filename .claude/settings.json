@@ -1,0 +1,40 @@
+{
+    "hooks":  {
+                  "SessionStart":  [
+                                       {
+                                           "matcher":  "",
+                                           "hooks":  [
+                                                         {
+                                                             "type":  "command",
+                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh\""
+                                                         }
+                                                     ]
+                                       }
+                                   ],
+                  "PostToolUse":  [
+                                      {
+                                          "matcher":  "Edit|Write",
+                                          "hooks":  [
+                                                        {
+                                                            "type":  "command",
+                                                            "command":  "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-code.js\""
+                                                        }
+                                                    ]
+                                      }
+                                  ]
+              },
+    "permissions":  {
+                        "allow":  [
+                                      "Bash(git status)",
+                                      "Bash(git status:*)",
+                                      "Bash(git log:*)",
+                                      "Bash(git diff:*)",
+                                      "Bash(git add:*)",
+                                      "Bash(git commit:*)",
+                                      "Bash(git push)",
+                                      "Bash(git push:*)",
+                                      "Bash(git pull:*)",
+                                      "Bash(bash -n:*)"
+                                  ]
+                    }
+}
