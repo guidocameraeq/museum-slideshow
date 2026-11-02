@@ -111,6 +111,25 @@
   .barra-res .pista { margin-top:20px; height:30px; border-radius:15px; background:#0a0a0b; overflow:hidden; display:flex; }
   .barra-res .rel { background:linear-gradient(90deg,#9a7c36,var(--dorado)); height:100%; }
   .barra-res .vis { background:#5d5a52; height:100%; }
+  .vsel { position:absolute; top:46px; display:flex; gap:10px; font:600 28px Inter; }
+  .vsel span { padding:8px 26px; border-radius:30px; background:rgba(255,255,255,.12); color:var(--tenue); }
+  .vsel span.on { border:3px solid var(--dorado); padding:5px 23px; color:var(--texto); }
+  .tj { position:absolute; width:390px; height:322px; border-radius:20px; background:var(--panel); overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+  .tj .im { position:absolute; left:0; top:0; right:0; height:236px; background-size:cover; background-position:center; }
+  .tj.off .im { filter:grayscale(1) brightness(.38); }
+  .tj .mos { position:absolute; left:0; top:0; right:0; height:236px; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:4px; background:#0E0E10; }
+  .tj .mos div { background-size:cover; background-position:center; }
+  .tj .tx { position:absolute; left:22px; right:22px; top:246px; }
+  .tj .tx b { display:block; font:600 32px/1.15 Inter; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tj .tx span { display:block; margin-top:4px; font:400 25px Inter; color:var(--tenue); }
+  .tj .tk { position:absolute; right:14px; top:14px; width:58px; height:58px; border-radius:50%; background:rgba(14,14,16,.7); display:flex; align-items:center; justify-content:center; }
+  .tj .tk .chk { margin:0; width:44px; height:44px; }
+  .tj .tag { position:absolute; left:14px; top:14px; display:flex; align-items:center; gap:10px; padding:6px 16px 6px 12px; border-radius:12px; background:rgba(14,14,16,.78); font:600 24px Inter; }
+  .tj .tag svg { width:30px; height:30px; stroke:var(--dorado); fill:none; stroke-width:2; stroke-linejoin:round; }
+  .tj.foco { outline:8px solid var(--foco); outline-offset:5px; transform:scale(1.045); z-index:5; box-shadow:0 0 0 16px rgba(244,241,234,.16), 0 26px 70px rgba(0,0,0,.7); }
+  .tj.foco .tx b { color:#fff; }
+  .btn-todas { position:absolute; height:68px; padding:0 34px; border-radius:16px; background:rgba(255,255,255,.14); font:600 30px Inter; display:flex; align-items:center; }
+  .btn-todas.foco { background:var(--foco); color:var(--focotx); box-shadow:0 0 0 6px rgba(244,241,234,.28); }
 </style>
 </head>
 <body>
@@ -237,7 +256,7 @@ function galerias(f) {
   const hojas = []; ARBOL.forEach(n => n.hijos ? hojas.push(...n.hijos) : hojas.push(n));
   const tild = hojas.filter(h=>h.on);
   const total = tild.reduce((a,h)=>a+h.obras,0);
-  let h = `<div class="abs t-h1" style="left:120px;top:40px">Galerías</div>`;
+  let h = `<div class="abs t-h1" style="left:120px;top:40px">Galerías</div>` + selector(false);
   h += `<div class="abs" style="right:120px;top:54px;font:600 34px Inter;color:var(--dorado)">${tild.length} galerías tildadas · ${total.toLocaleString('es-AR')} obras</div>`;
   const filas = filasArbol();
   filas.forEach((r,i) => {
@@ -253,6 +272,50 @@ function galerias(f) {
   h += `<div class="ayuda"><span><b>OK</b>Tilda</span><span><b>►</b>Abre el grupo</span><span><b>◄</b>Lo cierra</span><span><b>Atrás</b>Vuelve</span></div>`;
   return h;
 }
+
+/* ---------- 3b. Galerías como tarjetas (tapa = primera obra) ---------- */
+const TAPA = {Rafael:'venus', Botticelli:'caminante', Leonardo:'perla', Monet:'monet', Renoir:'perla', Pissarro:'caminante', Caravaggio:'perla', 'Mitología':'venus', Barroco:'gogh'};
+const SVG_CARPETA = '<svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+const hojasDe = n => n.hijos || [n];
+const estadoNodo = n => n.hijos ? estadoGrupo(n) : (n.on ? 'si' : 'no');
+function tarjeta(n, i, f, x, y) {
+  const st = estadoNodo(n), g = !!n.hijos;
+  let h = `<div class="tj ${st==='no'?'off':''} ${i===f?'foco':''}" style="left:${x}px;top:${y}px">`;
+  if (g) h += `<div class="mos">${n.hijos.slice(0,4).map(c=>`<div style="${bg(TAPA[c.nombre])}${c.on?'':';filter:grayscale(1) brightness(.4)'}"></div>`).join('')}</div><div class="tag">${SVG_CARPETA}Grupo · ${({si:'todas',medio:'algunas',no:'ninguna'})[st]}</div>`;
+  else h += `<div class="im" style="${bg(TAPA[n.nombre])}"></div>`;
+  if (st!=='no') h += `<div class="tk"><span class="chk ${st}"></span></div>`;
+  const sub = g ? `${n.hijos.length} galerías · ${obrasDe(n)} obras` : `${n.obras} obras`;
+  const est = g ? ({si:'Todas tildadas', medio:'Algunas tildadas', no:'Ninguna tildada'})[st] : '';
+  h += `<div class="tx"><b>${n.nombre}</b><span>${sub}</span></div></div>`;
+  return h;
+}
+function resumen() {
+  const hojas = []; ARBOL.forEach(n => hojas.push(...hojasDe(n)));
+  const t = hojas.filter(h=>h.on);
+  return `${t.length} galerías tildadas · ${t.reduce((a,h)=>a+h.obras,0).toLocaleString('es-AR')} obras`;
+}
+const selector = tarjetas => `<div class="vsel" style="left:440px"><span class="${tarjetas?'on':''}">Tarjetas</span><span class="${tarjetas?'':'on'}">Lista</span></div>`;
+const nuevasBar = `<div class="nuevas" style="bottom:112px;height:72px"><span>Galerías nuevas</span><span class="v">‹  Tildadas  ›</span></div>`;
+function galeriasTarjetas(f) {
+  let h = `<div class="abs t-h1" style="left:120px;top:40px">Galerías</div>` + selector(true);
+  h += `<div class="abs" style="right:120px;top:54px;font:600 34px Inter;color:var(--dorado)">${resumen()}</div>`;
+  ARBOL.forEach((n,i) => { h += tarjeta(n, i, f, 120 + (i%4)*430, 148 + Math.floor(i/4)*364); });
+  h += nuevasBar;
+  h += `<div class="ayuda"><span><b>OK</b>Tilda</span><span><b>OK</b>en un grupo: lo abre</span><span><b>▲ ▼ ◄ ►</b>Moverse</span><span><b>Atrás</b>Vuelve</span></div>`;
+  return h;
+}
+function galeriasGrupo(f) {
+  const g = ARBOL.find(n => n.id === GRUPO_ACTUAL);
+  const todas = g.hijos.every(c=>c.on);
+  let h = `<div class="abs t-h1" style="left:120px;top:40px"><span class="tenue" style="font-weight:500">Galerías  ›  </span>${g.nombre}</div>`;
+  h += `<div class="abs" style="right:120px;top:54px;font:600 34px Inter;color:var(--dorado)">${g.hijos.filter(c=>c.on).length} de ${g.hijos.length} galerías tildadas · ${g.hijos.filter(c=>c.on).reduce((a,c)=>a+c.obras,0)} obras</div>`;
+  h += `<div class="btn-todas ${f===0?'foco':''}" style="left:120px;top:140px">${todas?'Destildar todas':'Tildar todas'}</div>`;
+  g.hijos.forEach((c,i) => { h += tarjeta(c, i+1, f, 120 + i*430, 262); });
+  h += nuevasBar;
+  h += `<div class="ayuda"><span><b>OK</b>Tilda</span><span><b>▲ ▼ ◄ ►</b>Moverse</span><span><b>Atrás</b>Vuelve a Galerías</span></div>`;
+  return h;
+}
+let GRUPO_ACTUAL = 'imp';
 
 /* ---------- 4. Apariencia: ajustes agrupados ---------- */
 const APA = [
@@ -315,7 +378,11 @@ const PANT = {
     nota:'Propuesta A: la obra de la galería actual de fondo, nombre grande a la izquierda y el botón principal «Ver la galería» destacado en dorado. Los datos útiles quedan chicos arriba del botón.'},
   'inicio-b':  {t:'Inicio — B (tarjetas)', fn:inicioB, n:7, nom:MENU.map(m=>m[1]),
     nota:'Propuesta B, estilo Google TV: tarjetas grandes con imagen para lo más usado y fichas más chicas para lo técnico. La obra de fondo va desenfocada.'},
-  'galerias':  {t:'Galerías', fn:galerias, n:11, nom:null,
+  'galerias':  {t:'Galerías (tarjetas)', fn:galeriasTarjetas, n:ARBOL.length, nom:ARBOL.map(n=>n.nombre),
+    nota:'Galerías como tarjetas: la imagen es la primera obra de cada galería. Los grupos muestran un mosaico de 2×2 tapas. OK tilda; OK en un grupo lo abre. Destildadas: imagen apagada y sin tilde.'},
+  'galerias-grupo':  {t:'Dentro de un grupo', fn:galeriasGrupo, n:4, nom:['Tildar todas','Monet','Renoir','Pissarro'],
+    nota:'Adentro de «Impresionismo»: migas arriba, botón para tildar o destildar todo el grupo y las tarjetas de sus galerías. Atrás (Esc) vuelve.'},
+  'galerias-lista':  {t:'Galerías (lista)', fn:galerias, n:11, nom:null,
     nota:'Árbol de la carpeta de Drive. En el borrador podés probar: ▲▼ mueve, ► abre un grupo, ◄ lo cierra, OK tilda (tildar un grupo tilda todo lo de adentro; un grupo con algunas tildadas queda a medias).'},
   'apariencia':{t:'Apariencia', fn:apariencia, n:APA.length, nom:APA.map(a=>a[0]),
     nota:'Ajustes agrupados de Apariencia. Con las flechas ◄ ► cambiás el valor y la vista previa de la derecha se actualiza (tema, pared, tamaño).'},
@@ -323,18 +390,19 @@ const PANT = {
     nota:'Conexión y espacio, con la Reserva de obras y una barra que muestra cuántas hay listas.'},
 };
 let pan = qs.get('pantalla') in PANT ? qs.get('pantalla') : 'inicio';
-let foco = parseInt(qs.get('foco') || (pan==='galerias'?'4':pan==='apariencia'?'3':pan==='conexion'?'2':'0'), 10) || 0;
+const defFoco = k => k==='galerias-lista'?4:k==='galerias'?1:k==='galerias-grupo'?3:k==='apariencia'?3:k==='conexion'?2:0;
+let foco = parseInt(qs.get('foco') || defFoco(pan), 10) || 0;
 if (qs.get('abre') === 'no') ARBOL.forEach(n => { if (n.hijos) n.abierto = false; });
 
 function render() {
   const P = PANT[pan];
-  const n = pan==='galerias' ? filasArbol().length : P.n;
+  const n = pan==='galerias-lista' ? filasArbol().length : P.n;
   foco = Math.max(0, Math.min(n-1, foco));
   $('stage').innerHTML = P.fn(foco);
   $('note').textContent = P.nota;
   document.querySelectorAll('#gPan button').forEach(b => b.classList.toggle('on', b.dataset.k===pan));
   const gf = $('gFoco'); gf.innerHTML = '<span>Foco en</span>';
-  const nombres = pan==='galerias' ? filasArbol().map(r=>r.n.nombre) : P.nom;
+  const nombres = pan==='galerias-lista' ? filasArbol().map(r=>r.n.nombre) : P.nom;
   nombres.forEach((nm,i) => { const b = document.createElement('button'); b.textContent = nm; b.className = i===foco?'on':''; b.onclick = () => { foco = i; render(); }; gf.appendChild(b); });
 }
 function mover(dx, dy) {
@@ -346,6 +414,14 @@ function mover(dx, dy) {
     else if (dy<0 && foco>=3) foco = Math.min(foco-3, 2);
     if (dx) { const lim = foco<=2 ? [0,2] : [3,6]; foco = Math.max(lim[0], Math.min(lim[1], foco+dx)); }
   } else if (pan==='galerias') {
+    const n = ARBOL.length;
+    if (dx) foco += dx;
+    if (dy) foco += dy*4;
+    foco = Math.max(0, Math.min(n-1, foco));
+  } else if (pan==='galerias-grupo') {
+    if (foco===0) { if (dy>0) foco = 1; }
+    else if (dy<0) foco = 0; else if (dx) foco = Math.max(1, Math.min(3, foco+dx));
+  } else if (pan==='galerias-lista') {
     const filas = filasArbol(), r = filas[foco];
     if (dy) foco += dy;
     if (dx>0 && r.grupo && !r.n.abierto) r.n.abierto = true;
@@ -358,6 +434,16 @@ function mover(dx, dy) {
 }
 function ok() {
   if (pan==='galerias') {
+    const n = ARBOL[foco];
+    if (n.hijos) { GRUPO_ACTUAL = n.id; pan = 'galerias-grupo'; foco = 1; } else n.on = !n.on;
+    render(); return;
+  }
+  if (pan==='galerias-grupo') {
+    const g = ARBOL.find(x=>x.id===GRUPO_ACTUAL);
+    if (foco===0) { const m = !g.hijos.every(c=>c.on); g.hijos.forEach(c=>c.on=m); } else g.hijos[foco-1].on = !g.hijos[foco-1].on;
+    render(); return;
+  }
+  if (pan==='galerias-lista') {
     const r = filasArbol()[foco];
     if (r.grupo) { const marca = estadoGrupo(r.n)!=='si'; r.n.hijos.forEach(c=>c.on = marca); } else r.n.on = !r.n.on;
     render();
@@ -366,10 +452,11 @@ function ok() {
 document.addEventListener('keydown', ev => {
   const m = {ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[ev.key];
   if (m) { ev.preventDefault(); mover(m[0], m[1]); } else if (ev.key==='Enter') ok();
+  else if ((ev.key==='Escape'||ev.key==='Backspace') && pan==='galerias-grupo') { pan='galerias'; foco=ARBOL.findIndex(n=>n.id===GRUPO_ACTUAL); render(); }
 });
 Object.keys(PANT).forEach(k => {
   const b = document.createElement('button'); b.textContent = PANT[k].t; b.dataset.k = k;
-  b.onclick = () => { pan = k; foco = k==='galerias'?4:k==='apariencia'?3:k==='conexion'?2:0; render(); };
+  b.onclick = () => { pan = k; foco = defFoco(k); render(); };
   $('gPan').appendChild(b);
 });
 function scale() {
