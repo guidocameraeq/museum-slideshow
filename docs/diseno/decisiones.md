@@ -50,3 +50,4 @@
 ## Menú de inicio y Galerías (borrador 4, 02/11)
 - **Inicio A** (la obra de la galería actual de fondo con velo a la izquierda, nombre grande, tres datos chicos, botón principal "Ver la galería" y seis botones) → aprobado. El B (tarjetas) queda descartado.
 - **Galerías**: tarjetas con la **tapa** (primera obra de cada galería) y tilde; los grupos con mosaico de tapas, OK entra. La lista con tildes queda como **segunda vista** (ajuste Tarjetas / Lista, por defecto Tarjetas).
+- Guido dio el borrador 4 por bueno para construir (02/11).
