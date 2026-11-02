@@ -1,5 +1,6 @@
 package local.museumslideshow.galeria
 
+import android.view.KeyEvent
 import android.view.SurfaceView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.focusable
@@ -12,6 +13,9 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -30,8 +34,23 @@ import androidx.compose.ui.viewinterop.AndroidView
 import local.museumslideshow.R
 import local.museumslideshow.acomodo.Constantes
 import local.museumslideshow.ajustes.Preferencias
+import local.museumslideshow.ajustes.Tema
+import local.museumslideshow.pantallas.Barra
+import local.museumslideshow.pantallas.DatosBarra
+import local.museumslideshow.pantallas.EventoBarra
+import local.museumslideshow.pantallas.FocoBarra
+import local.museumslideshow.pantallas.IndicadorSincronizando
+import local.museumslideshow.pantallas.NavegacionBarra
+import local.museumslideshow.pantallas.teclaDe
 import local.museumslideshow.catalogo.CatalogoCargado
 import local.museumslideshow.sync.Sincronizacion
+
+/** Lo que la Barra le pide a la app (la galería no sabe de ajustes guardados ni de sincronización). */
+class AccionesApp(
+    val cambiar: ((Preferencias) -> Preferencias) -> Unit,
+    val sincronizar: () -> Unit,
+    val abrirAjustes: () -> Unit,
+)
 
 /** Un pedido de saltar a una escena (cada instancia es un pedido nuevo, aunque el índice se repita). */
 class SaltoEscena(val indice: Int)
@@ -48,6 +67,12 @@ fun GaleriaEnPantalla(
     alSalir: () -> Unit,
     modifier: Modifier = Modifier,
     salto: SaltoEscena? = null,
+    /** Si es null no hay Barra (Abajo no hace nada). */
+    app: AccionesApp? = null,
+    sincronizando: Boolean = false,
+    mensajeSync: String? = null,
+    /** false mientras otra pantalla (Ajustes, Estado) está encima: el pase se pausa y las teclas no son de la galería. */
+    teclasActivas: Boolean = true,
 ) {
     val ctx = LocalContext.current.applicationContext
     val resolver = LocalFontFamilyResolver.current
@@ -67,7 +92,61 @@ fun GaleriaEnPantalla(
     LaunchedEffect(controlador) { controlador.correr() }
     LaunchedEffect(catalogo, preferencias) { controlador.configurar(catalogo, preferencias) }
     LaunchedEffect(salto) { if (salto != null) controlador.saltarA(salto.indice) }
-    LaunchedEffect(Unit) { try { foco.requestFocus() } catch (e: Exception) { /* todavía no está listo */ } }
+    LaunchedEffect(teclasActivas) { if (teclasActivas) try { foco.requestFocus() } catch (e: Exception) { /* todavía no está listo */ } }
+
+    // La Barra
+    controlador.barraDisponible = app != null
+    val galeriasBarra = catalogo.galerias.map { it.driveId to it.titulo }
+    val indiceGaleria = galeriasBarra.indexOfFirst { (id, titulo) -> preferencias.galeria != null && (id == preferencias.galeria || titulo.equals(preferencias.galeria, ignoreCase = true)) }
+    val datosBarra = DatosBarra(
+        galerias = galeriasBarra,
+        galeriaElegida = indiceGaleria,
+        tema = preferencias.tema,
+        pantallaCompleta = controlador.pantallaCompleta,
+        explicacion = controlador.explicacionVisible,
+        sincronizando = sincronizando,
+        mensaje = mensajeSync,
+    )
+    val datosActuales by rememberUpdatedState(datosBarra)
+    val appActual by rememberUpdatedState(app)
+    val teclasActual by rememberUpdatedState(teclasActivas)
+    var focoBarra by remember { mutableStateOf(FocoBarra(0, 0)) }
+    LaunchedEffect(controlador.barraAbierta) { if (controlador.barraAbierta) focoBarra = FocoBarra(0, datosActuales.galeriaElegida + 1) }
+    LaunchedEffect(controlador.barraAbierta, teclasActivas) { controlador.suspender(controlador.barraAbierta || !teclasActivas) }
+
+    fun elegirEnBarra(fila: Int, columna: Int) {
+        val a = appActual ?: return
+        when (fila) {
+            DatosBarra.FILA_GALERIA -> {
+                val id = if (columna == 0) null else datosActuales.galerias.getOrNull(columna - 1)?.first ?: return
+                a.cambiar { it.copy(galeria = id) }
+            }
+            DatosBarra.FILA_TEMA -> Tema.values().getOrNull(columna)?.let { t -> a.cambiar { it.copy(tema = t) } }
+            DatosBarra.FILA_ACCIONES -> when (columna) {
+                DatosBarra.ACC_PANTALLA_COMPLETA -> controlador.alternarPantallaCompleta()
+                DatosBarra.ACC_EXPLICACION -> controlador.alternarExplicacionDesdeBarra()
+                DatosBarra.ACC_AJUSTES -> { controlador.cerrarBarra(); a.abrirAjustes() }
+                DatosBarra.ACC_SINCRONIZAR -> a.sincronizar()
+            }
+        }
+    }
+
+    /** Las teclas con la Barra abierta: las maneja la navegación pura de la Barra; las de volumen nunca se consumen. */
+    fun teclaEnBarra(action: Int, keyCode: Int, repeatCount: Int): Boolean {
+        if (esTeclaVolumen(keyCode)) return false
+        val tecla = teclaDe(keyCode) ?: return false
+        if (action == KeyEvent.ACTION_DOWN && repeatCount == 0) {
+            val d = datosActuales
+            val paso = NavegacionBarra.paso(focoBarra, tecla, d.tamanos, d.seleccion)
+            focoBarra = paso.foco
+            when (val e = paso.evento) {
+                EventoBarra.Cerrar -> controlador.cerrarBarra()
+                is EventoBarra.Elegir -> elegirEnBarra(e.fila, e.columna)
+                null -> Unit
+            }
+        }
+        return true
+    }
     DisposableEffect(controlador) { onDispose { controlador.liberarTodo() } }
 
     Box(
@@ -75,26 +154,30 @@ fun GaleriaEnPantalla(
             .fillMaxSize()
             .onPreviewKeyEvent { ev ->
                 val n = ev.nativeKeyEvent
-                control.alTecla(n.action, n.keyCode, n.repeatCount, n.downTime, n.eventTime, n.isLongPress)
+                if (!teclasActual) false
+                else if (controlador.barraAbierta) teclaEnBarra(n.action, n.keyCode, n.repeatCount)
+                else control.alTecla(n.action, n.keyCode, n.repeatCount, n.downTime, n.eventTime, n.isLongPress)
             }
             .focusRequester(foco)
             .focusable(),
     ) {
         // Dos superficies 4K apiladas, las dos detrás de la ventana: B (con overlay) queda arriba de A.
+        val calidadVista = preferencias.calidad
+        key(calidadVista) {   // al cambiar la Calidad se recrean las dos vistas, con el tamaño nuevo desde el arranque
         AndroidView(
-            factory = { c -> SurfaceView(c).also { controlador.superficie.enlazar(0, it) } },
-            update = { controlador.superficie.fijarCalidad(preferencias.calidad) },
+            factory = { c -> SurfaceView(c).also { controlador.superficie.enlazar(0, it, calidadVista) } },
             modifier = Modifier.fillMaxSize(),
         )
         AndroidView(
             factory = { c ->
                 SurfaceView(c).also {
                     it.setZOrderMediaOverlay(true)
-                    controlador.superficie.enlazar(1, it)
+                    controlador.superficie.enlazar(1, it, calidadVista)
                 }
             },
             modifier = Modifier.fillMaxSize(),
         )
+        }
         // La interfaz: cada escena en su propia capa (se dibuja una vez y en el fundido solo cambia su alpha).
         for (e in listOfNotNull(controlador.anterior, controlador.actual)) {
             key(e) {
@@ -113,5 +196,7 @@ fun GaleriaEnPantalla(
                 }
             }
         }
+        if (sincronizando && !controlador.barraAbierta) IndicadorSincronizando(Modifier.align(Alignment.TopEnd))
+        if (controlador.barraAbierta) Barra(datosBarra, focoBarra, Modifier.align(Alignment.BottomCenter))
     }
 }

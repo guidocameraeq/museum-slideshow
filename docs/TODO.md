@@ -5,10 +5,11 @@
 2026-11-02 — ver SESSION_HANDOFF.md
 
 ## 🔴 Crítico
-- [ ] Bug: cambiar a "Calidad 1080" con la app abierta (`--es calidad 1080` por intent) deja la obra chica en el rincón de arriba a la izquierda y el resto negro. Las superficies pasan a 1920×1080 pero el dibujo no se reacomoda. Revisar `SuperficieObra.fijarCalidad` y el redibujo tras `surfaceChanged`.
+- (nada)
 
 ## 🟠 Importante
-- [ ] Sesión 3: ajustes persistentes (DataStore), Barra (Abajo) y pantalla de Estado. Incluye: el `ERROR_RED` al listar la carpeta raíz hoy no se guarda en el índice (solo va al registro) → tiene que llegar a Estado; "Sincronizar cada" y "Espacio máximo" pasan de constantes (`sync/Sincronizacion.kt`) a ajustes.
+- [ ] Probar en la TV lo de la sesión 3 que no se probó: Estado sin internet ("No se pudo conectar con Drive"), "Sincronizar cada: Solo a mano" (el trabajo desaparece de `dumpsys jobscheduler`), cambiar Tiempo por obra desde Ajustes (la obra siguiente dura lo nuevo), reinicio real de la tele (no solo force-stop).
+- [ ] Guido mira a ojo la Barra, Ajustes y Estado (no había diseño visual; se hizo un estilo sobrio).
 - [ ] Conseguir fotos de marcos reales libres de derechos (negro fino, negro con filete dorado, madera con adornos, dorado, **dorado redondo**) y fijar sus nombres cortos para el campo `marco` de `docs/formato-galeria.md`. El código ya está listo (`MarcoImagen`, `res/drawable-nodpi/marco_<id>.png`); cuidar que `shrinkResources` no los borre.
 - [ ] Sesión 4: protector (`DreamService`) e interruptor "Usar como protector / Volver al anterior". Reusar `GaleriaEnPantalla` y las dos superficies; verificar 4K y fundido también en el protector.
 - [ ] Sesión 5: prueba de 2 horas y todos los criterios del SPEC-0 en la TV.

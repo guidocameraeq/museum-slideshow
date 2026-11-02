@@ -2,7 +2,7 @@
 
 > Save game del proyecto. `/cierre` lo SOBREESCRIBE ENTERO en cada sesión — acá nunca se apila historia (eso vive en CHANGELOG). El hook SessionStart lo inyecta en cada chat nuevo: **tope de 5.500 bytes** (unas 70 líneas); si se pasa, el hook lo corta y avisa "CORTADO".
 
-**Cierre**: 2026-11-02 (17:50) · **Último commit**: ver `git log -1` (sesión 2)
+**Cierre**: 2026-11-02 (19:00) · **Último commit**: ver `git log -1` (sesión 3)
 
 ## Qué se hizo
 - **Sesión 2 construida** (2 subagentes Sonnet, revisados por Opus): `acomodo/` (puerto del borrador 3 + decisiones de Guido), `temas/` (4 temas, colores con bordó, marcos), `ajustes/Preferencias` (defaults, sin persistir), `galeria/` (dos superficies 4K, capa Compose, fundido, control, vista Explicación). Fuentes EB Garamond e Inter (OFL) en `res/font`. 147 tests.
@@ -20,8 +20,8 @@
 - Nada.
 
 ## Próximo paso CONCRETO
-1. Arreglar el bug de "Calidad 1080" (ver TODO) con Sonnet y probarlo en la tele.
-2. **Sesión 3**: ajustes persistentes (DataStore), Barra (Abajo), pantalla de Estado.
+1. **Sesión 3 HECHA** (ajustes persistentes, Barra, Ajustes, Estado; bug de calidad arreglado recreando las superficies). Falta probar en la TV lo listado en TODO.
+2. **Sesión 4**: protector (`DreamService`) e interruptor "Usar como protector / Volver al anterior"; dar el permiso con `pm grant` y verificar 4K y fundido dentro del protector.
 
 ## Bloqueos
 - Ninguno. Marcos reales: siguen faltando fotos (hoy negro fino provisorio; redondas sin marco).

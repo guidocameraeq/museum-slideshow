@@ -30,6 +30,12 @@ data class IndiceLocal(
     val galerias: List<GaleriaIdx> = emptyList(),
     val problemas: List<Problema> = emptyList(),
     val ultimaSincronizacionBuena: Long? = null,
+    /** Hora (ms) del último intento de sincronizar, bueno o malo. */
+    val ultimoIntento: Long? = null,
+    /** Si el último intento salió bien (sin errores de red). */
+    val ultimoIntentoOk: Boolean? = null,
+    /** Si el último intento falló antes de empezar (no se pudo listar la carpeta raíz, falta la clave): no toca galerías ni problemas. */
+    val problemaUltimoIntento: Problema? = null,
 )
 
 object Catalogo {
@@ -68,6 +74,9 @@ object Catalogo {
             problemas += r.problemas
         }
         galerias.sortWith { a, b -> String.CASE_INSENSITIVE_ORDER.compare(a.titulo, b.titulo) }
-        return CatalogoCargado(galerias, problemas, indice.ultimaSincronizacionBuena)
+        return CatalogoCargado(
+            galerias, problemas, indice.ultimaSincronizacionBuena,
+            indice.ultimoIntento, indice.ultimoIntentoOk, indice.problemaUltimoIntento,
+        )
     }
 }

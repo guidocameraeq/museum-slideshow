@@ -39,7 +39,7 @@ enum class EspacioMaximo(val bytes: Long) {
 }
 
 /**
- * Todos los ajustes (tabla del SPEC-0) con su valor por defecto. Todavía no se guardan (sesión 3).
+ * Todos los ajustes (tabla del SPEC-0) con su valor por defecto. Se guardan con [AlmacenAjustes].
  * Las horas del Automático son minutos desde la medianoche (7:00 = 420).
  */
 data class Preferencias(
@@ -65,7 +65,6 @@ data class Preferencias(
     val cartelObra: CartelObra = CartelObra.SIEMPRE,
     val transicion: Transicion = Transicion.FUNDIDO,
     val duracionTransicionMs: Int = 1500,
-    // Se usan desde la sesión 3.
     val sincronizarCada: SincronizarCada = SincronizarCada.SEIS_HORAS,
     val espacioMaximo: EspacioMaximo = EspacioMaximo.UN_GB,
     /** null = el de `local.properties` al compilar. */
@@ -75,6 +74,22 @@ data class Preferencias(
         val TIEMPO_POR_OBRA_SEG = 10..600
         val DURACION_TRANSICION_MS = 500..3000
     }
+}
+
+/**
+ * Solo lo que cambia cómo SE VE una escena. El tiempo por obra, la transición y lo de la sincronización se dejan en su
+ * valor por defecto: cambiarlos no obliga a armar la escena de nuevo (y la obra no parpadea).
+ */
+fun Preferencias.paraEscena(): Preferencias {
+    val d = Preferencias()
+    return copy(
+        tiempoPorObraSeg = d.tiempoPorObraSeg,
+        transicion = d.transicion,
+        duracionTransicionMs = d.duracionTransicionMs,
+        sincronizarCada = d.sincronizarCada,
+        espacioMaximo = d.espacioMaximo,
+        carpetaDrive = d.carpetaDrive,
+    )
 }
 
 /** Claro u oscuro de verdad: si es AUTOMATICO, según la hora (minutos desde la medianoche). */

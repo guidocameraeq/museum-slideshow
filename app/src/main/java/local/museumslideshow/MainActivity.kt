@@ -7,73 +7,83 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
-import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.Text
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import local.museumslideshow.ajustes.AlmacenAjustes
+import local.museumslideshow.ajustes.GaleriaOpcion
+import local.museumslideshow.ajustes.ListaAjustes
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.ajustes.PreferenciasDesdeTexto
+import local.museumslideshow.ajustes.SincronizarCada
 import local.museumslideshow.catalogo.Catalogo
 import local.museumslideshow.catalogo.CatalogoCargado
+import local.museumslideshow.galeria.AccionesApp
 import local.museumslideshow.galeria.GaleriaEnPantalla
 import local.museumslideshow.galeria.SaltoEscena
+import local.museumslideshow.pantallas.PantallaAjustes
+import local.museumslideshow.pantallas.PantallaEstado
+import local.museumslideshow.pantallas.PantallaSinObras
+import local.museumslideshow.pantallas.SinObras
+import local.museumslideshow.sync.ResultadoSync
 import local.museumslideshow.sync.Sincronizacion
 import local.museumslideshow.sync.SincronizarWorker
+
+/** Qué pantalla de la app está al frente. La Barra no cuenta: vive dentro de la galería. */
+private enum class Pantalla { GALERIA, AJUSTES, ESTADO }
 
 class MainActivity : ComponentActivity() {
     private var catalogo by mutableStateOf<CatalogoCargado?>(null)
     private var sincronizando by mutableStateOf(false)
-    private var preferencias by mutableStateOf(Preferencias())
-    private var salto by mutableStateOf<SaltoEscena?>(null)
+    private var mensajeSync by mutableStateOf<String?>(null)
 
-    @OptIn(ExperimentalTvMaterial3Api::class)
+    /** null hasta que se leen los ajustes guardados (un instante al abrir). */
+    private var preferencias by mutableStateOf<Preferencias?>(null)
+    private var salto by mutableStateOf<SaltoEscena?>(null)
+    private var pantalla by mutableStateOf(Pantalla.GALERIA)
+    private var estadoDesdeAjustes by mutableStateOf(false)
+
+    private val almacen by lazy { AlmacenAjustes.de(applicationContext) }
+    private var cadaProgramada: SincronizarCada? = null
+    private var carpetaVista: String? = null
+    private var primeraLectura = true
+    private var repetirSync = false
+
+    private val acciones = AccionesApp(
+        cambiar = { t -> cambiarAjustes(t) },
+        sincronizar = { sincronizarAhora() },
+        abrirAjustes = { pantalla = Pantalla.AJUSTES },
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.i(Registro.TAG, "Arranca la app (versión ${BuildConfig.VERSION_NAME})")
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        aplicarIntent(intent)
-        try {
-            SincronizarWorker.programar(applicationContext)
-        } catch (e: Exception) {
-            Log.w(Registro.TAG, "No se pudo programar la sincronización (${e.javaClass.simpleName})")
-        }
-        setContent {
-            val cat = catalogo
-            val obras = cat?.galerias?.sumOf { it.obras.size } ?: 0
-            if (cat != null && obras > 0) {
-                GaleriaEnPantalla(cat, preferencias, alSalir = { finish() }, salto = salto)
-            } else {
-                PantallaMensaje(cat, sincronizando)
-            }
-        }
+        setContent { Contenido() }
 
         lifecycleScope.launch {
-            recargar()
-            sincronizando = true
-            try {
-                withContext(Dispatchers.IO) { Sincronizacion.ejecutar(applicationContext) }
-            } finally {
-                sincronizando = false
+            aplicarIntent(intent)
+            // La pantalla sigue a los ajustes guardados: cambiar uno (Barra, Ajustes o adb) se ve en ese momento.
+            launch {
+                almacen.flow.collect { p ->
+                    preferencias = p
+                    Log.i(Registro.TAG, Registro.limpiar("Preferencias efectivas: $p"))
+                    alCambiarAjustes(p)
+                }
             }
-            // Recarga el catálogo sin cortar la escena: la galería conserva la obra actual si sigue existiendo.
             recargar()
+            sincronizarAhora()
         }
     }
 
@@ -81,14 +91,14 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        aplicarIntent(intent)
+        lifecycleScope.launch { aplicarIntent(intent) }
     }
 
     /**
-     * Los extras del intent son ajustes de prueba (mismas claves que [PreferenciasDesdeTexto]) y se suman a los
-     * actuales; `reset` los vuelve a los valores por defecto antes. `escena` = índice (desde 0) donde arrancar.
+     * Los extras del intent son cambios de ajustes (mismas claves que [PreferenciasDesdeTexto]) y se GUARDAN;
+     * `reset` vuelve todo a los valores por defecto (también guardado). `escena` = índice (desde 0) donde arrancar.
      */
-    private fun aplicarIntent(i: Intent?) {
+    private suspend fun aplicarIntent(i: Intent?) {
         val extras = i?.extras ?: return
         val texto = HashMap<String, String>()
         for (k in extras.keySet()) {
@@ -96,65 +106,131 @@ class MainActivity : ComponentActivity() {
             extras.get(k)?.toString()?.let { texto[k] = it }
         }
         if (texto.isEmpty()) return
-        val base = if (texto.containsKey("reset")) Preferencias() else preferencias
-        preferencias = PreferenciasDesdeTexto.aplicar(base, texto)
-        Log.i(Registro.TAG, "Preferencias efectivas: $preferencias")
+        val reset = texto.containsKey("reset")
+        almacen.cambiar { actual -> PreferenciasDesdeTexto.aplicar(if (reset) Preferencias() else actual, texto) }
         texto["escena"]?.toIntOrNull()?.let {
             salto = SaltoEscena(it)
             Log.i(Registro.TAG, "Salto a la escena $it")
         }
     }
 
+    /** Un ajuste cambió (o se leyeron al abrir): reprograma la sincronización o sincroniza si cambió la carpeta. */
+    private fun alCambiarAjustes(p: Preferencias) {
+        if (p.sincronizarCada != cadaProgramada) {
+            cadaProgramada = p.sincronizarCada
+            try {
+                SincronizarWorker.programar(applicationContext, p.sincronizarCada)
+            } catch (e: Exception) {
+                Log.w(Registro.TAG, "No se pudo programar la sincronización (${e.javaClass.simpleName})")
+            }
+        }
+        if (!primeraLectura && p.carpetaDrive != carpetaVista) {
+            Log.i(Registro.TAG, "Cambió la carpeta de Drive: se sincroniza")
+            sincronizarAhora()
+        }
+        carpetaVista = p.carpetaDrive
+        primeraLectura = false
+    }
+
+    private fun cambiarAjustes(transform: (Preferencias) -> Preferencias) {
+        lifecycleScope.launch { almacen.cambiar(transform) }
+    }
+
+    /** Sincroniza ya (al abrir, desde la Barra o al cambiar la carpeta). Si ya hay una en curso, pide otra al terminar. */
+    private fun sincronizarAhora() {
+        if (sincronizando) {
+            repetirSync = true
+            return
+        }
+        sincronizando = true
+        mensajeSync = null
+        lifecycleScope.launch {
+            try {
+                do {
+                    repetirSync = false
+                    val r = withContext(Dispatchers.IO) { Sincronizacion.ejecutar(applicationContext) }
+                    // Recarga el catálogo sin cortar la escena: la galería conserva la obra actual si sigue existiendo.
+                    recargar()
+                    mensajeSync = mensajeDe(r)
+                } while (repetirSync)
+            } finally {
+                sincronizando = false
+            }
+            val m = mensajeSync
+            delay(MENSAJE_MS)
+            if (mensajeSync == m) mensajeSync = null
+        }
+    }
+
+    private fun mensajeDe(r: ResultadoSync): String = when {
+        !r.ok -> getString(R.string.sync_fallo)
+        r.problemas.isNotEmpty() -> getString(R.string.sync_con_avisos)
+        r.bajadas + r.borradas == 0 -> getString(R.string.sync_al_dia)
+        else -> getString(
+            R.string.sync_listo,
+            resources.getQuantityString(R.plurals.cantidad_bajadas, r.bajadas, r.bajadas),
+            resources.getQuantityString(R.plurals.cantidad_borradas, r.borradas, r.borradas),
+        )
+    }
+
     private suspend fun recargar() {
         catalogo = withContext(Dispatchers.IO) { Catalogo.cargar(Sincronizacion.dirBase(applicationContext)) }
     }
-}
 
-@OptIn(ExperimentalTvMaterial3Api::class)
-@androidx.compose.runtime.Composable
-private fun PantallaMensaje(cat: CatalogoCargado?, sincronizando: Boolean) {
-    val res = LocalContext.current.resources
-    Column(
-        modifier = Modifier.fillMaxSize().background(Color.Black).padding(48.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = stringResource(R.string.app_name),
-            color = Color.White,
-            fontSize = 48.sp,
-            textAlign = TextAlign.Center,
-        )
-        val obras = cat?.galerias?.sumOf { it.obras.size } ?: 0
-        if (cat == null || obras == 0) {
-            Linea(stringResource(R.string.estado_sin_obras), 24, Color(0xFFB0B0B0))
-        } else {
-            val g = res.getQuantityString(R.plurals.cantidad_galerias, cat.galerias.size, cat.galerias.size)
-            val o = res.getQuantityString(R.plurals.cantidad_obras, obras, obras)
-            Linea(res.getString(R.string.estado_resumen, g, o), 28, Color.White)
-            for (gal in cat.galerias) {
-                val n = res.getQuantityString(R.plurals.cantidad_obras, gal.obras.size, gal.obras.size)
-                Linea(res.getString(R.string.estado_galeria_linea, gal.titulo, n), 22, Color(0xFFB0B0B0))
+    @Composable
+    private fun Contenido() {
+        val p = preferencias
+        if (p == null) {
+            Box(Modifier.fillMaxSize().background(Color.Black))
+            return
+        }
+        val cat = catalogo
+        val hayObras = (cat?.galerias?.sumOf { it.obras.size } ?: 0) > 0
+        val items = remember(cat) { ListaAjustes.construir(cat?.galerias.orEmpty().map { GaleriaOpcion(it.driveId, it.titulo) }) }
+        val ajustesVisible = pantalla == Pantalla.AJUSTES || (pantalla == Pantalla.ESTADO && estadoDesdeAjustes)
+        Box(Modifier.fillMaxSize()) {
+            if (cat != null && hayObras) {
+                GaleriaEnPantalla(
+                    cat, p,
+                    alSalir = { finish() },
+                    salto = salto,
+                    app = acciones,
+                    sincronizando = sincronizando,
+                    mensajeSync = mensajeSync,
+                    teclasActivas = pantalla == Pantalla.GALERIA,
+                )
+            } else {
+                PantallaSinObras(
+                    SinObras.motivo(sincronizando, cat),
+                    activa = pantalla == Pantalla.GALERIA,
+                    alVerEstado = { abrirEstado(desdeAjustes = false) },
+                )
+            }
+            if (ajustesVisible) {
+                PantallaAjustes(
+                    items, p,
+                    activa = pantalla == Pantalla.AJUSTES,
+                    cambiar = { t -> cambiarAjustes(t) },
+                    alAbrirEstado = { abrirEstado(desdeAjustes = true) },
+                    alVolver = { pantalla = Pantalla.GALERIA },
+                )
+            }
+            if (pantalla == Pantalla.ESTADO) {
+                PantallaEstado(
+                    cat, p, sincronizando,
+                    alVolver = { pantalla = if (estadoDesdeAjustes) Pantalla.AJUSTES else Pantalla.GALERIA },
+                )
             }
         }
-        if (cat != null && cat.problemas.isNotEmpty()) {
-            val n = cat.problemas.size
-            Linea(res.getQuantityString(R.plurals.cantidad_problemas, n, n), 22, Color(0xFFE0A050))
-        }
-        if (sincronizando) {
-            Linea(stringResource(R.string.estado_sincronizando), 22, Color(0xFF80B0E0))
-        }
     }
-}
 
-@OptIn(ExperimentalTvMaterial3Api::class)
-@androidx.compose.runtime.Composable
-private fun Linea(texto: String, tamano: Int, color: Color) {
-    Text(
-        text = texto,
-        color = color,
-        fontSize = tamano.sp,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.padding(top = 12.dp),
-    )
+    private fun abrirEstado(desdeAjustes: Boolean) {
+        estadoDesdeAjustes = desdeAjustes
+        pantalla = Pantalla.ESTADO
+    }
+
+    private companion object {
+        /** Cuánto queda en la Barra el resultado de la última sincronización. */
+        const val MENSAJE_MS = 8000L
+    }
 }

@@ -7,7 +7,8 @@ import java.text.Normalizer
 /**
  * Para probar en la tele por adb: `am start ... --es tema sala-oscura --es tam maximo`.
  * Claves: tema, modo, pared-claro, pared-oscuro, marco, tam, completa-con-marco, expl, sala, calidad,
- * tiempo, orden, galeria, pared, cartel, transicion, duracion. Un valor inválido se ignora.
+ * tiempo, orden, galeria, pared, cartel, transicion, duracion, sincronizar, espacio, carpeta. Un valor inválido se ignora.
+ * Estos cambios se GUARDAN en el almacén de ajustes (`reset=si` los vuelve todos a los valores por defecto).
  */
 object PreferenciasDesdeTexto {
     private val MARCOS get() = CatalogoMarcos.ids
@@ -107,6 +108,24 @@ object PreferenciasDesdeTexto {
                 }
                 "duracion" -> v.toIntOrNull()?.takeIf { it in Preferencias.DURACION_TRANSICION_MS }
                     ?.let { p.copy(duracionTransicionMs = it) } ?: p
+                "sincronizar" -> when (v) {
+                    "1h", "1" -> p.copy(sincronizarCada = SincronizarCada.UNA_HORA)
+                    "6h", "6" -> p.copy(sincronizarCada = SincronizarCada.SEIS_HORAS)
+                    "24h", "24" -> p.copy(sincronizarCada = SincronizarCada.VEINTICUATRO_HORAS)
+                    "mano", "a-mano", "solo-a-mano" -> p.copy(sincronizarCada = SincronizarCada.SOLO_A_MANO)
+                    else -> p
+                }
+                "espacio" -> when (v) {
+                    "0.5", "0,5", "medio" -> p.copy(espacioMaximo = EspacioMaximo.MEDIO_GB)
+                    "1" -> p.copy(espacioMaximo = EspacioMaximo.UN_GB)
+                    "2" -> p.copy(espacioMaximo = EspacioMaximo.DOS_GB)
+                    else -> p
+                }
+                // ID o link de Drive (se respeta el texto tal cual: tiene mayúsculas). "defecto" = el de local.properties.
+                "carpeta" -> when {
+                    v == "defecto" || v == "fabrica" -> p.copy(carpetaDrive = null)
+                    else -> CarpetaDrive.extraerId(crudo)?.let { p.copy(carpetaDrive = it) } ?: p
+                }
                 else -> p
             }
         }

@@ -64,4 +64,7 @@ data class CatalogoCargado(
     val galerias: List<Galeria>,
     val problemas: List<Problema>,
     val ultimaSincronizacionBuena: Long?,
+    val ultimoIntento: Long? = null,
+    val ultimoIntentoOk: Boolean? = null,
+    val problemaUltimoIntento: Problema? = null,
 )

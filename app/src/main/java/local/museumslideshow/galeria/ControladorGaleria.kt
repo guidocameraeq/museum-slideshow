@@ -21,6 +21,7 @@ import local.museumslideshow.acomodo.Texto
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.ajustes.Transicion
 import local.museumslideshow.ajustes.modoEfectivo
+import local.museumslideshow.ajustes.paraEscena
 import local.museumslideshow.catalogo.CatalogoCargado
 import local.museumslideshow.temas.RegistroTemas
 
@@ -55,8 +56,20 @@ class ControladorGaleria(
     private var pase: Pase? = null
     private val semilla = System.nanoTime()
 
-    private var pantallaCompleta = false
+    /** Pantalla completa y Explicación pedidas con el control o con la Barra (la Barra muestra su estado). */
+    var pantallaCompleta by mutableStateOf(false)
+        private set
     private var expl = EstadoExplicacion.AUTO
+
+    /** La Barra (abajo) está abierta: el pase está en pausa y las teclas son de ella. */
+    var barraAbierta by mutableStateOf(false)
+        private set
+
+    /** Hay quién abra la Barra (la app sí; un protector sin Barra, no). */
+    var barraDisponible = false
+
+    private var suspendido = false
+    private var pausadoAntes = false
 
     private val despertar = Channel<Unit>(Channel.CONFLATED)
     private var pendDelta = 0
@@ -73,6 +86,7 @@ class ControladorGaleria(
     fun configurar(cat: CatalogoCargado, p: Preferencias) {
         catalogo = cat
         val cambioTema = p.tema != prefs.tema || p.pared != prefs.pared || p.orden != prefs.orden || p.galeria != prefs.galeria
+        val cambioTiempo = p.tiempoPorObraSeg != prefs.tiempoPorObraSeg
         prefs = p
         val tema = RegistroTemas.de(p.tema)
         val obraActual = pase?.actual?.obras?.firstOrNull()?.driveId
@@ -85,6 +99,7 @@ class ControladorGaleria(
             Log.w(Registro.TAG, "Galería: no hay obras para mostrar")
             return
         }
+        if (cambioTiempo && timer?.isActive == true) arrancarTimer()   // la obra que sigue ya dura el tiempo nuevo
         pendRelay = true
         despertar.trySend(Unit)
     }
@@ -113,7 +128,7 @@ class ControladorGaleria(
             Accion.EXPLICACION -> alternarExplicacion()
             Accion.ELEGIR_ANTERIOR -> elegirObra(-1)
             Accion.ELEGIR_SIGUIENTE -> elegirObra(1)
-            Accion.BARRA -> Log.i(Registro.TAG, "Barra: pendiente (sesión 3)")
+            Accion.BARRA -> abrirBarra()
             Accion.PAUSAR_O_SEGUIR -> pausa(pase?.pausado != true)
             Accion.PAUSAR -> pausa(true)
             Accion.SEGUIR -> pausa(false)
@@ -127,6 +142,43 @@ class ControladorGaleria(
         Log.i(Registro.TAG, "Control: pausa = ${p.pausado}")
         if (p.pausado) timer?.cancel() else arrancarTimer()
     }
+
+    private fun abrirBarra() {
+        if (!barraDisponible || barraAbierta) return
+        barraAbierta = true
+        Log.i(Registro.TAG, "Barra: abierta")
+    }
+
+    fun cerrarBarra() {
+        if (!barraAbierta) return
+        barraAbierta = false
+        Log.i(Registro.TAG, "Barra: cerrada")
+    }
+
+    /**
+     * Algo se puso encima de la galería (la Barra, o las pantallas de Ajustes y Estado): el pase se pausa mientras dure
+     * y, al volver, sigue solo si no estaba en pausa antes (la pausa que pidió el usuario con Play/Pausa se respeta).
+     */
+    fun suspender(s: Boolean) {
+        if (s == suspendido) return
+        suspendido = s
+        val p = pase ?: return
+        if (s) {
+            pausadoAntes = p.pausado
+            if (!p.pausado) pausa(true)
+        } else if (!pausadoAntes) {
+            pausa(false)
+        }
+    }
+
+    /** Alterna la Pantalla completa (igual que OK). Lo usa la Barra. */
+    fun alternarPantallaCompleta() = alAccion(Accion.PANTALLA_COMPLETA)
+
+    /** Alterna la Explicación (igual que mantener OK). Lo usa la Barra. */
+    fun alternarExplicacionDesdeBarra() = alAccion(Accion.EXPLICACION)
+
+    /** ¿La escena de ahora muestra la explicación? (para el interruptor de la Barra). */
+    val explicacionVisible: Boolean get() = actual?.muestraExplicacion == true
 
     private fun alternarExplicacion() {
         val a = actual ?: return
@@ -191,7 +243,7 @@ class ControladorGaleria(
         val ahora = Calendar.getInstance()
         val minutos = ahora.get(Calendar.HOUR_OF_DAY) * 60 + ahora.get(Calendar.MINUTE)
         val usaElegida = pantallaCompleta || expl != EstadoExplicacion.AUTO
-        return ClaveEscena(p.actual, pantallaCompleta, expl, if (usaElegida) elegida else 0, prefs.modoEfectivo(minutos), prefs)
+        return ClaveEscena(p.actual, pantallaCompleta, expl, if (usaElegida) elegida else 0, prefs.modoEfectivo(minutos), prefs.paraEscena())
     }
 
     private suspend fun procesar(delta: Int, ir: Int?) {
@@ -341,7 +393,7 @@ class ControladorGaleria(
         val a = actual ?: return
         if (a.esVista) return
         val sig = p.escenas[p.indiceRelativo(1)]
-        val clave = ClaveEscena(sig, pantallaCompleta, EstadoExplicacion.AUTO, 0, claveActual(p).modo, prefs)
+        val clave = ClaveEscena(sig, pantallaCompleta, EstadoExplicacion.AUTO, 0, claveActual(p).modo, prefs.paraEscena())
         precargaClave = clave
         precarga = scope.async {
             delay(ConstantesGaleria.RECICLADO_DEMORA_MS + ConstantesGaleria.PRECARGA_DEMORA_MS)

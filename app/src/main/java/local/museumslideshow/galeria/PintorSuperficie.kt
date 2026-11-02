@@ -241,25 +241,18 @@ class SuperficieObra {
     // Solo en el hilo de la superficie: la escena que muestra cada una (para redibujar si la superficie se recrea).
     private val escenas = arrayOfNulls<EscenaLista>(2)
 
-    fun enlazar(slot: Int, v: SurfaceView) {
-        vistas[slot] = v
-        v.holder.addCallback(Escucha(slot))
-        if (v.holder.surface?.isValid == true) validas = validas or (1 shl slot)
-        calidad?.let { aplicarCalidad(it) }
-    }
-
-    fun fijarCalidad(c: Calidad) {
-        if (c == calidad) return
+    /**
+     * Engancha una vista nueva (las dos se recrean cada vez que cambia la Calidad: cambiar el tamaño de una superficie
+     * viva dejaba búferes de 1920x1080 al volver a 4K). Nace con el tamaño correcto desde el arranque.
+     */
+    fun enlazar(slot: Int, v: SurfaceView, c: Calidad) {
         calidad = c
-        aplicarCalidad(c)
-    }
-
-    private fun aplicarCalidad(c: Calidad) {
-        for (v in vistas) {
-            val holder = v?.holder ?: continue
-            if (c == Calidad.HD1080) holder.setFixedSize(ConstantesGaleria.SUPERFICIE_1080_ANCHO, ConstantesGaleria.SUPERFICIE_1080_ALTO)
-            else holder.setFixedSize(ConstantesGaleria.SUPERFICIE_4K_ANCHO, ConstantesGaleria.SUPERFICIE_4K_ALTO)
-        }
+        validas = validas and (1 shl slot).inv()
+        vistas[slot] = v
+        if (c == Calidad.HD1080) v.holder.setFixedSize(ConstantesGaleria.SUPERFICIE_1080_ANCHO, ConstantesGaleria.SUPERFICIE_1080_ALTO)
+        else v.holder.setFixedSize(ConstantesGaleria.SUPERFICIE_4K_ANCHO, ConstantesGaleria.SUPERFICIE_4K_ALTO)
+        v.holder.addCallback(Escucha(slot, v))
+        if (v.holder.surface?.isValid == true) validas = validas or (1 shl slot)
     }
 
     /** Dibuja la escena en la superficie `slot` (0 = A, 1 = B) y espera a que esté mandada. Devuelve cuánto tardó (ms). */
@@ -330,13 +323,18 @@ class SuperficieObra {
         }
     }
 
-    private inner class Escucha(private val slot: Int) : SurfaceHolder.Callback {
+    /** Escucha de UNA vista: si ya la reemplazó otra (cambio de calidad), sus avisos no cuentan. */
+    private inner class Escucha(private val slot: Int, private val vista: SurfaceView) : SurfaceHolder.Callback {
+        private fun vigente() = vistas[slot] === vista
+
         override fun surfaceCreated(holder: SurfaceHolder) {
+            if (!vigente()) return
             validas = validas or (1 shl slot)
             if (slot == 1) aplicarAlphaB()
         }
 
         override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+            if (!vigente()) return
             validas = validas or (1 shl slot)
             if (slot == 1) aplicarAlphaB()
             Log.i(Registro.TAG, "Superficie de la obra ${if (slot == 0) "A" else "B"}: ${width}x$height")
@@ -344,6 +342,7 @@ class SuperficieObra {
         }
 
         override fun surfaceDestroyed(holder: SurfaceHolder) {
+            if (!vigente()) return
             validas = validas and (1 shl slot).inv()
         }
     }

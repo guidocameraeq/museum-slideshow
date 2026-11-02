@@ -1,5 +1,6 @@
 package local.museumslideshow.sync
 
+import android.util.Log
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -39,7 +40,9 @@ class Sincronizador(
         bajadas = 0; borradas = 0; salteadas = 0; problemas.clear(); huboErrorRed = false; espacioLlenoAvisado = false
 
         if (!api.disponible || carpetaId.isBlank()) {
-            problemas += Problema("", null, TipoProblema.SIN_CLAVE, if (carpetaId.isBlank()) "carpeta" else "clave")
+            val p = Problema("", null, TipoProblema.SIN_CLAVE, if (carpetaId.isBlank()) "carpeta" else "clave")
+            problemas += p
+            registrarIntentoFallido(p)
             return ResultadoSync(false, 0, 0, 0, problemas.toList())
         }
         dirBase.mkdirs()
@@ -54,7 +57,9 @@ class Sincronizador(
         val raiz = try {
             api.listar(carpetaId)
         } catch (e: ErrorDrive) {
-            problemas += Problema("", null, TipoProblema.ERROR_RED, codigo(e))
+            val p = Problema("", null, TipoProblema.ERROR_RED, codigo(e))
+            problemas += p
+            registrarIntentoFallido(p)
             return ResultadoSync(false, 0, 0, 0, problemas.toList())
         }
 
@@ -143,6 +148,9 @@ class Sincronizador(
             galerias = galeriasNuevas,
             problemas = problemas.toList(),
             ultimaSincronizacionBuena = if (buena) ahora() else viejo.ultimaSincronizacionBuena,
+            ultimoIntento = ahora(),
+            ultimoIntentoOk = buena,
+            problemaUltimoIntento = null,
         )
         escribirIndice(indice)
         borrarHuerfanos(
@@ -259,6 +267,20 @@ class Sincronizador(
         }
         File(dirBase, "json").listFiles()?.forEach { f ->
             if (f.name.removeSuffix(".json") !in idsJson && f.delete()) borradas++
+        }
+    }
+
+    /**
+     * El intento falló antes de empezar (no se pudo listar la carpeta raíz, o falta la clave): se anota SOLO el intento y
+     * su problema; las galerías, los problemas de antes y la hora de la última sincronización buena quedan como estaban.
+     */
+    private fun registrarIntentoFallido(p: Problema) {
+        try {
+            dirBase.mkdirs()
+            val viejo = Catalogo.leerIndice(dirBase)
+            escribirIndice(viejo.copy(ultimoIntento = ahora(), ultimoIntentoOk = false, problemaUltimoIntento = p))
+        } catch (e: Exception) {
+            Log.w(Registro.TAG, "No se pudo anotar el intento fallido (${e.javaClass.simpleName})")
         }
     }
 

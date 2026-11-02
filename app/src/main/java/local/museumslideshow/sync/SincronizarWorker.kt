@@ -11,6 +11,7 @@ import androidx.work.WorkerParameters
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import local.museumslideshow.ajustes.SincronizarCada
 
 class SincronizarWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -21,13 +22,21 @@ class SincronizarWorker(context: Context, params: WorkerParameters) : CoroutineW
     companion object {
         private const val NOMBRE = "sincronizar"
 
-        /** Trabajo periódico único: si ya está programado, no se toca (KEEP). */
-        fun programar(context: Context) {
-            val pedido = PeriodicWorkRequestBuilder<SincronizarWorker>(Sincronizacion.PERIODO_HORAS, TimeUnit.HOURS)
+        /**
+         * Deja el trabajo periódico según el ajuste "Sincronizar cada": 1 h / 6 h / 24 h lo programa (o lo actualiza si ya
+         * existía, UPDATE) y "Solo a mano" lo cancela.
+         */
+        fun programar(context: Context, cada: SincronizarCada) {
+            val wm = WorkManager.getInstance(context)
+            val horas = cada.horas
+            if (horas == null) {
+                wm.cancelUniqueWork(NOMBRE)
+                return
+            }
+            val pedido = PeriodicWorkRequestBuilder<SincronizarWorker>(horas.toLong(), TimeUnit.HOURS)
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .build()
-            WorkManager.getInstance(context)
-                .enqueueUniquePeriodicWork(NOMBRE, ExistingPeriodicWorkPolicy.KEEP, pedido)
+            wm.enqueueUniquePeriodicWork(NOMBRE, ExistingPeriodicWorkPolicy.UPDATE, pedido)
         }
     }
 }

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Museum Slideshow</string>
-    <string name="estado_sin_obras">Todavía no hay obras. Falta sincronizar con Drive.</string>
     <string name="estado_sincronizando">Sincronizando…</string>
     <string name="estado_resumen">%1$s · %2$s</string>
     <string name="estado_galeria_linea">%1$s — %2$s</string>
@@ -26,4 +25,185 @@
         <item quantity="one">%d problema</item>
         <item quantity="other">%d problemas</item>
     </plurals>
+    <plurals name="cantidad_bajadas">
+        <item quantity="one">%d bajada</item>
+        <item quantity="other">%d bajadas</item>
+    </plurals>
+    <plurals name="cantidad_borradas">
+        <item quantity="one">%d borrada</item>
+        <item quantity="other">%d borradas</item>
+    </plurals>
+
+    <!-- Barra -->
+    <string name="barra_galeria">Galería</string>
+    <string name="barra_tema">Tema</string>
+    <string name="barra_pantalla_completa">Pantalla completa</string>
+    <string name="barra_explicacion">Explicación</string>
+    <string name="barra_ajustes">Ajustes</string>
+    <string name="barra_sincronizar">Sincronizar ahora</string>
+    <string name="barra_interruptor_si">%1$s: sí</string>
+    <string name="barra_interruptor_no">%1$s: no</string>
+    <string name="sync_listo">Listo: %1$s · %2$s</string>
+    <string name="sync_al_dia">Todo al día</string>
+    <string name="sync_con_avisos">Listo, con avisos. Mirá Estado.</string>
+    <string name="sync_fallo">No se pudo sincronizar. Mirá Estado para ver qué pasó.</string>
+
+    <!-- Pantalla sin obras -->
+    <string name="vacio_sincronizando_titulo">Bajando las obras…</string>
+    <string name="vacio_sincronizando_texto">La primera vez puede tardar unos minutos. Apenas haya una obra, empieza a mostrarse.</string>
+    <string name="vacio_sin_conexion_titulo">Todavía no hay obras</string>
+    <string name="vacio_sin_conexion_texto">No se pudo conectar con Drive y no hay obras guardadas en la tele. Revisá que la tele tenga internet: la app vuelve a intentar sola.</string>
+    <string name="vacio_sin_clave_titulo">Falta conectar con Drive</string>
+    <string name="vacio_sin_clave_texto">Esta versión de la app no tiene la clave de acceso a Drive o la carpeta. Se carga desde la PC al armar la app.</string>
+    <string name="vacio_carpeta_vacia_titulo">La carpeta de Drive no tiene obras</string>
+    <string name="vacio_carpeta_vacia_texto">Agregá imágenes en una subcarpeta de la carpeta de Drive y la app las baja sola.</string>
+    <string name="vacio_ver_estado">Ver Estado</string>
+
+    <!-- Pantalla de Ajustes -->
+    <string name="ajustes_titulo">Ajustes</string>
+    <string name="ajustes_pie">↑ ↓ moverse · ← → cambiar el valor · OK avanza al siguiente valor · Atrás vuelve</string>
+    <string name="aj_tema">Tema</string>
+    <string name="aj_modo">Modo</string>
+    <string name="aj_hora_dia">Empieza el día</string>
+    <string name="aj_hora_noche">Empieza la noche</string>
+    <string name="aj_pared_claro">Color de pared claro</string>
+    <string name="aj_pared_oscuro">Color de pared oscuro</string>
+    <string name="aj_marco">Marco</string>
+    <string name="aj_tamano">Tamaño de la obra</string>
+    <string name="aj_completa_con_marco">Pantalla completa con marco</string>
+    <string name="aj_explicacion">Explicación en pantalla</string>
+    <string name="aj_sala">Nombre de la sala</string>
+    <string name="aj_calidad">Calidad de la obra</string>
+    <string name="aj_tiempo">Tiempo por obra</string>
+    <string name="aj_orden">Orden</string>
+    <string name="aj_galeria">Galería</string>
+    <string name="aj_pared">Pared de verticales</string>
+    <string name="aj_cartel">Cartel de la obra</string>
+    <string name="aj_transicion">Transición</string>
+    <string name="aj_duracion">Duración de la transición</string>
+    <string name="aj_sincronizar">Sincronizar cada</string>
+    <string name="aj_espacio">Espacio máximo</string>
+    <string name="aj_carpeta">Carpeta de Drive</string>
+    <string name="aj_protector">Usar como protector</string>
+    <string name="aj_estado">Estado</string>
+    <string name="aj_estado_valor">Qué pasó y qué falta →</string>
+
+    <string name="v_si">Sí</string>
+    <string name="v_no">No</string>
+    <string name="v_siempre">Siempre</string>
+    <string name="v_nunca">Nunca</string>
+    <string name="v_todas">Todas</string>
+    <string name="v_del_tema">Del tema</string>
+    <string name="v_cuando_entra">Cuando entra</string>
+    <string name="v_unos_segundos">Unos segundos</string>
+
+    <string name="tema_galeria_moderna">Galería moderna</string>
+    <string name="tema_sala_oscura">Sala oscura</string>
+    <string name="tema_inmersivo">Inmersivo</string>
+    <string name="tema_libro_de_arte">Libro de arte</string>
+    <string name="modo_claro">Claro</string>
+    <string name="modo_oscuro">Oscuro</string>
+    <string name="modo_automatico">Automático</string>
+    <string name="formato_hora">%1$d:%2$02d</string>
+    <string name="color_blanco_galeria">Blanco galería</string>
+    <string name="color_gris_calido">Gris cálido</string>
+    <string name="color_piedra">Piedra</string>
+    <string name="color_carbon">Carbón</string>
+    <string name="color_negro">Negro</string>
+    <string name="color_azul_noche">Azul noche</string>
+    <string name="color_bordo">Bordó</string>
+    <string name="marco_fino">Negro fino</string>
+    <string name="marco_filete">Negro con filete dorado</string>
+    <string name="marco_madera">Madera con adornos</string>
+    <string name="marco_dorado">Dorado</string>
+    <string name="marco_dorado_redondo">Dorado redondo</string>
+    <string name="marco_sin">Sin marco</string>
+    <string name="marco_al_azar">Al azar por obra</string>
+    <string name="marco_de_la_galeria">El que diga la galería</string>
+    <string name="tamano_normal">Normal</string>
+    <string name="tamano_grande">Grande</string>
+    <string name="tamano_maximo">Máximo</string>
+    <string name="tamano_pantalla_completa">Pantalla completa</string>
+    <string name="sala_siempre">Siempre que entre</string>
+    <string name="sala_solo_contador">Solo el contador</string>
+    <string name="calidad_4k">4K</string>
+    <string name="calidad_1080">1080</string>
+    <string name="formato_segundos">%d s</string>
+    <string name="formato_minutos">%d min</string>
+    <string name="formato_segundos_texto">%s s</string>
+    <string name="orden_galeria">El de la galería</string>
+    <string name="orden_mezclar">Mezclar</string>
+    <string name="pared_apagada">Apagada</string>
+    <string name="pared_hasta_2">Hasta 2</string>
+    <string name="pared_hasta_3">Hasta 3</string>
+    <string name="cartel_unos_segundos">Unos segundos al cambiar</string>
+    <string name="transicion_fundido">Fundido</string>
+    <string name="transicion_ninguna">Ninguna</string>
+    <string name="sinc_1h">Cada 1 hora</string>
+    <string name="sinc_6h">Cada 6 horas</string>
+    <string name="sinc_24h">Cada 24 horas</string>
+    <string name="sinc_mano">Solo a mano</string>
+    <string name="espacio_medio">0,5 GB</string>
+    <string name="espacio_1">1 GB</string>
+    <string name="espacio_2">2 GB</string>
+    <string name="carpeta_de_fabrica">La de fábrica</string>
+    <string name="carpeta_ayuda">Se cambia desde la PC</string>
+    <string name="protector_proximamente">Llega en la próxima versión</string>
+
+    <!-- Pantalla de Estado -->
+    <string name="estado_titulo">Estado</string>
+    <string name="estado_pie">↑ ↓ para recorrer · Atrás vuelve</string>
+    <string name="est_sec_sync">Sincronización</string>
+    <string name="est_ultima_buena">Última sincronización buena: %1$s</string>
+    <string name="est_ultima_buena_nunca">Todavía no se pudo sincronizar bien con Drive.</string>
+    <string name="est_intento_nunca">Todavía no se intentó sincronizar.</string>
+    <string name="est_intento_ok">Último intento: %1$s. Salió bien.</string>
+    <string name="est_intento_con_errores">Último intento: %1$s. Terminó con errores (mirá Problemas).</string>
+    <string name="est_sin_conexion">No se pudo conectar con Drive (%1$s). Se muestran las obras guardadas.</string>
+    <string name="est_sin_conexion_sin_obras">No se pudo conectar con Drive (%1$s) y todavía no hay obras guardadas.</string>
+    <string name="est_sec_obras">Obras bajadas</string>
+    <string name="est_sin_obras">No hay obras bajadas.</string>
+    <string name="est_sec_espacio">Espacio</string>
+    <string name="est_espacio_usado">Usado: %1$s de %2$s</string>
+    <string name="est_espacio_lleno">El espacio está lleno: no se bajan más obras. Podés subir el espacio máximo en Ajustes.</string>
+    <string name="est_sec_problemas">Problemas</string>
+    <string name="est_sin_problemas">Sin problemas.</string>
+    <string name="est_grupo_general">En general</string>
+    <string name="est_sec_protector">Protector de pantalla</string>
+    <string name="est_permiso_si">Permiso para cambiar el protector: otorgado.</string>
+    <string name="est_permiso_no">Permiso para cambiar el protector: falta. Para darlo, conectá la tele a la PC y ejecutá este comando:</string>
+    <string name="comando_permiso" translatable="false">adb shell pm grant local.museumslideshow android.permission.WRITE_SECURE_SETTINGS</string>
+    <string name="est_protector_activo">Protector activo hoy: %1$s</string>
+    <string name="est_protector_nuestro">Museum Slideshow</string>
+    <string name="est_protector_ninguno">Ninguno</string>
+    <string name="est_protector_ambient">Ambient de Google</string>
+    <string name="formato_fecha" translatable="false">d \'de\' MMMM</string>
+    <string name="formato_fecha_anio" translatable="false">d \'de\' MMMM \'de\' yyyy</string>
+    <string name="formato_hora_corta" translatable="false">HH:mm</string>
+    <string name="formato_fecha_y_hora">%1$s, %2$s</string>
+    <string name="formato_tamano_mb">%d MB</string>
+    <string name="formato_tamano_gb">%s GB</string>
+    <string name="est_sec_app">La app</string>
+    <string name="est_version">Versión %1$s</string>
+
+    <!-- Problemas, en criollo. Datos: 1 = galería, 2 = archivo, 3 = detalle -->
+    <string name="problema_json_invalido">El archivo %2$s de «%1$s» tiene un error y no se pudo leer. Las obras se muestran sin sus datos.</string>
+    <string name="problema_json_sin_formato">El archivo %2$s de «%1$s» no dice qué formato usa (falta el campo «formato»). Las obras se muestran sin sus datos.</string>
+    <string name="problema_formato_nuevo">El archivo %2$s de «%1$s» usa un formato más nuevo (el %3$s) que esta versión de la app: puede que algunos datos no se vean.</string>
+    <string name="problema_archivo_faltante">En «%1$s», el galeria.json nombra la imagen «%2$s», pero esa imagen no está en la carpeta de Drive.</string>
+    <string name="problema_archivo_repetido">En «%1$s», la imagen «%2$s» está nombrada más de una vez en el galeria.json: se usa solo la primera.</string>
+    <string name="problema_id_repetido">En «%1$s», dos obras tienen el mismo id (%3$s). La repetida es la imagen «%2$s».</string>
+    <string name="problema_obra_sin_archivo">En «%1$s», la obra %3$s del galeria.json no dice qué imagen es y se salteó.</string>
+    <string name="problema_imagen_muy_grande">La imagen «%2$s» de «%1$s» pesa demasiado (más de 50 MB) y no se bajó.</string>
+    <string name="problema_no_es_imagen">El archivo «%2$s» de «%1$s» no es una imagen y se ignoró.</string>
+    <string name="problema_json_muy_grande">El archivo %2$s de «%1$s» es demasiado grande (más de 1 MB) y no se leyó.</string>
+    <string name="problema_imagen_no_decodifica">La imagen «%2$s» de «%1$s» está dañada o tiene un formato que la tele no puede abrir.</string>
+    <string name="problema_espacio_lleno">Se llenó el espacio reservado (al llegar a «%2$s» de «%1$s»): no se bajan más obras hasta que subas el espacio máximo en Ajustes.</string>
+    <string name="problema_red_drive">No se pudo conectar con Drive (%3$s).</string>
+    <string name="problema_red_carpeta">No se pudo leer la carpeta «%1$s» de Drive (%3$s). Se muestran las obras que ya estaban.</string>
+    <string name="problema_red_archivo">No se pudo bajar «%2$s» de «%1$s» (%3$s). Se muestra la versión que ya estaba.</string>
+    <string name="problema_sin_carpeta">Falta indicar la carpeta de Drive.</string>
+    <string name="problema_sin_clave">Falta la clave de acceso a Drive en esta versión de la app.</string>
+    <string name="detalle_sin_conexion">sin conexión</string>
+    <string name="detalle_error_http">error %1$s</string>
 </resources>

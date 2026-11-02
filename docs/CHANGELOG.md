@@ -2,6 +2,17 @@
 
 > Historia permanente. `/cierre` agrega una entrada AL TOPE en cada sesión. Orden descendente estricto, sin excepciones. Nada de versiones duplicadas en otros docs.
 
+## 2026-11-02 (19:00) — Sesión 3: ajustes, Barra y Estado
+
+### Added
+- Ajustes que se guardan (DataStore), con efecto inmediato; los extras de intent también se guardan (`reset`, `carpeta`, `sincronizar`, `espacio`).
+- Barra (Abajo), pantalla de Ajustes (todos los del SPEC) y pantalla de Estado (sincronización, obras, espacio, problemas en criollo, permiso y protector activo). Avisos de sin obras y de sincronizando. 203 tests.
+- "Sincronizar cada", "Espacio máximo" y "Carpeta de Drive" como ajustes; el error de red al listar la raíz llega a Estado.
+- Permiso `WRITE_SECURE_SETTINGS` declarado en el manifest (se usa en la sesión 4; hoy solo se consulta).
+
+### Fixed
+- Cambiar la Calidad con la app abierta dejaba la obra en un rincón o al doble: ahora se recrean las dos superficies.
+
 ## 2026-11-02 (17:50) — Sesión 2: la galería en pantalla a 4K
 
 ### Added

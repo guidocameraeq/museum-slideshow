@@ -213,19 +213,58 @@ class SincronizadorTest {
     }
 
     @Test
-    fun fallaAlListarLaRaizNoTocaNadaNiAvanzaLaHora() {
+    fun fallaAlListarLaRaizNoTocaGaleriasNiAvanzaLaHoraBuenaPeroQuedaAnotada() {
         escenarioBasico()
         sync()
-        val antes = File(base, "indice.json").readText()
+        val antes = Catalogo.leerIndice(base)
         api.falla += CARPETA
         reloj = 9999L
         val r = sync()
         assertFalse(r.ok)
         assertEquals(listOf(TipoProblema.ERROR_RED), r.problemas.map { it.tipo })
         assertEquals("503", r.problemas[0].detalle)
-        assertEquals(antes, File(base, "indice.json").readText())
+        val despues = Catalogo.leerIndice(base)
+        assertEquals(antes.galerias, despues.galerias)
+        assertEquals(antes.problemas, despues.problemas)
+        assertEquals(1000L, despues.ultimaSincronizacionBuena)
         assertTrue(File(base, "obras/A1.jpg").isFile)
-        assertEquals(1000L, Catalogo.cargar(base).ultimaSincronizacionBuena)
+        // lo nuevo: el problema y la hora del intento llegan a Estado
+        val c = Catalogo.cargar(base)
+        assertEquals(1000L, c.ultimaSincronizacionBuena)
+        assertEquals(9999L, c.ultimoIntento)
+        assertEquals(false, c.ultimoIntentoOk)
+        assertEquals(TipoProblema.ERROR_RED, c.problemaUltimoIntento!!.tipo)
+        assertEquals("503", c.problemaUltimoIntento!!.detalle)
+        assertEquals(2, c.galerias[0].obras.size)
+        assertTrue(c.problemas.isEmpty())
+    }
+
+    @Test
+    fun unaSincronizacionBuenaDespuesDeUnaFallidaLimpiaElProblemaDelIntento() {
+        escenarioBasico()
+        sync()
+        api.falla += CARPETA
+        sync()
+        api.falla.clear()
+        reloj = 20000L
+        sync()
+        val c = Catalogo.cargar(base)
+        assertNull(c.problemaUltimoIntento)
+        assertEquals(true, c.ultimoIntentoOk)
+        assertEquals(20000L, c.ultimoIntento)
+        assertEquals(20000L, c.ultimaSincronizacionBuena)
+    }
+
+    @Test
+    fun sinClaveTambienQuedaAnotadoComoIntento() {
+        escenarioBasico()
+        api.disponible = false
+        reloj = 777L
+        sync()
+        val c = Catalogo.cargar(base)
+        assertEquals(TipoProblema.SIN_CLAVE, c.problemaUltimoIntento!!.tipo)
+        assertEquals(777L, c.ultimoIntento)
+        assertNull(c.ultimaSincronizacionBuena)
     }
 
     @Test
