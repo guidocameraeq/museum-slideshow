@@ -2,6 +2,17 @@
 
 > Historia permanente. `/cierre` agrega una entrada AL TOPE en cada sesión. Orden descendente estricto, sin excepciones. Nada de versiones duplicadas en otros docs.
 
+## 2026-11-02 (17:50) — Sesión 2: la galería en pantalla a 4K
+
+### Added
+- Acomodador (`acomodo/`), temas, colores de pared (con bordó) y marcos (`temas/`), preferencias con sus valores por defecto (`ajustes/`), fuentes EB Garamond e Inter (OFL).
+- Galería en pantalla (`galeria/`): dos superficies 4K detrás de una capa de Compose, fundido hecho por el compositor (~58 cuadros/s), vista Explicación, control (OK, mantener OK, flechas, Play/Pausa, Atrás) y extras de intent para probar por adb. 147 tests.
+- Imágenes de prueba en "Galerías-prueba/Sana": grilla de 1 px y la comparación 1080/4K.
+
+### Changed
+- Las obras se abren como Bitmap de memoria de video: la app usa la mitad de memoria.
+- SPEC-0: 4K verificado (capa 3840×2160 `DEVICE` y ojos de Guido); supuestos de `screencap` y del fundido verificados.
+
 ## 2026-11-02 (16:20) — Sesión 1: sincronizador + lector, y la clave de Drive
 
 ### Added
