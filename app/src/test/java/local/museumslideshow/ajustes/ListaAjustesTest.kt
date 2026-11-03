@@ -63,7 +63,7 @@ class ListaAjustesTest {
                 IdAjuste.TEMA, IdAjuste.MODO, IdAjuste.HORA_DIA, IdAjuste.HORA_NOCHE, IdAjuste.PARED_CLARO, IdAjuste.PARED_OSCURO,
                 IdAjuste.MARCO, IdAjuste.TAMANO, IdAjuste.COMPLETA_CON_MARCO, IdAjuste.EXPLICACION, IdAjuste.SALA, IdAjuste.CALIDAD,
                 IdAjuste.TIEMPO, IdAjuste.ORDEN, IdAjuste.GALERIA, IdAjuste.PARED, IdAjuste.CARTEL, IdAjuste.TRANSICION,
-                IdAjuste.DURACION, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.CARPETA, IdAjuste.GALERIAS_NUEVAS,
+                IdAjuste.DURACION, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.RITMO, IdAjuste.CARPETA, IdAjuste.GALERIAS_NUEVAS,
                 IdAjuste.PROTECTOR, IdAjuste.ESTADO,
             ),
             items.map { it.id },
@@ -208,7 +208,7 @@ class GruposAjustesTest {
             items.delGrupo(GrupoAjustes.PASE).map { it.id },
         )
         assertEquals(
-            listOf(IdAjuste.CARPETA, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO),
+            listOf(IdAjuste.CARPETA, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.RITMO),
             items.delGrupo(GrupoAjustes.CONEXION).map { it.id },
         )
     }

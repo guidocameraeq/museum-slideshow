@@ -40,6 +40,8 @@ enum class Pared(val maximo: Int) { APAGADA(1), HASTA_2(2), HASTA_3(3) }
 enum class CartelObra { SIEMPRE, UNOS_SEGUNDOS, NUNCA }
 enum class Transicion { FUNDIDO, NINGUNA }
 enum class SincronizarCada(val horas: Int?) { UNA_HORA(1), SEIS_HORAS(6), VEINTICUATRO_HORAS(24), SOLO_A_MANO(null) }
+/** Qué tan seguido se baja de Drive: siempre de a una descarga; `pausaMs` es el respiro entre una y otra. */
+enum class RitmoBajada(val pausaMs: Long) { TRANQUILO(2000L), NORMAL(0L) }
 enum class EspacioMaximo(val bytes: Long) {
     MEDIO_GB(512L * 1024 * 1024), UN_GB(1024L * 1024 * 1024), DOS_GB(2048L * 1024 * 1024)
 }
@@ -73,6 +75,7 @@ data class Preferencias(
     val duracionTransicionMs: Int = 1500,
     val sincronizarCada: SincronizarCada = SincronizarCada.SEIS_HORAS,
     val espacioMaximo: EspacioMaximo = EspacioMaximo.UN_GB,
+    val ritmoBajada: RitmoBajada = RitmoBajada.TRANQUILO,
     /** null = el de `local.properties` al compilar. */
     val carpetaDrive: String? = null,
     /** Id de carpeta -> tildada. Lo que falta toma el valor de [galeriasNuevas]. */
@@ -102,6 +105,7 @@ fun Preferencias.paraEscena(): Preferencias {
         duracionTransicionMs = d.duracionTransicionMs,
         sincronizarCada = d.sincronizarCada,
         espacioMaximo = d.espacioMaximo,
+        ritmoBajada = d.ritmoBajada,
         carpetaDrive = d.carpetaDrive,
         seleccionGalerias = d.seleccionGalerias,
         galeriasNuevas = d.galeriasNuevas,

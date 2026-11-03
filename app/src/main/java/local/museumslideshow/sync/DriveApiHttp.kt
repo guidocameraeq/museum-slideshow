@@ -66,7 +66,7 @@ class DriveApiHttp(
             try {
                 con = abrir(url)
                 val codigo = con.responseCode
-                if (codigo != 200) throw ErrorDrive(codigo, archivoId)
+                if (codigo != 200) throw errorDe(con, codigo, archivoId)
                 val declarado = con.contentLengthLong
                 if (declarado > maxBytes) throw ArchivoExcedeTope(archivoId)
                 con.inputStream.use { entrada ->
@@ -102,13 +102,25 @@ class DriveApiHttp(
         try {
             con = abrir(url)
             val codigo = con.responseCode
-            if (codigo != 200) throw ErrorDrive(codigo, id)
+            if (codigo != 200) throw errorDe(con, codigo, id)
             return con.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
         } catch (e: IOException) {
             throw ErrorDrive(null, id)
         } finally {
             con?.disconnect()
         }
+    }
+
+    /** El error de una respuesta no 200: si Google pidió una pausa lo dice (mirando el cuerpo); nada del cuerpo se guarda. */
+    private fun errorDe(con: HttpURLConnection, codigo: Int, id: String): ErrorDrive {
+        val cuerpo = if (codigo == 403) {
+            try {
+                con.errorStream?.use { it.readNBytes(16 * 1024).toString(Charsets.UTF_8) }
+            } catch (e: Exception) {
+                null
+            }
+        } else null
+        return ErrorDrive(codigo, id, ClasificadorRespuestaDrive.clasificar(codigo, cuerpo))
     }
 
     private fun abrir(url: String): HttpURLConnection {
@@ -127,6 +139,7 @@ class DriveApiHttp(
             try {
                 return bloque()
             } catch (e: ErrorDrive) {
+                if (e.pausa != null) throw e // Google pidió parar: reintentar empeora el bloqueo
                 val reintentable = e.codigoHttp == null || e.codigoHttp == 429 || e.codigoHttp in 500..599
                 if (!reintentable || intento >= INTENTOS) throw e
                 esperar(espera)

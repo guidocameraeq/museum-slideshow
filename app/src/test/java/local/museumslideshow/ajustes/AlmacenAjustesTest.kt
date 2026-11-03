@@ -39,6 +39,7 @@ class CodecPreferenciasTest {
         duracionTransicionMs = 2500,
         sincronizarCada = SincronizarCada.SOLO_A_MANO,
         espacioMaximo = EspacioMaximo.DOS_GB,
+        ritmoBajada = RitmoBajada.NORMAL,
         carpetaDrive = "1CarpetaDeDriveLarga123",
         seleccionGalerias = mapOf("G-1" to false, "G_2" to true),
         galeriasNuevas = GaleriasNuevas.DESTILDADAS,
@@ -133,7 +134,7 @@ class CodecPreferenciasTest {
     fun paraEscenaIgnoraLoQueNoCambiaLaVista() {
         val a = Preferencias()
         val b = a.copy(tiempoPorObraSeg = 10, transicion = Transicion.NINGUNA, duracionTransicionMs = 500,
-            sincronizarCada = SincronizarCada.UNA_HORA, espacioMaximo = EspacioMaximo.DOS_GB, carpetaDrive = "XXXXXXXXXXXX")
+            sincronizarCada = SincronizarCada.UNA_HORA, espacioMaximo = EspacioMaximo.DOS_GB, ritmoBajada = RitmoBajada.NORMAL, carpetaDrive = "XXXXXXXXXXXX")
         assertEquals(a.paraEscena(), b.paraEscena())
         assertTrue(a.paraEscena() != a.copy(tema = Tema.SALA_OSCURA).paraEscena())
         assertTrue(a.paraEscena() != a.copy(calidad = Calidad.HD1080).paraEscena())
@@ -185,5 +186,21 @@ class CarpetaDriveTest {
         val p = PreferenciasDesdeTexto.aplicar(Preferencias(), mapOf("sincronizar" to "mano", "espacio" to "2"))
         assertEquals(SincronizarCada.SOLO_A_MANO, p.sincronizarCada)
         assertEquals(EspacioMaximo.DOS_GB, p.espacioMaximo)
+    }
+
+    @Test
+    fun elRitmoDeBajadaPorDefectoEsTranquiloYSeGuardaYSeCambiaPorIntent() {
+        assertEquals(RitmoBajada.TRANQUILO, Preferencias().ritmoBajada)
+        assertEquals(2000L, RitmoBajada.TRANQUILO.pausaMs)
+        assertEquals(0L, RitmoBajada.NORMAL.pausaMs)
+        val guardado = CodecPreferencias.codificar(Preferencias(ritmoBajada = RitmoBajada.NORMAL))
+        assertEquals("NORMAL", guardado["ritmo_bajada"])
+        assertEquals(RitmoBajada.NORMAL, CodecPreferencias.decodificar(guardado).ritmoBajada)
+        assertEquals(RitmoBajada.TRANQUILO, CodecPreferencias.decodificar(mapOf("ritmo_bajada" to "VELOZ")).ritmoBajada)
+        assertEquals(RitmoBajada.TRANQUILO, CodecPreferencias.decodificar(emptyMap()).ritmoBajada)
+        val n = PreferenciasDesdeTexto.aplicar(Preferencias(), mapOf("ritmo" to "Normal"))
+        assertEquals(RitmoBajada.NORMAL, n.ritmoBajada)
+        assertEquals(RitmoBajada.TRANQUILO, PreferenciasDesdeTexto.aplicar(n, mapOf("ritmo" to "tranquilo")).ritmoBajada)
+        assertEquals(RitmoBajada.NORMAL, PreferenciasDesdeTexto.aplicar(n, mapOf("ritmo" to "rapidisimo")).ritmoBajada)
     }
 }

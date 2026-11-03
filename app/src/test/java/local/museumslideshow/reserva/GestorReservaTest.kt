@@ -74,6 +74,36 @@ class GestorReservaTest {
     private fun enDisco() = File(dir, "obras").listFiles().orEmpty().map { it.name }.filter { !it.endsWith(".chica.jpg") }.map { it.removeSuffix(".jpg") }.toSet()
 
     @Test
+    fun conDriveEnPausaLaReservaNoBajaNadaYLaGaleriaSigueConLoGuardado() = runBlocking {
+        val g = GestorReserva(
+            scope = CoroutineScope(Dispatchers.Default), dirBase = dir, descargador = descargador,
+            parametros = { ParametrosReserva(n, tope) }, registrar = { registro += it }, enPausa = { true }, iniciar = false,
+        )
+        // Una obra ya guardada: no se borra por estar en pausa.
+        val previa = Catalogo.archivoObra(dir, "o0")
+        previa.parentFile.mkdirs()
+        previa.writeBytes(ByteArray(10))
+        g.procesar(pedido(orden(30), 0))
+        assertTrue("no se pidió nada al descargador", descargador.pedidas.isEmpty())
+        assertEquals(setOf("o0"), enDisco())
+        assertTrue(registro.any { it.contains("pausa") })
+    }
+
+    @Test
+    fun siElDescargadorAvisaQueHayPausaSeCortaLaTandaSinMarcarError() = runBlocking {
+        val avisa = DescargadorObras { ResultadoBajada.Falla(ErrorReserva.PAUSA, null) }
+        val pedidas = AtomicInteger(0)
+        val contando = DescargadorObras { pedidas.incrementAndGet(); avisa.bajar(it) }
+        val g = GestorReserva(
+            scope = CoroutineScope(Dispatchers.Default), dirBase = dir, descargador = contando,
+            parametros = { ParametrosReserva(n, tope) }, registrar = { registro += it }, iniciar = false,
+        )
+        g.procesar(pedido(orden(30), 0))
+        assertEquals("de a una y corta al primer aviso", 1, pedidas.get())
+        assertNull(g.estado.value.ultimoError)
+    }
+
+    @Test
     fun alAbrirBajaLasNProximas() = runBlocking {
         val g = gestor()
         g.procesar(pedido(orden(30), 0))
@@ -155,13 +185,13 @@ class GestorReservaTest {
     }
 
     @Test
-    fun bajaDeAVariasALaVezPeroNoDeMasDeTres() = runBlocking {
+    fun bajaDeAUnaALaVezPorDefecto() = runBlocking {
         n = 12
         descargador.demoraMs = 40
         val g = gestor()
         g.procesar(pedido(orden(50), 0))
         assertEquals(12, enDisco().size)
-        assertTrue("simultáneas ${descargador.maximoSimultaneas.get()}", descargador.maximoSimultaneas.get() in 2..3)
+        assertEquals(1, descargador.maximoSimultaneas.get())
     }
 
     @Test

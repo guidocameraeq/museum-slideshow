@@ -1,7 +1,7 @@
 package local.museumslideshow.reserva
 
 /** Por qué falló la última bajada (Estado lo cuenta con una frase de strings.xml). */
-enum class ErrorReserva { SIN_INTERNET, ESPACIO_LLENO, NO_DECODIFICA, MUY_GRANDE, DRIVE }
+enum class ErrorReserva { SIN_INTERNET, ESPACIO_LLENO, NO_DECODIFICA, MUY_GRANDE, DRIVE, PAUSA }
 
 /** Lo que la reserva sabe de sí misma, para Inicio, Conexión y Estado. */
 data class EstadoReserva(

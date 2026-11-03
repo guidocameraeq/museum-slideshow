@@ -20,6 +20,7 @@ import local.museumslideshow.catalogo.Catalogo
 import local.museumslideshow.sync.ArchivoExcedeTope
 import local.museumslideshow.sync.DriveApi
 import local.museumslideshow.sync.ErrorDrive
+import local.museumslideshow.sync.PausaDriveException
 import local.museumslideshow.sync.ProcesadorImagen
 import local.museumslideshow.sync.Sincronizador
 
@@ -63,6 +64,8 @@ class DescargadorDrive(
                 api.bajar(obra.id, original, Sincronizador.MAX_IMAGEN)
             } catch (e: ArchivoExcedeTope) {
                 return ResultadoBajada.Falla(ErrorReserva.MUY_GRANDE, null)
+            } catch (e: PausaDriveException) {
+                return ResultadoBajada.Falla(ErrorReserva.PAUSA, null)
             } catch (e: ErrorDrive) {
                 return if (e.codigoHttp == null) ResultadoBajada.Falla(ErrorReserva.SIN_INTERNET, null)
                 else ResultadoBajada.Falla(ErrorReserva.DRIVE, e.codigoHttp.toString())
@@ -111,7 +114,10 @@ class GestorReserva(
     private val descargador: DescargadorObras,
     private val parametros: () -> ParametrosReserva,
     private val registrar: (String) -> Unit = {},
-    private val paralelo: Int = 3,
+    /** De a una (Drive se enoja si se le baja de golpe); el respiro entre descargas lo pone la API ([local.museumslideshow.sync.DriveApiConPausa]). */
+    private val paralelo: Int = 1,
+    /** Si Google pidió una pausa: no se baja nada (la galería sigue con lo guardado). */
+    private val enPausa: () -> Boolean = { false },
     iniciar: Boolean = true,
 ) : EnlaceReserva {
 
@@ -171,6 +177,10 @@ class GestorReserva(
         _estado.update { it.copy(conPedido = true) }
         refrescar(0)
         if (plan.aBajar.isEmpty()) return
+        if (enPausa()) {
+            registrar("Reserva: Drive pidió una pausa; no se baja nada hasta que termine")
+            return
+        }
 
         val guardadas = bajadasEnDisco()
         val estimado = if (guardadas.isEmpty()) Reserva.BYTES_POR_OBRA_ESTIMADO else (bytesObras() / guardadas.size).coerceAtLeast(1L)
@@ -225,12 +235,21 @@ class GestorReserva(
             sinEspacio.set(true)
             return
         }
+        if (enPausa()) {
+            corte.set(true)
+            return
+        }
         when (val r = descargador.bajar(ObraRef(id, nombre))) {
             is ResultadoBajada.Lista -> {
                 registrar("Reserva: obra lista ${Registro.limpiar(nombre)} en ${r.ms} ms")
                 _estado.update { it.copy(version = it.version + 1, sinInternet = false) }
             }
             is ResultadoBajada.Falla -> {
+                if (r.error == ErrorReserva.PAUSA) {
+                    corte.set(true)
+                    registrar("Reserva: Drive pidió una pausa; se corta la tanda")
+                    return
+                }
                 fallas.incrementAndGet()
                 val extra = r.detalle?.let { " $it" } ?: ""
                 registrar("Reserva: no se pudo bajar ${Registro.limpiar(nombre)} (${r.error}$extra)")

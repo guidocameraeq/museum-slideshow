@@ -29,6 +29,7 @@ class PreferenciasTest {
         assertEquals(1500, p.duracionTransicionMs)
         assertEquals(SincronizarCada.SEIS_HORAS, p.sincronizarCada)
         assertEquals(EspacioMaximo.UN_GB, p.espacioMaximo)
+        assertEquals(RitmoBajada.TRANQUILO, p.ritmoBajada)
         assertNull(p.carpetaDrive)
     }
 

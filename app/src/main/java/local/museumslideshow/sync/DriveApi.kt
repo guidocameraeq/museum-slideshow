@@ -31,7 +31,7 @@ data class ArchivoDrive(
 }
 
 /** Error de Drive. Jamás lleva la URL (que trae la clave): solo el código HTTP y el ID. */
-class ErrorDrive(val codigoHttp: Int?, val archivoId: String) :
+class ErrorDrive(val codigoHttp: Int?, val archivoId: String, val pausa: MotivoPausa? = null) :
     Exception("Drive: HTTP ${codigoHttp ?: "sin respuesta"} (id $archivoId)")
 
 /** El archivo pasó el tope de bytes permitido mientras se bajaba. */

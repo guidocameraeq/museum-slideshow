@@ -23,6 +23,8 @@ data class ResultadoSync(
     val borradas: Int,
     val salteadas: Int,
     val problemas: List<Problema>,
+    /** Si Google pidió una pausa: hasta cuándo no se le pide nada a Drive. En ese caso no hay problemas por archivo. */
+    val pausaHastaMs: Long? = null,
 )
 
 /**
@@ -54,6 +56,16 @@ class Sincronizador(
 
     /** Un solo sincronizador a la vez en todo el proceso (la app y el Worker no se pisan). */
     fun sincronizar(carpetaId: String): ResultadoSync = synchronized(CANDADO) {
+        try {
+            sincronizarBloqueado(carpetaId)
+        } catch (e: PausaDriveException) {
+            // Se corta al instante: sin problemas por archivo y con el índice como estaba.
+            File(dirBase, "tmp").deleteRecursively()
+            ResultadoSync(false, bajadas, borradas, salteadas, emptyList(), e.hastaMs)
+        }
+    }
+
+    private fun sincronizarBloqueado(carpetaId: String): ResultadoSync {
         bajadas = 0; borradas = 0; salteadas = 0; problemas.clear(); huboErrorRed = false
         planes.clear(); gruposNuevos.clear(); conservadas.clear(); gruposConservados.clear()
 

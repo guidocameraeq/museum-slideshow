@@ -49,6 +49,7 @@ import local.museumslideshow.reserva.EstadoReserva
 import local.museumslideshow.catalogo.TipoProblema
 import local.museumslideshow.galeria.esTeclaVolumen
 import local.museumslideshow.sync.Sincronizacion
+import local.museumslideshow.sync.PausaDrive
 
 private enum class Tipo { SECCION, NORMAL, TENUE, AVISO, BIEN, CODIGO, GRUPO }
 
@@ -127,9 +128,14 @@ private fun armarLineas(
     val buena = cat?.ultimaSincronizacionBuena
     l += if (buena != null) Linea(res.getString(R.string.est_ultima_buena, fechaHora(res, buena)), Tipo.NORMAL)
     else Linea(res.getString(R.string.est_ultima_buena_nunca), Tipo.TENUE)
+    val pausaHasta = PausaDrive.de(ctx).hastaActivo()
     val intento = cat?.ultimoIntento
     val pIntento = cat?.problemaUltimoIntento
     l += when {
+        pausaHasta != null -> Linea(
+            res.getString(if (prefs.sincronizarCada.horas == null) R.string.est_pausa_drive_mano else R.string.est_pausa_drive, PausaDrive.horaTexto(pausaHasta)),
+            Tipo.AVISO,
+        )
         intento == null -> Linea(res.getString(R.string.est_intento_nunca), Tipo.TENUE)
         pIntento?.tipo == TipoProblema.ERROR_RED ->
             Linea(res.getString(if (obras > 0) R.string.est_sin_conexion else R.string.est_sin_conexion_sin_obras, hora(res, intento)), Tipo.AVISO)
@@ -171,6 +177,7 @@ private fun armarLineas(
         ErrorReserva.NO_DECODIFICA -> l += Linea(res.getString(R.string.est_reserva_error_imagen), Tipo.AVISO)
         ErrorReserva.MUY_GRANDE -> l += Linea(res.getString(R.string.est_reserva_error_grande), Tipo.AVISO)
         ErrorReserva.DRIVE -> l += Linea(res.getString(R.string.est_reserva_error_drive, reserva?.detalleError ?: "?"), Tipo.AVISO)
+        ErrorReserva.PAUSA -> {}
     }
 
     // --- Espacio
@@ -187,7 +194,8 @@ private fun armarLineas(
 
     // --- Problemas (agrupados por galería)
     l += Linea(res.getString(R.string.est_sec_problemas), Tipo.SECCION)
-    val problemas = cat?.problemas.orEmpty()
+    // Con Drive en pausa no se listan los errores de red por archivo: ya lo explica la línea de Sincronización.
+    val problemas = cat?.problemas.orEmpty().filter { pausaHasta == null || it.tipo != TipoProblema.ERROR_RED }
     if (problemas.isEmpty()) {
         l += Linea(res.getString(R.string.est_sin_problemas), Tipo.TENUE)
     } else {

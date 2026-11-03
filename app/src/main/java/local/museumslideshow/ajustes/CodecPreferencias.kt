@@ -35,11 +35,12 @@ object CodecPreferencias {
         const val GALERIAS_NUEVAS = "galerias_nuevas"
         const val RESERVA = "reserva"
         const val VISTA_GALERIAS = "vista_galerias"
+        const val RITMO_BAJADA = "ritmo_bajada"
 
         val TODAS = listOf(
             TEMA, MODO, HORA_DIA, HORA_NOCHE, PARED_CLARO, PARED_OSCURO, MARCO, TAMANO, COMPLETA_CON_MARCO, EXPLICACION,
             SALA, CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, TRANSICION, DURACION, SINCRONIZAR_CADA, ESPACIO_MAXIMO, CARPETA,
-            GALERIAS_SELECCION, GALERIAS_NUEVAS, RESERVA, VISTA_GALERIAS,
+            GALERIAS_SELECCION, GALERIAS_NUEVAS, RESERVA, VISTA_GALERIAS, RITMO_BAJADA,
         )
     }
 
@@ -82,6 +83,7 @@ object CodecPreferencias {
         m[K.GALERIAS_NUEVAS] = p.galeriasNuevas.name
         m[K.RESERVA] = p.reservaObras.toString()
         m[K.VISTA_GALERIAS] = p.vistaGalerias.name
+        m[K.RITMO_BAJADA] = p.ritmoBajada.name
         return m
     }
 
@@ -119,6 +121,7 @@ object CodecPreferencias {
             galeriasNuevas = enum<GaleriasNuevas>(m[K.GALERIAS_NUEVAS]) ?: d.galeriasNuevas,
             reservaObras = m[K.RESERVA]?.toIntOrNull()?.takeIf { it in Preferencias.RESERVA_OBRAS } ?: d.reservaObras,
             vistaGalerias = enum<VistaGalerias>(m[K.VISTA_GALERIAS]) ?: d.vistaGalerias,
+            ritmoBajada = enum<RitmoBajada>(m[K.RITMO_BAJADA]) ?: d.ritmoBajada,
         )
     }
 

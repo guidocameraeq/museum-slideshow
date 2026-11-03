@@ -47,6 +47,8 @@
     <string name="sync_al_dia">Todo al día</string>
     <string name="sync_con_avisos">Listo, con avisos. Mirá Estado.</string>
     <string name="sync_fallo">No se pudo sincronizar. Mirá Estado para ver qué pasó.</string>
+    <string name="sync_pausa">Google pidió una pausa: se reintenta a las %1$s</string>
+    <string name="sync_pausa_mano">Google pidió una pausa: podés volver a sincronizar a partir de las %1$s</string>
 
     <!-- Pantalla sin obras -->
     <string name="vacio_sincronizando_titulo">Bajando las obras…</string>
@@ -85,6 +87,7 @@
     <string name="aj_duracion">Duración de la transición</string>
     <string name="aj_sincronizar">Sincronizar cada</string>
     <string name="aj_espacio">Espacio máximo</string>
+    <string name="aj_ritmo">Ritmo de bajada</string>
     <string name="aj_reserva">Reserva de obras</string>
     <string name="aj_galerias_nuevas">Galerías nuevas</string>
     <string name="v_tildadas">Tildadas</string>
@@ -153,6 +156,8 @@
     <string name="espacio_medio">0,5 GB</string>
     <string name="espacio_1">1 GB</string>
     <string name="espacio_2">2 GB</string>
+    <string name="ritmo_tranquilo">Tranquilo</string>
+    <string name="ritmo_normal">Normal</string>
     <string name="carpeta_de_fabrica">La de fábrica</string>
     <string name="carpeta_ayuda">Se cambia desde la PC</string>
     <string name="protector_proximamente">Llega en la próxima versión</string>
@@ -166,6 +171,8 @@
     <string name="est_intento_nunca">Todavía no se intentó sincronizar.</string>
     <string name="est_intento_ok">Último intento: %1$s. Salió bien.</string>
     <string name="est_intento_con_errores">Último intento: %1$s. Terminó con errores (mirá Problemas).</string>
+    <string name="est_pausa_drive">Google pidió una pausa por demasiadas descargas. Se vuelve a intentar sola a las %1$s.</string>
+    <string name="est_pausa_drive_mano">Google pidió una pausa por demasiadas descargas. Podés volver a sincronizar a partir de las %1$s.</string>
     <string name="est_sin_conexion">No se pudo conectar con Drive (%1$s). Se muestran las obras guardadas.</string>
     <string name="est_sin_conexion_sin_obras">No se pudo conectar con Drive (%1$s) y todavía no hay obras guardadas.</string>
     <string name="est_sec_obras">Obras bajadas</string>
