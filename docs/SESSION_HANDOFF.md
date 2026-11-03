@@ -13,7 +13,7 @@
 
 ## Estado
 - TV: última versión instalada. **Protector = Museum Slideshow** (Guido pidió dejarlo puesto; el anterior guardado es el Ambient). Tema galería moderna, pared gris cálido, 10 min por obra (ajustes de Guido).
-- Drive en pausa (bloqueo de Google) al cerrar; la reserva quedó VACÍA (la versión vieja borró Rococó para hacer lugar a obras que no pudo bajar). Se llena sola cuando Google levante el bloqueo. Estado: 11 de 23 galerías catalogadas.
+- Bloqueo: desde la PC se levantó 23:15; a las 23:39 la tele reintentó SOLA y sincronizó bien (44 bajadas, 0 problemas); a las 23:41 la primera obra de la reserva volvió a recibir el 403 → pausa hasta 00:11 (manejada bien, sin cierres). La reserva quedó VACÍA (la versión vieja borró Rococó): **al prender la tele el protector puede no tener obras** hasta que baje. Estado: 11 de 23 galerías (el resto seguramente sigue subiendo a Drive).
 - La TV quedó apagada (pedido de Guido).
 
 ## En curso

@@ -5,7 +5,7 @@
 2026-11-02 — ver SESSION_HANDOFF.md
 
 ## 🔴 Crítico
-- [ ] Verificar que, levantado el bloqueo de Google, la sincronización trae las 23 galerías y la reserva vuelve a llenarse (hoy vacía). Si el bloqueo se repite, bajar menos: copias a 3840 px y/o menos pedidos por sincronización.
+- [ ] Verificar que, levantado el bloqueo de Google, la sincronización trae las 23 galerías y la reserva vuelve a llenarse (hoy vacía). Si el bloqueo se repite (volvió a las 23:41, a 3 min de levantarse), probar bajar las obras por el `thumbnailLink` de Drive con `=s3840` (otro servidor de Google, ya achicado a 4K: menos bloqueos y menos GB) en vez de `alt=media`; o copias a 3840 px y menos pedidos.
 
 ## 🟠 Importante
 - [ ] Guido decide: originales vs copias a 3840 px en "Galerías" (recomendado: copias). Lo regenera el curador.
