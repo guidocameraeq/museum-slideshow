@@ -2,6 +2,20 @@
 
 > Historia permanente. `/cierre` agrega una entrada AL TOPE en cada sesión. Orden descendente estricto, sin excepciones. Nada de versiones duplicadas en otros docs.
 
+## 2026-11-02 (23:40) — Sesión 4: protector e interruptor; biblioteca real; pausa ante el bloqueo de Google
+
+### Added
+- Protector de pantalla `ProtectorMuseo` (DreamService): la misma galería, 4K, sin Barra; Atrás cierra lo abierto antes de salir; el volumen nunca se consume. Sincroniza al arrancar solo si toca.
+- Interruptor "Usar como protector / Volver al anterior" (guarda y restaura el anterior; una sola función escribe `screensaver_components`) y pantalla Protector según el borrador `05-protector.html` (con "Probarlo ahora"). Extra de prueba `--es protector usar|volver`.
+- Pausa ante "Google pidió una pausa" (429 / 403 de consultas automáticas o cuota): 30 min→6 h, respetada por todo, con reintento solo y mensaje en Estado. Ajuste "Ritmo de bajada" (Tranquilo / Normal). 374 tests.
+
+### Changed
+- `MotorApp`: catálogo, ajustes, sincronización y una sola reserva por proceso, compartidos por la app y el protector. La reserva baja de a una.
+- La app lee la biblioteca real: carpeta "Galerías" (23 colecciones del curador).
+
+### Fixed
+- La app se cerraba al leer un 403 (`InputStream.readNBytes` no existe en Android 12).
+
 ## 2026-11-02 (21:10) — Cierre formal (cambio de chat)
 
 ### Changed

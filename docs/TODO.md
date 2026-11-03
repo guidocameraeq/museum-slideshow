@@ -5,23 +5,24 @@
 2026-11-02 — ver SESSION_HANDOFF.md
 
 ## 🔴 Crítico
-- (nada)
+- [ ] Verificar que, levantado el bloqueo de Google, la sincronización trae las 23 galerías y la reserva vuelve a llenarse (hoy vacía). Si el bloqueo se repite, bajar menos: copias a 3840 px y/o menos pedidos por sincronización.
 
 ## 🟠 Importante
-- [ ] Probar en la TV lo que falta: sin internet (el pase sigue con la reserva y Estado dice "No se pudo conectar con Drive"; criterio del SPEC de menú y reserva), "Sincronizar cada: Solo a mano" (desaparece de `dumpsys jobscheduler`), cambiar Tiempo por obra (la obra siguiente dura lo nuevo), reinicio real de la tele.
-- [ ] Guido mira a ojo la Barra, las pantallas de ajustes y Estado (Inicio y Galerías ya tienen diseño aprobado).
-- [ ] Avisarle al curador: `Sana/prueba-1080-vs-4k.jpg` (fuera del JSON) y `Grupo prueba/{Uno,Dos}` en "Galerías-prueba" los puso Opus para probar.
-- [ ] Reserva: la sincronización del Worker en segundo plano no dispara la reserva (se rearma al abrir la app o la galería); revisar en la sesión 4 que el protector la dispare.
+- [ ] Guido decide: originales vs copias a 3840 px en "Galerías" (recomendado: copias). Lo regenera el curador.
+- [ ] La reserva borra lo guardado aunque no pueda bajar lo que lo reemplaza (pasó con Rococó antes de la pausa): no borrar una obra hasta tener lista la que entra.
+- [ ] Probar en la TV lo que falta: sin internet (el pase sigue con la reserva), "Sincronizar cada: Solo a mano" (desaparece de `dumpsys jobscheduler`), cambiar Tiempo por obra, reinicio real de la tele, pantalla Protector sin permiso.
+- [ ] Guido mira a ojo la Barra, las pantallas de ajustes y Estado.
 - [ ] Conseguir fotos de marcos reales libres de derechos (negro fino, negro con filete dorado, madera con adornos, dorado, **dorado redondo**) y fijar sus nombres cortos para el campo `marco` de `docs/formato-galeria.md`. El código ya está listo (`MarcoImagen`, `res/drawable-nodpi/marco_<id>.png`); cuidar que `shrinkResources` no los borre.
-- [ ] Sesión 4: protector (`DreamService`) e interruptor "Usar como protector / Volver al anterior". Reusar `GaleriaEnPantalla` y las dos superficies; verificar 4K y fundido también en el protector.
+- [ ] Tondos: ninguna obra de la biblioteca real trae `forma`; si Guido ve alguno redondo, avisarle al curador para marcarlo.
 - [ ] Sesión 5: prueba de 2 horas y todos los criterios del SPEC-0 en la TV.
-- [ ] Curador: exportar la biblioteca real a una carpeta "Galerías" nueva (espera las imágenes de la otra PC de Guido) y cambiar `drive.carpeta`.
 
 ## 🟡 Cuando se pueda
-- [ ] Guido mira el fundido a ojo: a mitad del cruce, marcos y textos de una escena se ven un instante sobre la obra de la otra (las dos capas se cruzan por separado). Si molesta, ajustar.
+- [ ] Lint: 5 errores `NewApi` viejos (API 29 en `PintorSuperficie`, minSdk 28). Inofensivos en la TV (API 31); subir `minSdk` a 29 o envolver.
+- [ ] `pie_protector` en `strings.xml` quedó sin uso.
+- [ ] Guido mira el fundido a ojo: a mitad del cruce, marcos y textos de una escena se ven un instante sobre la obra de la otra. Si molesta, ajustar.
 - [ ] Ícono y banner definitivos: templo griego (tipo Partenón). Hoy hay uno provisorio.
-- [ ] Rotación EXIF en `ProcesadorImagenAndroid` (hoy no se aplica; las obras casi nunca la traen).
-- [ ] La grilla de 1 px se ve apenas: el sincronizador guarda JPEG 95, que suaviza rayas de 1 px. Para obras normales no se nota (la comparación 1080/4K dio bien).
+- [ ] Rotación EXIF en `ProcesadorImagenAndroid` (hoy no se aplica).
+- [ ] La grilla de 1 px se ve apenas: el sincronizador guarda JPEG 95, que suaviza rayas de 1 px.
 
 ## 🟢 Ideas / algún día
 - [ ] Más temas; zoom o paneo lento sobre la obra (fuera de la v1).
