@@ -4,7 +4,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Solo se declara para que `adb shell pm grant` pueda darlo (lo usa el interruptor del protector, sesión 4). La app NO escribe ajustes del sistema en esta versión; Estado solo lo consulta. -->
+    <!-- Permiso especial: se da UNA vez por adb (`pm grant`). Lo usa solo el interruptor del protector, para escribir `screensaver_components`. -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
 
     <uses-feature android:name="android.software.leanback" android:required="false" />
@@ -27,5 +27,21 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- El protector de pantalla. El nombre de esta clase es identidad fija (ver CLAUDE.md). -->
+        <service
+            android:name=".protector.ProtectorMuseo"
+            android:exported="true"
+            android:icon="@drawable/icono"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.dream"
+                android:resource="@xml/protector" />
+        </service>
     </application>
 </manifest>

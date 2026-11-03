@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Borrador 5 — Protector</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fondo:#0E0E10; --panel:#1F1F22; --panel2:#34343A; --texto:#E8E6E1; --tenue:#A19D95;
+    --dorado:#C9A54E; --aviso:#E0A050; --bien:#8FBF8F; --foco:#F4F1EA; --focotx:#1A1A1C;
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; background:#18181b; color:var(--texto); font:400 16px Inter, sans-serif; }
+  header { padding:14px 22px; background:#111; border-bottom:1px solid #2a2a2e; }
+  header h1 { font:600 18px Inter; margin:0; }
+  main { padding:18px 22px 40px; max-width:1500px; margin:0 auto; }
+  .titulo-lienzo { margin:26px 0 10px; font:600 20px Inter; color:var(--texto); }
+  .titulo-lienzo span { color:var(--tenue); font-weight:400; }
+  .wrap { position:relative; width:100%; background:#000; overflow:hidden; border-radius:10px; }
+  .stage { position:absolute; left:0; top:0; width:1920px; height:1080px; transform-origin:0 0; overflow:hidden; background:var(--fondo); font-family:Inter, sans-serif; }
+  .nota { margin-top:34px; padding:22px 28px; background:#1d1d21; border:1px solid #3a3a40; border-radius:12px; color:var(--texto); font-size:16px; line-height:1.6; max-width:1100px; }
+  .nota h2 { font:600 18px Inter; margin:0 0 10px; }
+  .nota ul { margin:0 0 14px; padding-left:22px; }
+  .nota b { color:var(--dorado); font-weight:600; }
+  /* modo captura: ?lienzo=N muestra un solo lienzo a 1920x1080 */
+  html.solo, html.solo body { margin:0; padding:0; width:1920px; height:1080px; overflow:hidden; background:#000; }
+  html.solo header, html.solo .nota, html.solo .titulo-lienzo, html.solo .wrap.oculto { display:none !important; }
+  html.solo main { padding:0; margin:0; max-width:none; }
+  html.solo .wrap { position:fixed; left:0; top:0; width:1920px; height:1080px; border-radius:0; }
+  html.solo .stage { transform:none !important; }
+
+  /* ---------- piezas de la app (iguales al borrador 4) ---------- */
+  .abs { position:absolute; }
+  .t-h1 { font:600 52px/1.1 Inter; }
+  .tenue { color:var(--tenue); }
+  .ayuda { position:absolute; left:0; right:0; bottom:0; height:84px; padding:0 120px; display:flex; align-items:center; gap:46px; background:rgba(0,0,0,.55); font:400 26px Inter; color:var(--tenue); }
+  .ayuda b { display:inline-block; min-width:54px; text-align:center; padding:3px 12px; margin-right:12px; border-radius:9px; background:rgba(255,255,255,.14); color:var(--texto); font:600 24px Inter; }
+  .bt { position:absolute; display:flex; align-items:center; gap:16px; border-radius:16px; background:rgba(255,255,255,.14); color:var(--texto); font:500 32px Inter; padding:0 34px; }
+  .bt.foco { background:var(--foco); color:var(--focotx); font-weight:600; box-shadow:0 0 0 6px rgba(244,241,234,.28), 0 14px 40px rgba(0,0,0,.55); transform:scale(1.025); }
+  .bt.apagado { background:rgba(255,255,255,.06); color:#6a675f; }
+  .bt .ic { width:44px; height:44px; flex:none; }
+  .bt .ic svg { width:100%; height:100%; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .panel { position:absolute; left:120px; right:120px; border-radius:18px; background:var(--panel); padding:26px 34px; }
+  .dato { display:flex; align-items:center; gap:14px; font:400 30px/1.3 Inter; color:var(--texto); }
+  .dato i { width:14px; height:14px; border-radius:50%; background:var(--dorado); flex:none; }
+  .dato.ok i { background:var(--bien); }
+  .dato.mal i { background:var(--aviso); }
+  .dato b { font-weight:600; }
+  .aviso-ok { position:absolute; left:120px; right:120px; height:84px; border-radius:16px; background:rgba(143,191,143,.14); border:2px solid rgba(143,191,143,.55); color:var(--bien); display:flex; align-items:center; gap:18px; padding:0 34px; font:600 32px Inter; }
+  .aviso-ok svg { width:40px; height:40px; stroke:var(--bien); fill:none; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+  .ayuda-txt { position:absolute; left:120px; right:120px; font:400 26px/1.45 Inter; color:var(--tenue); }
+  .cmd { position:absolute; left:120px; right:120px; border-radius:12px; background:#0a0a0b; border:2px solid #3a3a40; padding:22px 30px; font:500 28px 'Consolas','Courier New',monospace; color:#F2E7C4; word-break:break-all; }
+</style>
+</head>
+<body>
+<header><h1>Protector — borrador 5</h1></header>
+<main>
+<div class="titulo-lienzo">1 · Hoy está el de Google <span>(permiso dado)</span></div>
+<div class="wrap" data-n="1"><div class="stage">
+  <div class="abs t-h1" style="left:120px;top:44px">Protector</div>
+  <div class="abs tenue" style="left:120px;top:111px;font:400 24px Inter">Lo que muestra la tele cuando queda quieta</div>
+
+  <div class="bt foco" style="left:120px;top:200px;width:1000px;height:112px"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/></svg></span><span>Usar Museum Slideshow como protector</span></div>
+
+  <div class="panel" style="top:370px">
+    <div class="dato"><i></i><span>Protector de hoy: <b>Ambient de Google</b></span></div>
+    <div class="dato ok" style="margin-top:18px"><i></i><span>Permiso para cambiar el protector: otorgado.</span></div>
+  </div>
+
+  <div class="ayuda-txt" style="top:582px">Cuánto espera la tele antes de arrancarlo lo elegís en los ajustes de Google TV (Sistema → Energía y protector).</div>
+
+  <div class="ayuda"><span><b>OK</b>Elegir</span><span><b>Atrás</b>Volver al inicio</span></div>
+</div></div>
+
+<div class="titulo-lienzo">2 · Recién activado / ya está el nuestro <span>(el anterior era Ambient de Google)</span></div>
+<div class="wrap" data-n="2"><div class="stage">
+  <div class="abs t-h1" style="left:120px;top:44px">Protector</div>
+  <div class="abs tenue" style="left:120px;top:111px;font:400 24px Inter">Lo que muestra la tele cuando queda quieta</div>
+
+  <div class="aviso-ok" style="top:190px"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Listo: cuando la tele quede quieta, arranca la galería</span></div>
+
+  <div class="bt foco" style="left:120px;top:312px;width:1000px;height:112px"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></span><span>Volver al anterior (Ambient de Google)</span></div>
+  <div class="bt" style="left:120px;top:452px;width:1000px;height:112px"><span class="ic"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span><span>Probarlo ahora</span></div>
+
+  <div class="panel" style="top:630px">
+    <div class="dato ok"><i></i><span>Protector de hoy: <b>Museum Slideshow</b></span></div>
+    <div class="dato" style="margin-top:18px"><i style="background:var(--tenue)"></i><span class="tenue">El anterior era: Ambient de Google</span></div>
+  </div>
+
+  <div class="ayuda"><span><b>▲ ▼</b>Moverse</span><span><b>OK</b>Elegir</span><span><b>Atrás</b>Volver al inicio</span></div>
+</div></div>
+
+<div class="titulo-lienzo">3 · Falta el permiso <span>(el botón principal no se puede usar)</span></div>
+<div class="wrap" data-n="3"><div class="stage">
+  <div class="abs t-h1" style="left:120px;top:44px">Protector</div>
+  <div class="abs tenue" style="left:120px;top:111px;font:400 24px Inter">Lo que muestra la tele cuando queda quieta</div>
+
+  <div class="bt apagado" style="left:120px;top:200px;width:1000px;height:112px"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/></svg></span><span>Usar Museum Slideshow como protector</span></div>
+
+  <div class="abs dato mal" style="left:120px;top:350px"><i></i><span style="color:var(--aviso);font-weight:500">Permiso para cambiar el protector: falta.</span></div>
+  <div class="ayuda-txt" style="top:410px;color:var(--texto)">Es un permiso que se da una sola vez. Para darlo, conectá la tele a la PC y ejecutá este comando:</div>
+  <div class="cmd" style="top:520px">adb shell pm grant local.museumslideshow android.permission.WRITE_SECURE_SETTINGS</div>
+
+  <div class="panel" style="top:670px;padding:20px 34px">
+    <div class="dato"><i></i><span>Protector de hoy: <b>Ambient de Google</b></span></div>
+  </div>
+
+  <div class="ayuda"><span><b>Atrás</b>Volver al inicio</span></div>
+</div></div>
+
+<div class="titulo-lienzo">4 · El anterior era otro protector <span>(por ejemplo Aerial Views)</span></div>
+<div class="wrap" data-n="4"><div class="stage">
+  <div class="abs t-h1" style="left:120px;top:44px">Protector</div>
+  <div class="abs tenue" style="left:120px;top:111px;font:400 24px Inter">Lo que muestra la tele cuando queda quieta</div>
+
+  <div class="aviso-ok" style="top:190px"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Listo: cuando la tele quede quieta, arranca la galería</span></div>
+
+  <div class="bt foco" style="left:120px;top:312px;width:1000px;height:112px"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></span><span>Volver al anterior (Aerial Views)</span></div>
+  <div class="bt" style="left:120px;top:452px;width:1000px;height:112px"><span class="ic"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span><span>Probarlo ahora</span></div>
+
+  <div class="panel" style="top:630px">
+    <div class="dato ok"><i></i><span>Protector de hoy: <b>Museum Slideshow</b></span></div>
+    <div class="dato" style="margin-top:18px"><i style="background:var(--tenue)"></i><span class="tenue">El anterior era: Aerial Views</span></div>
+  </div>
+
+  <div class="ayuda"><span><b>▲ ▼</b>Moverse</span><span><b>OK</b>Elegir</span><span><b>Atrás</b>Volver al inicio</span></div>
+</div></div>
+
+<div class="nota">
+  <h2>Qué hace cada botón</h2>
+  <ul>
+    <li><b>Usar Museum Slideshow como protector</b>: la tele pasa a mostrar tus galerías cuando queda quieta.</li>
+    <li><b>Volver al anterior</b>: deja exactamente el protector que tenías antes.</li>
+    <li><b>Probarlo ahora</b>: lo arranca ya, para que lo veas sin esperar.</li>
+    <li><b>Atrás</b>: vuelve al inicio.</li>
+  </ul>
+  <h2>Dentro del protector</h2>
+  <ul style="margin-bottom:0">
+    <li><b>Izquierda / Derecha</b>: cambian de obra.</li>
+    <li><b>OK</b>: pantalla completa. <b>Mantener OK</b>: la explicación de la obra.</li>
+    <li><b>Atrás</b>: vuelve a la tele.</li>
+  </ul>
+</div>
+</main>
+<script>
+const qs = new URLSearchParams(location.search);
+const solo = qs.get('lienzo');
+if (solo) document.documentElement.classList.add('solo');
+function ajustar() {
+  document.querySelectorAll('.wrap').forEach(w => {
+    const st = w.firstElementChild;
+    if (solo) { if (w.dataset.n !== solo) w.classList.add('oculto'); return; }
+    const s = w.clientWidth / 1920;
+    st.style.transform = 'scale(' + s + ')';
+    w.style.height = (1080 * s) + 'px';
+  });
+}
+addEventListener('resize', ajustar);
+ajustar();
+</script>
+</body>
+</html>

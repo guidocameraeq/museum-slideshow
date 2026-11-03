@@ -36,7 +36,8 @@ import local.museumslideshow.galeria.esTeclaVolumen
 fun PantallaSinObras(
     motivo: MotivoSinObras,
     activa: Boolean,
-    alVerEstado: () -> Unit,
+    /** null = sin botón (el protector no tiene a dónde ir). */
+    alVerEstado: (() -> Unit)?,
     alVolver: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -77,7 +78,7 @@ fun PantallaSinObras(
                     val tecla = teclaDe(n.keyCode)
                     if (tecla == Tecla.OK || tecla == Tecla.ATRAS) {
                         if (n.action == KeyEvent.ACTION_DOWN && n.repeatCount == 0) {
-                            if (tecla == Tecla.OK) verEstado() else volver()
+                            if (tecla == Tecla.OK) verEstado?.invoke() else volver()
                         }
                         true
                     } else false
@@ -92,7 +93,7 @@ fun PantallaSinObras(
             Box(Modifier.padding(top = 24.dp).widthIn(max = 1200.dp)) {
                 BasicText(explicacion, style = estiloTexto(32, Paleta.Tenue, 400).copy(textAlign = TextAlign.Center, lineHeight = androidx.compose.ui.unit.TextUnit(46f, androidx.compose.ui.unit.TextUnitType.Sp)))
             }
-            Box(Modifier.padding(top = 56.dp)) {
+            if (alVerEstado != null) Box(Modifier.padding(top = 56.dp)) {
                 Boton(stringResource(R.string.vacio_ver_estado), conFoco = activa)
             }
         }

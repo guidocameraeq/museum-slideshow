@@ -51,3 +51,6 @@
 - **Inicio A** (la obra de la galería actual de fondo con velo a la izquierda, nombre grande, tres datos chicos, botón principal "Ver la galería" y seis botones) → aprobado. El B (tarjetas) queda descartado.
 - **Galerías**: tarjetas con la **tapa** (primera obra de cada galería) y tilde; los grupos con mosaico de tapas, OK entra. La lista con tildes queda como **segunda vista** (ajuste Tarjetas / Lista, por defecto Tarjetas).
 - Guido dio el borrador 4 por bueno para construir (02/11).
+
+## Pantalla Protector (borrador 5, 02/11)
+- Aprobado tal cual `05-protector.html`: un botón grande según el estado ("Usar Museum Slideshow como protector" / "Volver al anterior (<nombre>)"), "Probarlo ahora" cuando ya es el nuestro, franja verde "Listo" al activar, panel con el protector de hoy y el anterior, y sin permiso el botón apagado con el comando.

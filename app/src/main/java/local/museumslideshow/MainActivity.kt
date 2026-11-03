@@ -20,37 +20,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import local.museumslideshow.ajustes.AlmacenAjustes
 import local.museumslideshow.ajustes.GaleriaOpcion
 import local.museumslideshow.ajustes.GrupoAjustes
 import local.museumslideshow.ajustes.ListaAjustes
 import local.museumslideshow.ajustes.delGrupo
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.ajustes.PreferenciasDesdeTexto
-import local.museumslideshow.ajustes.SincronizarCada
 import local.museumslideshow.ajustes.estaTildada
 import local.museumslideshow.catalogo.Arbol
-import local.museumslideshow.catalogo.Catalogo
-import local.museumslideshow.galeria.ConstantesGaleria
-import local.museumslideshow.galeria.Pase
-import local.museumslideshow.reserva.DescargadorDrive
-import local.museumslideshow.reserva.GestorReserva
-import local.museumslideshow.reserva.ObraRef
-import local.museumslideshow.reserva.ParametrosReserva
-import local.museumslideshow.sync.DriveApiHttp
-import local.museumslideshow.sync.ProcesadorImagenAndroid
-import local.museumslideshow.sync.medirImagen
-import local.museumslideshow.temas.RegistroTemas
-import local.museumslideshow.catalogo.CatalogoCargado
 import local.museumslideshow.galeria.AccionesApp
 import local.museumslideshow.galeria.GaleriaEnPantalla
 import local.museumslideshow.galeria.SaltoEscena
@@ -65,17 +43,11 @@ import local.museumslideshow.pantallas.ResumenInicio
 import local.museumslideshow.pantallas.PantallaEstado
 import local.museumslideshow.pantallas.PantallaSinObras
 import local.museumslideshow.pantallas.SinObras
-import local.museumslideshow.sync.ResultadoSync
-import local.museumslideshow.sync.Sincronizacion
-import local.museumslideshow.sync.SincronizarWorker
+import local.museumslideshow.protector.ResultadoInterruptor
 
 class MainActivity : ComponentActivity() {
-    private var catalogo by mutableStateOf<CatalogoCargado?>(null)
-    private var sincronizando by mutableStateOf(false)
-    private var mensajeSync by mutableStateOf<String?>(null)
-
-    /** null hasta que se leen los ajustes guardados (un instante al abrir). */
-    private var preferencias by mutableStateOf<Preferencias?>(null)
+    /** Lo compartido con el protector (ajustes, catálogo, sincronización, reserva): una sola vez por proceso. */
+    private val motor by lazy { MotorApp.de(applicationContext) }
     private var salto by mutableStateOf<SaltoEscena?>(null)
 
     /** La pantalla al frente (la Barra no cuenta: vive dentro de la galería). Al abrir la app es Inicio. */
@@ -88,54 +60,9 @@ class MainActivity : ComponentActivity() {
     private var galeriaAbierta by mutableStateOf(false)
     private var focoInicio by mutableIntStateOf(0)
 
-    private val almacen by lazy { AlmacenAjustes.de(applicationContext) }
-
-    /** La reserva de obras: vive con la app (sigue bajando aunque la galería no esté abierta). */
-    private val scopeReserva = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val reserva: GestorReserva by lazy {
-        val dir = Sincronizacion.dirBase(applicationContext)
-        GestorReserva(
-            scope = scopeReserva,
-            dirBase = dir,
-            descargador = DescargadorDrive(DriveApiHttp(BuildConfig.DRIVE_API_KEY), dir, ProcesadorImagenAndroid()),
-            parametros = {
-                val p = preferencias ?: Preferencias()
-                ParametrosReserva(p.reservaObras, p.espacioMaximo.bytes)
-            },
-            registrar = { Log.i(Registro.TAG, Registro.limpiar(it)) },
-        )
-    }
-    private var claveReserva: List<Any?>? = null
-
-    /**
-     * Con la galería cerrada nadie le dice a la reserva dónde va el pase: se lo calcula acá, con el mismo orden y la misma
-     * mezcla que la galería (empieza en la primera obra, que es donde abre). Con la galería abierta lo hace ella.
-     */
-    private fun pedirReservaSinGaleria() {
-        if (galeriaAbierta) return
-        val cat = catalogo ?: return
-        val p = preferencias ?: return
-        val pase = Pase.armar(cat.galerias, p, RegistroTemas.de(p.tema), Pase.SEMILLA_SESION)
-        val extras = Pase.obrasSinMedidas(cat.galerias, p).take(ConstantesGaleria.MAX_SIN_MEDIDAS).map { ObraRef(it.driveId, it.archivo) }
-        if (pase == null) {
-            if (extras.isNotEmpty()) reserva.actualizar(emptyList(), 0, extras)
-            return
-        }
-        reserva.actualizar(pase.ordenDeObras().map { ObraRef(it.driveId, it.archivo) }, 0, extras)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        scopeReserva.cancel()
-    }
-    private var cadaProgramada: SincronizarCada? = null
-    private var carpetaVista: String? = null
-    private var primeraLectura = true
-    private var repetirSync = false
-
     private val acciones = AccionesApp(
-        cambiar = { t -> cambiarAjustes(t) },
-        sincronizar = { sincronizarAhora() },
+        cambiar = { t -> motor.cambiarAjustes(t) },
+        sincronizar = { motor.sincronizarAhora() },
         // El botón "Ajustes" de la Barra abre Apariencia (lo que se toca mirando la obra); Atrás vuelve a la galería.
         abrirAjustes = { irA(PantallaApp.APARIENCIA, atrasA = PantallaApp.GALERIA) },
     )
@@ -144,9 +71,11 @@ class MainActivity : ComponentActivity() {
     private fun irA(destino: PantallaApp, atrasA: PantallaApp = PantallaApp.INICIO) {
         when {
             destino == PantallaApp.GALERIA -> galeriaAbierta = true
-            destino == PantallaApp.INICIO -> { galeriaAbierta = false; salto = null; pedirReservaSinGaleria() }
+            destino == PantallaApp.INICIO -> { galeriaAbierta = false; salto = null }
             atrasA != PantallaApp.GALERIA -> galeriaAbierta = false
         }
+        motor.galeriaAbierta(this, galeriaAbierta)
+        if (destino == PantallaApp.INICIO) motor.pedirReservaSinGaleria()
         atras = atrasA
         pantalla = destino
     }
@@ -159,32 +88,14 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             aplicarIntent(intent)
-            // La pantalla sigue a los ajustes guardados: cambiar uno (Barra, Ajustes o adb) se ve en ese momento.
-            launch {
-                almacen.flow.collect { p ->
-                    preferencias = p
-                    Log.i(Registro.TAG, Registro.limpiar("Preferencias efectivas: $p"))
-                    alCambiarAjustes(p)
-                    val clave = listOf(p.seleccionGalerias, p.galeriasNuevas, p.orden, p.galeria, p.pared, p.tema, p.reservaObras, p.espacioMaximo)
-                    if (clave != claveReserva) {
-                        claveReserva = clave
-                        pedirReservaSinGaleria()
-                    }
-                }
-            }
-            // Si Drive no dio las medidas de alguna obra, la reserva la baja para poder medirla: cuando llega, se recarga el catálogo.
-            launch {
-                reserva.estado.map { it.version }.distinctUntilChanged().collect {
-                    val hay = catalogo?.galerias?.any { g -> g.obras.any { o -> !o.conMedidas } } == true
-                    if (hay) {
-                        delay(800)
-                        recargar()
-                    }
-                }
-            }
-            recargar()
-            sincronizarAhora()
+            motor.iniciar()
+            motor.sincronizarAhora()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        motor.galeriaAbierta(this, false)
     }
 
     /** Para probar por adb sin reiniciar: `am start -n local.museumslideshow/.MainActivity --es tema sala-oscura`. */
@@ -198,6 +109,7 @@ class MainActivity : ComponentActivity() {
      * Los extras del intent son cambios de ajustes (mismas claves que [PreferenciasDesdeTexto]) y se GUARDAN;
      * `reset` vuelve todo a los valores por defecto (también guardado). `escena` = índice (desde 0) donde arrancar.
      * `pantalla` = inicio, galeria, galerias, apariencia, pase, conexion, protector o estado: abre esa pantalla directo.
+     * `protector` = usar o volver: prueba el interruptor del protector sin la pantalla.
      * Sin ningún extra (abrir desde Google TV) abre Inicio.
      */
     private suspend fun aplicarIntent(i: Intent?) {
@@ -211,23 +123,42 @@ class MainActivity : ComponentActivity() {
         }
         if (texto.isNotEmpty()) {
             val reset = texto.containsKey("reset")
-            almacen.cambiar { actual -> PreferenciasDesdeTexto.aplicar(if (reset) Preferencias() else actual, texto) }
+            motor.almacen.cambiar { actual -> PreferenciasDesdeTexto.aplicar(if (reset) Preferencias() else actual, texto) }
             aplicarTildes(texto)
             texto["escena"]?.toIntOrNull()?.let {
                 salto = SaltoEscena(it)
                 Log.i(Registro.TAG, "Salto a la escena $it")
             }
+            texto["protector"]?.let { aplicarProtector(it) }
         }
         PantallaApp.deIntent(texto)?.let { irA(it) }
+    }
+
+    /** Extra `protector` = usar | volver: prueba el interruptor por adb y deja en el registro el valor de antes, el de después y el resultado. */
+    private suspend fun aplicarProtector(pedido: String) {
+        val interruptor = motor.interruptor
+        val r = when (pedido.trim().lowercase()) {
+            "usar" -> interruptor.usar()
+            "volver" -> interruptor.volverAlAnterior()
+            else -> {
+                Log.w(Registro.TAG, Registro.limpiar("Protector: extra no entendido '$pedido' (usar o volver)"))
+                return
+            }
+        }
+        val detalle = when (r) {
+            is ResultadoInterruptor.Hecho -> "ok anterior='${r.antes ?: ""}' nuevo='${r.despues ?: ""}'"
+            ResultadoInterruptor.SinPermiso -> "falta el permiso WRITE_SECURE_SETTINGS"
+            ResultadoInterruptor.Fallo -> "fallo"
+        }
+        Log.i(Registro.TAG, Registro.limpiar("Protector: $pedido -> $detalle"))
     }
 
     /** Extras `tildar` y `destildar` (id o nombre de carpeta, sin importar mayúsculas ni tildes): para probar antes de la pantalla Galerías. */
     private suspend fun aplicarTildes(texto: Map<String, String>) {
         val pedidos = listOfNotNull(texto["tildar"]?.let { it to true }, texto["destildar"]?.let { it to false })
         if (pedidos.isEmpty()) return
-        val cat = catalogo ?: withContext(Dispatchers.IO) { Catalogo.cargar(Sincronizacion.dirBase(applicationContext), ::medirImagen) }
-        val arbol = Arbol(cat)
-        almacen.cambiar { actual ->
+        val arbol = Arbol(motor.catalogoAhora())
+        motor.almacen.cambiar { actual ->
             var p = actual
             for ((nombre, valor) in pedidos) {
                 val ids = arbol.resolver(nombre)
@@ -238,79 +169,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** Un ajuste cambió (o se leyeron al abrir): reprograma la sincronización o sincroniza si cambió la carpeta. */
-    private fun alCambiarAjustes(p: Preferencias) {
-        if (p.sincronizarCada != cadaProgramada) {
-            cadaProgramada = p.sincronizarCada
-            try {
-                SincronizarWorker.programar(applicationContext, p.sincronizarCada)
-            } catch (e: Exception) {
-                Log.w(Registro.TAG, "No se pudo programar la sincronización (${e.javaClass.simpleName})")
-            }
-        }
-        if (!primeraLectura && p.carpetaDrive != carpetaVista) {
-            Log.i(Registro.TAG, "Cambió la carpeta de Drive: se sincroniza")
-            sincronizarAhora()
-        }
-        carpetaVista = p.carpetaDrive
-        primeraLectura = false
-    }
-
-    private fun cambiarAjustes(transform: (Preferencias) -> Preferencias) {
-        lifecycleScope.launch { almacen.cambiar(transform) }
-    }
-
-    /** Sincroniza ya (al abrir, desde la Barra o al cambiar la carpeta). Si ya hay una en curso, pide otra al terminar. */
-    private fun sincronizarAhora() {
-        if (sincronizando) {
-            repetirSync = true
-            return
-        }
-        sincronizando = true
-        mensajeSync = null
-        lifecycleScope.launch {
-            try {
-                do {
-                    repetirSync = false
-                    val r = withContext(Dispatchers.IO) { Sincronizacion.ejecutar(applicationContext) }
-                    // Recarga el catálogo sin cortar la escena: la galería conserva la obra actual si sigue existiendo.
-                    recargar()
-                    mensajeSync = mensajeDe(r)
-                } while (repetirSync)
-            } finally {
-                sincronizando = false
-            }
-            val m = mensajeSync
-            delay(MENSAJE_MS)
-            if (mensajeSync == m) mensajeSync = null
-        }
-    }
-
-    private fun mensajeDe(r: ResultadoSync): String = when {
-        !r.ok -> getString(R.string.sync_fallo)
-        r.problemas.isNotEmpty() -> getString(R.string.sync_con_avisos)
-        r.bajadas + r.borradas == 0 -> getString(R.string.sync_al_dia)
-        else -> getString(
-            R.string.sync_listo,
-            resources.getQuantityString(R.plurals.cantidad_bajadas, r.bajadas, r.bajadas),
-            resources.getQuantityString(R.plurals.cantidad_borradas, r.borradas, r.borradas),
-        )
-    }
-
-    private suspend fun recargar() {
-        catalogo = withContext(Dispatchers.IO) { Catalogo.cargar(Sincronizacion.dirBase(applicationContext), ::medirImagen) }
-        reserva.releer()
-        pedirReservaSinGaleria()
-    }
-
     @Composable
     private fun Contenido() {
-        val p = preferencias
+        val p = motor.preferencias
         if (p == null) {
             Box(Modifier.fillMaxSize().background(Color.Black))
             return
         }
-        val cat = catalogo
+        val cat = motor.catalogo
+        val sincronizando = motor.sincronizando
+        val mensajeSync = motor.mensajeSync
+        val reserva = motor.reserva
         val estadoReserva by reserva.estado.collectAsState()
         val tildadas = cat?.galerias.orEmpty().filter { p.estaTildada(it.driveId) }
         val hayObras = tildadas.sumOf { it.obras.size } > 0
@@ -348,7 +217,7 @@ class MainActivity : ComponentActivity() {
                         reserva = estadoReserva,
                     )
                     PantallaApp.GALERIA -> Unit
-                    PantallaApp.GALERIAS -> PantallaGalerias(cat, p, cambiar = { t -> cambiarAjustes(t) }, activa = true, alVolver = volver)
+                    PantallaApp.GALERIAS -> PantallaGalerias(cat, p, cambiar = { t -> motor.cambiarAjustes(t) }, activa = true, alVolver = volver)
                     PantallaApp.APARIENCIA, PantallaApp.PASE, PantallaApp.CONEXION -> {
                         val grupo = when (pantalla) {
                             PantallaApp.APARIENCIA -> GrupoAjustes.APARIENCIA
@@ -358,13 +227,13 @@ class MainActivity : ComponentActivity() {
                         PantallaAjustesGrupo(
                             grupo, todos.delGrupo(grupo), p,
                             activa = true,
-                            cambiar = { t -> cambiarAjustes(t) },
+                            cambiar = { t -> motor.cambiarAjustes(t) },
                             alVolver = volver,
                             obraPrevia = ResumenInicio.de(cat, p).tapa,
                             galeriaPrevia = ResumenInicio.de(cat, p).tapaGaleriaId,
                             reserva = estadoReserva,
                             sync = if (grupo == GrupoAjustes.CONEXION) DatosSync(sincronizando, mensajeSync, cat?.ultimaSincronizacionBuena) else null,
-                            alSincronizar = { sincronizarAhora() },
+                            alSincronizar = { motor.sincronizarAhora() },
                         )
                     }
                     PantallaApp.PROTECTOR -> PantallaProtector(activa = true, alVolver = volver)
@@ -385,9 +254,4 @@ class MainActivity : ComponentActivity() {
             DestinoInicio.ESTADO -> PantallaApp.ESTADO
         },
     )
-
-    private companion object {
-        /** Cuánto queda en la Barra el resultado de la última sincronización. */
-        const val MENSAJE_MS = 8000L
-    }
 }
