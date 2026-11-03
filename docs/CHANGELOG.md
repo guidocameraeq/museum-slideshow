@@ -2,6 +2,11 @@
 
 > Historia permanente. `/cierre` agrega una entrada AL TOPE en cada sesión. Orden descendente estricto, sin excepciones. Nada de versiones duplicadas en otros docs.
 
+## 2026-11-02 (21:10) — Cierre formal (cambio de chat)
+
+### Changed
+- Handoff: el próximo paso arranca por la biblioteca real (si el curador ya la subió) y sigue con la sesión 4 (protector).
+
 ## 2026-11-02 (20:40) — Menú de inicio, elegir galerías y reserva de obras
 
 ### Added

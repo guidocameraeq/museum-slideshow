@@ -2,7 +2,7 @@
 
 > Save game del proyecto. `/cierre` lo SOBREESCRIBE ENTERO en cada sesión — acá nunca se apila historia (eso vive en CHANGELOG). El hook SessionStart lo inyecta en cada chat nuevo: **tope de 5.500 bytes** (unas 70 líneas); si se pasa, el hook lo corta y avisa "CORTADO".
 
-**Cierre**: 2026-11-02 (20:40) · **Último commit**: ver `git log -1` (menú y reserva)
+**Cierre**: 2026-11-02 (21:10) · **Último commit**: ver `git log -1` (cierre formal; nos mudamos de chat)
 
 ## Qué se hizo (esta tanda)
 - **Sesiones 1, 2 y 3 del SPEC-0 hechas y probadas en la TV** (sincronizador, galería 4K con fundido por el compositor a ~58 cuadros/s, ajustes, Barra, Estado). Detalle en CHANGELOG.
@@ -22,8 +22,9 @@
 - Nada.
 
 ## Próximo paso CONCRETO
-1. **Sesión 4**: protector (`DreamService`) + interruptor "Usar como protector / Volver al anterior" (pantalla Protector ya existe, deshabilitada). Debe arrancar directo en la galería, con la reserva; dar el permiso con `pm grant`; verificar 4K y fundido dentro del protector.
-2. Pendientes de prueba en la TV listados en TODO (sin internet, Solo a mano, reinicio real).
+1. **Biblioteca real primero (si ya está)**: preguntarle al curador (sesión "Agente Galerias de arte", repo `../galerias-de-arte`) si la biblioteca real ya está en una carpeta de Drive compartida "cualquiera con el link". Si sí: cambiar `drive.carpeta` en `local.properties` (o `--es carpeta <id>`), sincronizar y ver en la tele que aparecen las galerías y que Estado no tira problemas de más. Antes, avisarle a Guido lo del consumo (abajo) y que el curador suba copias 4K si conviene.
+2. **Sesión 4**: protector (`DreamService`) + interruptor "Usar como protector / Volver al anterior" (pantalla Protector ya existe, deshabilitada). Arranca directo en la galería con la reserva; permiso con `pm grant`; verificar 4K y fundido dentro del protector; que la reserva se dispare también desde el protector. Pantallas nuevas → borrador HTML antes.
+3. Pendientes de prueba en la TV listados en TODO (sin internet, Solo a mano, reinicio real).
 
 ## Bloqueos
 - Ninguno. Marcos reales: faltan fotos (hoy negro fino provisorio; redondas sin marco).
