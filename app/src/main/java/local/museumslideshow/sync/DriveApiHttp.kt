@@ -115,7 +115,17 @@ class DriveApiHttp(
     private fun errorDe(con: HttpURLConnection, codigo: Int, id: String): ErrorDrive {
         val cuerpo = if (codigo == 403) {
             try {
-                con.errorStream?.use { it.readNBytes(16 * 1024).toString(Charsets.UTF_8) }
+                // Leído a mano: InputStream.readNBytes no existe en el Android 12 de la tele (rompía la app).
+                con.errorStream?.use { entrada ->
+                    val buf = ByteArray(16 * 1024)
+                    var n = 0
+                    while (n < buf.size) {
+                        val leidos = entrada.read(buf, n, buf.size - n)
+                        if (leidos < 0) break
+                        n += leidos
+                    }
+                    String(buf, 0, n, Charsets.UTF_8)
+                }
             } catch (e: Exception) {
                 null
             }
