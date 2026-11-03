@@ -236,7 +236,7 @@ class MainActivity : ComponentActivity() {
                             alSincronizar = { motor.sincronizarAhora() },
                         )
                     }
-                    PantallaApp.PROTECTOR -> PantallaProtector(activa = true, alVolver = volver)
+                    PantallaApp.PROTECTOR -> PantallaProtector(motor.interruptor, activa = true, alVolver = volver)
                     PantallaApp.ESTADO -> PantallaEstado(cat, p, sincronizando, alVolver = volver, reserva = estadoReserva)
                 }
             }

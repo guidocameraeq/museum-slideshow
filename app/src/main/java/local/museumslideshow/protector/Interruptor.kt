@@ -12,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import local.museumslideshow.pantallas.nombreProtector
+import local.museumslideshow.pantallas.nombreProtectorLegible
 
 /** La clave del ajuste del sistema que elige el protector. Es lo ÚNICO del sistema que esta app escribe, y solo desde [Interruptor.escribirAjuste]. */
 private const val CLAVE_PROTECTOR = "screensaver_components"
@@ -87,7 +87,7 @@ class Interruptor(context: Context) {
             permisoDado = tienePermiso(),
             activoHoy = activo,
             esElNuestro = PlanInterruptor.esNuestro(activo, paquete),
-            anteriorNombre = guardado?.let { nombreProtector(ctx, it.takeIf { v -> v.isNotBlank() }) },
+            anteriorNombre = guardado?.let { nombreProtectorLegible(ctx, it.takeIf { v -> v.isNotBlank() }) },
         )
     }
 

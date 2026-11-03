@@ -50,39 +50,3 @@ private fun PantallaSimple(
     }
 }
 
-/**
- * Protector: el interruptor "Usar como protector" todavía no anda (llega en la sesión 4) y se muestra apagado, junto con lo
- * que el sistema dice hoy del permiso y del protector activo. Solo lee: nada se escribe en el sistema.
- */
-@Composable
-fun PantallaProtector(activa: Boolean, alVolver: () -> Unit, modifier: Modifier = Modifier) {
-    val ctx = LocalContext.current
-    val datos = leerProtector(ctx)
-    PantallaSimple(R.string.menu_protector, R.string.pie_protector, activa, alVolver, modifier) {
-        Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Paleta.Panel).padding(horizontal = 28.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BasicText(stringResource(R.string.aj_protector), Modifier.width(560.dp), style = estiloTexto(30, Paleta.Tenue, 500), maxLines = 1)
-            BasicText(stringResource(R.string.protector_proximamente), style = estiloTexto(30, Paleta.Tenue, 600), maxLines = 1)
-        }
-        Box(Modifier.padding(top = 18.dp)) {
-            if (datos.permisoOtorgado) {
-                BasicText(stringResource(R.string.est_permiso_si), style = estiloTexto(28, Paleta.Bien, 500))
-            } else {
-                BasicText(stringResource(R.string.est_permiso_no), style = estiloTexto(28, Paleta.Aviso, 500))
-            }
-        }
-        if (!datos.permisoOtorgado) {
-            BasicText(
-                stringResource(R.string.comando_permiso),
-                modifier = Modifier.background(Paleta.Panel).padding(horizontal = 18.dp, vertical = 10.dp),
-                style = estiloTexto(26, Color(0xFFF2E7C4), 500),
-            )
-        }
-        BasicText(
-            stringResource(R.string.est_protector_activo, nombreProtector(ctx, datos.activo)),
-            style = estiloTexto(28, Paleta.Texto, 400),
-        )
-    }
-}
