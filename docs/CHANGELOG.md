@@ -2,6 +2,12 @@
 
 > Historia permanente. `/cierre` agrega una entrada AL TOPE en cada sesión. Orden descendente estricto, sin excepciones. Nada de versiones duplicadas en otros docs.
 
+## 2026-11-03 — Obras por la copia 4K de Drive
+
+### Changed
+- Las obras y las tapas se bajan primero por la copia de Drive (`thumbnailLink` pedido fresco, `=s3840` / `=s1920` / `=s480`, servidor `lh3`), que Google no bloquea; el original (`alt=media`) queda de respaldo. Ajuste nuevo "Bajar las obras de" (copia primero, por defecto / original primero).
+- La pausa ante el bloqueo de Google es por camino (original / copia): si se traba el original, las obras siguen por copia y Estado lo dice sin alarmar. 401 tests. Probado en la TV: la reserva bajó obras de Gótico "por copia s3840", ~3 s cada una, sin cierres.
+
 ## 2026-11-02 (23:40) — Sesión 4: protector e interruptor; biblioteca real; pausa ante el bloqueo de Google
 
 ### Added

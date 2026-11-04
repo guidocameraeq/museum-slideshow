@@ -61,39 +61,59 @@ class DriveApiHttp(
 
     override fun bajar(archivoId: String, destino: File, maxBytes: Long) {
         val url = "$BASE/${URLEncoder.encode(archivoId, "UTF-8")}?alt=media&key=${URLEncoder.encode(clave, "UTF-8")}"
-        conReintentos(archivoId) {
-            var con: HttpURLConnection? = null
-            try {
-                con = abrir(url)
-                val codigo = con.responseCode
-                if (codigo != 200) throw errorDe(con, codigo, archivoId)
-                val declarado = con.contentLengthLong
-                if (declarado > maxBytes) throw ArchivoExcedeTope(archivoId)
-                con.inputStream.use { entrada ->
-                    FileOutputStream(destino).use { salida ->
-                        val buf = ByteArray(64 * 1024)
-                        var total = 0L
-                        while (true) {
-                            val n = entrada.read(buf)
-                            if (n < 0) break
-                            total += n
-                            if (total > maxBytes) throw ArchivoExcedeTope(archivoId)
-                            salida.write(buf, 0, n)
-                        }
+        conReintentos(archivoId) { descargar(url, archivoId, destino, maxBytes, soloImagen = false) }
+    }
+
+    /**
+     * La copia de Drive: primero se pide el `thumbnailLink` FRESCO de esta imagen (viene firmado y vence en horas, por eso no se
+     * guarda), se le cambia el tamaño del final y se baja de `lh3.googleusercontent.com` (sin clave). Sin `thumbnailLink` o con
+     * una respuesta que no es imagen, lanza [ErrorDrive] para que se use el original.
+     */
+    override fun bajarCopia(archivoId: String, lado: Int, destino: File, maxBytes: Long) {
+        val pedido = "$BASE/${URLEncoder.encode(archivoId, "UTF-8")}?fields=thumbnailLink&key=${URLEncoder.encode(clave, "UTF-8")}"
+        val texto = conReintentos(archivoId) { pedirTexto(pedido, archivoId) }
+        val enlace = try {
+            cadena(Json.parseToJsonElement(texto).jsonObject, "thumbnailLink")
+        } catch (e: Exception) {
+            throw ErrorDrive(null, archivoId)
+        }
+        val url = enlace?.let { UrlCopia.armar(it, lado) } ?: throw ErrorDrive(404, archivoId) // sin copia
+        conReintentos(archivoId) { descargar(url, archivoId, destino, maxBytes, soloImagen = true) }
+    }
+
+    private fun descargar(url: String, archivoId: String, destino: File, maxBytes: Long, soloImagen: Boolean) {
+        var con: HttpURLConnection? = null
+        try {
+            con = abrir(url)
+            val codigo = con.responseCode
+            if (codigo != 200) throw errorDe(con, codigo, archivoId)
+            if (soloImagen && con.contentType?.trim()?.lowercase()?.startsWith("image/") != true) throw ErrorDrive(200, archivoId)
+            val declarado = con.contentLengthLong
+            if (declarado > maxBytes) throw ArchivoExcedeTope(archivoId)
+            con.inputStream.use { entrada ->
+                FileOutputStream(destino).use { salida ->
+                    val buf = ByteArray(64 * 1024)
+                    var total = 0L
+                    while (true) {
+                        val n = entrada.read(buf)
+                        if (n < 0) break
+                        total += n
+                        if (total > maxBytes) throw ArchivoExcedeTope(archivoId)
+                        salida.write(buf, 0, n)
                     }
                 }
-            } catch (e: IOException) {
-                destino.delete()
-                throw ErrorDrive(null, archivoId)
-            } catch (e: ArchivoExcedeTope) {
-                destino.delete()
-                throw e
-            } catch (e: ErrorDrive) {
-                destino.delete()
-                throw e
-            } finally {
-                con?.disconnect()
             }
+        } catch (e: IOException) {
+            destino.delete()
+            throw ErrorDrive(null, archivoId)
+        } catch (e: ArchivoExcedeTope) {
+            destino.delete()
+            throw e
+        } catch (e: ErrorDrive) {
+            destino.delete()
+            throw e
+        } finally {
+            con?.disconnect()
         }
     }
 

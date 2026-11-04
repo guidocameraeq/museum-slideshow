@@ -20,12 +20,12 @@
 - Drive para escritorio de la PC sube los 7 GB a la nube en segundo plano (puede tardar horas).
 
 ## Próximo paso CONCRETO
-1. Prender la tele, abrir la app → Estado: ¿ya no hay pausa? ¿están las 23 galerías? ¿la reserva bajó obras? Si sigue la pausa, esperar (se reintenta sola); si el bloqueo dura días, pensar copias a 3840 px y bajar menos (preguntarle a Guido).
-2. Pedirle a Guido: originales vs copias a 3840 px (sigue sin responder; recomendado: copias). Si sí, el curador regenera con `--max-side=3840`.
+1. **03/11: las obras ya bajan por la copia 4K de Drive** (`thumbnailLink` `=s3840`, Google no la bloquea; original de respaldo, pausa por camino; ajuste "Bajar las obras de"). Probado en la TV: reserva "por copia s3840". Falta ver en la TV el caso con originales bloqueados y las 23 galerías en Estado.
+2. Originales vs copias en Drive: ya no importa (la app pide la copia 4K); quedan los originales.
 3. Sesión 5: prueba de 2 horas y criterios que faltan del SPEC-0 (ver TODO).
 
 ## Bloqueos
-- Bloqueo anti-abuso de Google sobre la red de la casa (temporal, duración desconocida).
+- Ninguno. El bloqueo de Google sobre `alt=media` (originales) puede volver; ya no frena las obras.
 
 ## Contexto que no está en otro doc
 - **Forma de trabajo de Guido**: Opus coordina y revisa; construcción con subagentes `model: sonnet`; borrador HTML + OK antes de UI; subir a GitHub cada parte que anda.

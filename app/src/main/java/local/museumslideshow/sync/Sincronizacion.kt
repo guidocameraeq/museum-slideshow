@@ -50,6 +50,8 @@ object Sincronizacion {
             dirBase = dirBase(ctx),
             procesador = ProcesadorImagenAndroid(),
             ahora = { System.currentTimeMillis() },
+            caminoObras = { p.caminoObras },
+            registrar = { Log.i(Registro.TAG, Registro.limpiar(it)) },
         )
         val r = try {
             s.sincronizar(carpeta)

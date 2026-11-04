@@ -49,6 +49,7 @@ import local.museumslideshow.reserva.EstadoReserva
 import local.museumslideshow.catalogo.TipoProblema
 import local.museumslideshow.galeria.esTeclaVolumen
 import local.museumslideshow.sync.Sincronizacion
+import local.museumslideshow.sync.CaminoDrive
 import local.museumslideshow.sync.PausaDrive
 
 private enum class Tipo { SECCION, NORMAL, TENUE, AVISO, BIEN, CODIGO, GRUPO }
@@ -128,7 +129,11 @@ private fun armarLineas(
     val buena = cat?.ultimaSincronizacionBuena
     l += if (buena != null) Linea(res.getString(R.string.est_ultima_buena, fechaHora(res, buena)), Tipo.NORMAL)
     else Linea(res.getString(R.string.est_ultima_buena_nunca), Tipo.TENUE)
-    val pausaHasta = PausaDrive.de(ctx).hastaActivo()
+    val pausas = PausaDrive.de(ctx)
+    val pausaOriginal = pausas.hastaActivo(camino = CaminoDrive.ORIGINAL)
+    val pausaCopia = pausas.hastaActivo(camino = CaminoDrive.COPIA)
+    // Los dos caminos en pausa: el aviso de siempre. Uno solo: las obras siguen bajando por el otro (renglÃ³n tranquilo).
+    val pausaHasta = if (pausaOriginal != null && pausaCopia != null) minOf(pausaOriginal, pausaCopia) else null
     val intento = cat?.ultimoIntento
     val pIntento = cat?.problemaUltimoIntento
     l += when {
@@ -136,6 +141,8 @@ private fun armarLineas(
             res.getString(if (prefs.sincronizarCada.horas == null) R.string.est_pausa_drive_mano else R.string.est_pausa_drive, PausaDrive.horaTexto(pausaHasta)),
             Tipo.AVISO,
         )
+        pausaOriginal != null -> Linea(res.getString(R.string.est_pausa_originales, PausaDrive.horaTexto(pausaOriginal)), Tipo.NORMAL)
+        pausaCopia != null -> Linea(res.getString(R.string.est_pausa_copias, PausaDrive.horaTexto(pausaCopia)), Tipo.NORMAL)
         intento == null -> Linea(res.getString(R.string.est_intento_nunca), Tipo.TENUE)
         pIntento?.tipo == TipoProblema.ERROR_RED ->
             Linea(res.getString(if (obras > 0) R.string.est_sin_conexion else R.string.est_sin_conexion_sin_obras, hora(res, intento)), Tipo.AVISO)
@@ -177,7 +184,7 @@ private fun armarLineas(
         ErrorReserva.NO_DECODIFICA -> l += Linea(res.getString(R.string.est_reserva_error_imagen), Tipo.AVISO)
         ErrorReserva.MUY_GRANDE -> l += Linea(res.getString(R.string.est_reserva_error_grande), Tipo.AVISO)
         ErrorReserva.DRIVE -> l += Linea(res.getString(R.string.est_reserva_error_drive, reserva?.detalleError ?: "?"), Tipo.AVISO)
-        ErrorReserva.PAUSA -> {}
+        ErrorReserva.PAUSA, ErrorReserva.PAUSA_ESTA_OBRA -> {}
     }
 
     // --- Espacio

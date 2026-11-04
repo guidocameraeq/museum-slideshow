@@ -104,6 +104,21 @@ class GestorReservaTest {
     }
 
     @Test
+    fun siSoloEstaObraEsperaLaPausaDeUnCaminoLasDemasSiguenSinMarcarError() = runBlocking {
+        val esperan = setOf("o1", "o3")
+        val d = DescargadorObras { obra ->
+            if (obra.id in esperan) ResultadoBajada.Falla(ErrorReserva.PAUSA_ESTA_OBRA, null) else descargador.bajar(obra)
+        }
+        val g = GestorReserva(
+            scope = CoroutineScope(Dispatchers.Default), dirBase = dir, descargador = d,
+            parametros = { ParametrosReserva(n, tope) }, registrar = { registro += it }, iniciar = false,
+        )
+        g.procesar(pedido(orden(30), 0))
+        assertEquals(setOf("o0", "o2", "o4"), enDisco())
+        assertNull(g.estado.value.ultimoError)
+    }
+
+    @Test
     fun alAbrirBajaLasNProximas() = runBlocking {
         val g = gestor()
         g.procesar(pedido(orden(30), 0))

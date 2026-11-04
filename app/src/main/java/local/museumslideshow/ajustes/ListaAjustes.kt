@@ -21,7 +21,7 @@ class Opcion(
 /** Los ajustes de la pantalla, en el orden de la tabla del SPEC-0 (y al final, la entrada que abre Estado). */
 enum class IdAjuste {
     TEMA, MODO, HORA_DIA, HORA_NOCHE, PARED_CLARO, PARED_OSCURO, MARCO, TAMANO, COMPLETA_CON_MARCO, EXPLICACION, SALA,
-    CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, TRANSICION, DURACION, SINCRONIZAR, RESERVA, ESPACIO, RITMO, CARPETA, GALERIAS_NUEVAS,
+    CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, TRANSICION, DURACION, SINCRONIZAR, RESERVA, ESPACIO, RITMO, CAMINO, CARPETA, GALERIAS_NUEVAS,
     PROTECTOR, ESTADO,
 }
 
@@ -256,6 +256,9 @@ object ListaAjustes {
             lista(IdAjuste.RITMO, R.string.aj_ritmo, RitmoBajada.values().toList(), { it.ritmoBajada }, { p, v -> p.copy(ritmoBajada = v) }) {
                 res(if (it == RitmoBajada.TRANQUILO) R.string.ritmo_tranquilo else R.string.ritmo_normal)
             },
+            lista(IdAjuste.CAMINO, R.string.aj_camino, CaminoObras.values().toList(), { it.caminoObras }, { p, v -> p.copy(caminoObras = v) }) {
+                res(if (it == CaminoObras.COPIA_PRIMERO) R.string.camino_copia else R.string.camino_original)
+            },
             ItemInfo(
                 IdAjuste.CARPETA, R.string.aj_carpeta,
                 { p -> p.carpetaDrive?.let { Etiqueta.Texto(CarpetaDrive.abreviar(it)) } ?: res(R.string.carpeta_de_fabrica) },
@@ -290,7 +293,7 @@ enum class GrupoAjustes(val ids: List<IdAjuste>) {
             IdAjuste.TIEMPO, IdAjuste.ORDEN, IdAjuste.GALERIA, IdAjuste.PARED, IdAjuste.TRANSICION, IdAjuste.DURACION, IdAjuste.CALIDAD,
         ),
     ),
-    CONEXION(listOf(IdAjuste.CARPETA, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.RITMO)),
+    CONEXION(listOf(IdAjuste.CARPETA, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.RITMO, IdAjuste.CAMINO)),
     /** La pantalla Galerías lleva su propia fila "Galerías nuevas" al pie. */
     GALERIAS(listOf(IdAjuste.GALERIAS_NUEVAS)),
     ;

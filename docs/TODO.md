@@ -5,10 +5,9 @@
 2026-11-02 — ver SESSION_HANDOFF.md
 
 ## 🔴 Crítico
-- [ ] Verificar que, levantado el bloqueo de Google, la sincronización trae las 23 galerías y la reserva vuelve a llenarse (hoy vacía). Si el bloqueo se repite (volvió a las 23:41, a 3 min de levantarse), probar bajar las obras por el `thumbnailLink` de Drive con `=s3840` (otro servidor de Google, ya achicado a 4K: menos bloqueos y menos GB) en vez de `alt=media`; o copias a 3840 px y menos pedidos.
+- [ ] Verificar en la TV el caso "originales bloqueados, copias siguen" (probado en la PC y en tests; el 03/11 en la TV los originales no estaban bloqueados) y que Estado muestre el renglón tranquilo. Ver que aparezcan las 23 galerías.
 
 ## 🟠 Importante
-- [ ] Guido decide: originales vs copias a 3840 px en "Galerías" (recomendado: copias). Lo regenera el curador.
 - [ ] La reserva borra lo guardado aunque no pueda bajar lo que lo reemplaza (pasó con Rococó antes de la pausa): no borrar una obra hasta tener lista la que entra.
 - [ ] Probar en la TV lo que falta: sin internet (el pase sigue con la reserva), "Sincronizar cada: Solo a mano" (desaparece de `dumpsys jobscheduler`), cambiar Tiempo por obra, reinicio real de la tele, pantalla Protector sin permiso.
 - [ ] Guido mira a ojo la Barra, las pantallas de ajustes y Estado.

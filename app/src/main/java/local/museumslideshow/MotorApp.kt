@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import local.museumslideshow.ajustes.AlmacenAjustes
+import local.museumslideshow.ajustes.Calidad
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.ajustes.SincronizarCada
 import local.museumslideshow.catalogo.Catalogo
@@ -33,6 +34,7 @@ import local.museumslideshow.sync.ReglaSincronizacion
 import local.museumslideshow.sync.ResultadoSync
 import local.museumslideshow.sync.Sincronizacion
 import local.museumslideshow.sync.SincronizarWorker
+import local.museumslideshow.sync.UrlCopia
 import local.museumslideshow.sync.medirImagen
 import local.museumslideshow.temas.RegistroTemas
 
@@ -67,8 +69,11 @@ class MotorApp private constructor(context: Context) {
         GestorReserva(
             scope = scopeReserva,
             dirBase = dir,
-            descargador = DescargadorDrive(Sincronizacion.crearApi(ctx) { preferencias ?: Preferencias() }, dir, ProcesadorImagenAndroid()),
-            enPausa = { PausaDrive.de(ctx).hastaActivo() != null },
+            descargador = DescargadorDrive(Sincronizacion.crearApi(ctx) { preferencias ?: Preferencias() }, dir, ProcesadorImagenAndroid(),
+                lado = { if ((preferencias ?: Preferencias()).calidad == Calidad.HD1080) UrlCopia.LADO_1080 else UrlCopia.LADO_4K },
+                orden = { (preferencias ?: Preferencias()).caminoObras },
+            ),
+            enPausa = { PausaDrive.de(ctx).todosEnPausa() },
             parametros = {
                 val p = preferencias ?: Preferencias()
                 ParametrosReserva(p.reservaObras, p.espacioMaximo.bytes)

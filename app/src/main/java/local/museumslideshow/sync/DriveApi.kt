@@ -45,4 +45,12 @@ interface DriveApi {
 
     /** Baja el archivo a `destino`; si pasa `maxBytes` corta y lanza [ArchivoExcedeTope]. */
     fun bajar(archivoId: String, destino: File, maxBytes: Long)
+
+    /**
+     * Baja la COPIA que Drive guarda de la imagen (el `thumbnailLink` se pide fresco justo antes, y se baja a `lado` px de lado
+     * largo). Si la obra no tiene copia, o la copia falla, lanza [ErrorDrive]; por defecto: "no hay copia".
+     */
+    fun bajarCopia(archivoId: String, lado: Int, destino: File, maxBytes: Long) {
+        throw ErrorDrive(404, archivoId)
+    }
 }

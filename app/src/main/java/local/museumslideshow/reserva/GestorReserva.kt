@@ -17,7 +17,10 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import local.museumslideshow.Registro
 import local.museumslideshow.catalogo.Catalogo
+import local.museumslideshow.ajustes.CaminoObras
 import local.museumslideshow.sync.ArchivoExcedeTope
+import local.museumslideshow.sync.BajadorConRespaldo
+import local.museumslideshow.sync.UrlCopia
 import local.museumslideshow.sync.DriveApi
 import local.museumslideshow.sync.ErrorDrive
 import local.museumslideshow.sync.PausaDriveException
@@ -37,7 +40,8 @@ interface EnlaceReserva {
 data class ParametrosReserva(val n: Int, val topeBytes: Long)
 
 sealed interface ResultadoBajada {
-    data class Lista(val ms: Long) : ResultadoBajada
+    /** `via` = por quÃ© camino bajÃ³ ("copia s3840" / "original"), solo para el registro. */
+    data class Lista(val ms: Long, val via: String? = null) : ResultadoBajada
     data class Falla(val error: ErrorReserva, val detalle: String?) : ResultadoBajada
 }
 
@@ -46,13 +50,18 @@ fun interface DescargadorObras {
     fun bajar(obra: ObraRef): ResultadoBajada
 }
 
-/** Baja el original de Drive, lo pasa por el procesador (copia 4K + copia chica) y borra el original: igual que siempre. */
+/** Baja la obra de Drive (la copia de Drive o el original, segÃºn el ajuste), la pasa por el procesador (copia 4K + copia chica) y borra el original: igual que siempre. */
 class DescargadorDrive(
     private val api: DriveApi,
     private val dirBase: File,
     private val procesador: ProcesadorImagen,
     private val ahora: () -> Long = System::currentTimeMillis,
+    /** Lado largo de la copia que se pide (3840 con calidad 4K, 1920 con 1080). */
+    private val lado: () -> Int = { UrlCopia.LADO_4K },
+    orden: () -> CaminoObras = { CaminoObras.COPIA_PRIMERO },
 ) : DescargadorObras {
+    private val bajador = BajadorConRespaldo(api, orden)
+
     override fun bajar(obra: ObraRef): ResultadoBajada {
         val t0 = ahora()
         val tmp = File(dirBase, TMP).also { it.mkdirs() }
@@ -60,12 +69,13 @@ class DescargadorDrive(
         val copia = File(tmp, "${obra.id}.jpg")
         val chica = File(tmp, "${obra.id}.chica.jpg")
         try {
-            try {
-                api.bajar(obra.id, original, Sincronizador.MAX_IMAGEN)
+            val via = try {
+                bajador.bajar(obra.id, lado(), original, Sincronizador.MAX_IMAGEN)
             } catch (e: ArchivoExcedeTope) {
                 return ResultadoBajada.Falla(ErrorReserva.MUY_GRANDE, null)
             } catch (e: PausaDriveException) {
-                return ResultadoBajada.Falla(ErrorReserva.PAUSA, null)
+                // Con un solo camino en pausa solo espera ESTA obra (no tiene el otro camino); con los dos, se corta la tanda.
+                return ResultadoBajada.Falla(if (e.todosEnPausa) ErrorReserva.PAUSA else ErrorReserva.PAUSA_ESTA_OBRA, null)
             } catch (e: ErrorDrive) {
                 return if (e.codigoHttp == null) ResultadoBajada.Falla(ErrorReserva.SIN_INTERNET, null)
                 else ResultadoBajada.Falla(ErrorReserva.DRIVE, e.codigoHttp.toString())
@@ -74,7 +84,7 @@ class DescargadorDrive(
             if (medidas == null || !copia.isFile || !chica.isFile) return ResultadoBajada.Falla(ErrorReserva.NO_DECODIFICA, null)
             mover(chica, Catalogo.archivoObraChica(dirBase, obra.id))
             mover(copia, Catalogo.archivoObra(dirBase, obra.id)) // la copia grande va al final: es la que dice "esta obra esta lista"
-            return ResultadoBajada.Lista(ahora() - t0)
+            return ResultadoBajada.Lista(ahora() - t0, via.etiqueta)
         } finally {
             original.delete(); copia.delete(); chica.delete()
         }
@@ -241,10 +251,15 @@ class GestorReserva(
         }
         when (val r = descargador.bajar(ObraRef(id, nombre))) {
             is ResultadoBajada.Lista -> {
-                registrar("Reserva: obra lista ${Registro.limpiar(nombre)} en ${r.ms} ms")
+                registrar("Reserva: obra lista ${Registro.limpiar(nombre)} en ${r.ms} ms" + (r.via?.let { " (por $it)" } ?: ""))
                 _estado.update { it.copy(version = it.version + 1, sinInternet = false) }
             }
             is ResultadoBajada.Falla -> {
+                if (r.error == ErrorReserva.PAUSA_ESTA_OBRA) {
+                    // Esta obra espera a que termine la pausa de un camino; las demÃ¡s siguen (sin marcar error).
+                    registrar("Reserva: ${Registro.limpiar(nombre)} espera a que termine la pausa de Drive")
+                    return
+                }
                 if (r.error == ErrorReserva.PAUSA) {
                     corte.set(true)
                     registrar("Reserva: Drive pidió una pausa; se corta la tanda")

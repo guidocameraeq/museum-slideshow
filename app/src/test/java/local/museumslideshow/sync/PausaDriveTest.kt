@@ -135,6 +135,7 @@ private class ApiQueFalla(var respuesta: () -> Nothing) : DriveApi {
     var pedidos = 0
     override fun listar(carpetaId: String): List<ArchivoDrive> { pedidos++; respuesta() }
     override fun bajar(archivoId: String, destino: File, maxBytes: Long) { pedidos++; respuesta() }
+    override fun bajarCopia(archivoId: String, lado: Int, destino: File, maxBytes: Long) { pedidos++; respuesta() }
 }
 
 class DriveApiConPausaTest {
@@ -232,7 +233,7 @@ class DriveApiConPausaTest {
         assertEquals(ResultadoBajada.Falla(ErrorReserva.PAUSA, null), r)
         val r2 = descargador.bajar(ObraRef("OBRA2", "b.jpg"))
         assertEquals(ResultadoBajada.Falla(ErrorReserva.PAUSA, null), r2)
-        assertEquals("el segundo ni llegó a Drive", 1, api.pedidos)
+        assertEquals("el segundo ni llegó a Drive (la primera probó copia y original)", 2, api.pedidos)
         assertFalse(Catalogo.archivoObra(dir, "OBRA1").exists())
     }
 }

@@ -88,6 +88,7 @@
     <string name="aj_sincronizar">Sincronizar cada</string>
     <string name="aj_espacio">Espacio máximo</string>
     <string name="aj_ritmo">Ritmo de bajada</string>
+    <string name="aj_camino">Bajar las obras de</string>
     <string name="aj_reserva">Reserva de obras</string>
     <string name="aj_galerias_nuevas">Galerías nuevas</string>
     <string name="v_tildadas">Tildadas</string>
@@ -158,6 +159,8 @@
     <string name="espacio_2">2 GB</string>
     <string name="ritmo_tranquilo">Tranquilo</string>
     <string name="ritmo_normal">Normal</string>
+    <string name="camino_copia">La copia 4K de Drive, y si no, el original</string>
+    <string name="camino_original">El original, y si no, la copia</string>
     <string name="carpeta_de_fabrica">La de fábrica</string>
     <string name="carpeta_ayuda">Se cambia desde la PC</string>
     <string name="protector_proximamente">Llega en la próxima versión</string>
@@ -172,6 +175,8 @@
     <string name="est_intento_ok">Último intento: %1$s. Salió bien.</string>
     <string name="est_intento_con_errores">Último intento: %1$s. Terminó con errores (mirá Problemas).</string>
     <string name="est_pausa_drive">Google pidió una pausa por demasiadas descargas. Se vuelve a intentar sola a las %1$s.</string>
+    <string name="est_pausa_originales">Google limitó la descarga de originales; las obras se bajan igual por la copia 4K de Drive. Las fichas se actualizan a partir de las %1$s.</string>
+    <string name="est_pausa_copias">Google limitó la descarga de copias; las obras se bajan por el original. Se vuelve a probar a partir de las %1$s.</string>
     <string name="est_pausa_drive_mano">Google pidió una pausa por demasiadas descargas. Podés volver a sincronizar a partir de las %1$s.</string>
     <string name="est_sin_conexion">No se pudo conectar con Drive (%1$s). Se muestran las obras guardadas.</string>
     <string name="est_sin_conexion_sin_obras">No se pudo conectar con Drive (%1$s) y todavía no hay obras guardadas.</string>

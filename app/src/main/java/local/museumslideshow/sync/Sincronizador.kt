@@ -37,8 +37,12 @@ class Sincronizador(
     private val api: DriveApi,
     private val dirBase: File,
     private val procesador: ProcesadorImagen,
+    /** Por dÃ³nde se baja la tapa (la copia de Drive o el original): se lee en cada uso. */
+    caminoObras: () -> local.museumslideshow.ajustes.CaminoObras = { local.museumslideshow.ajustes.CaminoObras.COPIA_PRIMERO },
+    private val registrar: (String) -> Unit = {},
     private val ahora: () -> Long,
 ) {
+    private val bajador = BajadorConRespaldo(api, caminoObras)
     private var bajadas = 0
     private var borradas = 0
     private var salteadas = 0
@@ -303,7 +307,8 @@ class Sincronizador(
                 fuente = copiaLocal
             } else {
                 try {
-                    api.bajar(primera.id, original, MAX_IMAGEN)
+                    val via = bajador.bajar(primera.id, LADO_TAPA, original, MAX_IMAGEN)
+                    registrar("Tapa de ${Registro.limpiar(p.carpeta.nombre)}: ${via.etiqueta}")
                 } catch (e: ArchivoExcedeTope) {
                     problemas += Problema(p.carpeta.nombre, primera.nombre, TipoProblema.IMAGEN_MUY_GRANDE, null)
                     salteadas++
