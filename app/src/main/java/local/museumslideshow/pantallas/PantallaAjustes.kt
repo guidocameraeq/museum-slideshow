@@ -182,6 +182,7 @@ fun PantallaAjustesGrupo(
     IdAjuste.EXPLICACION -> R.string.ayuda_explicacion
     IdAjuste.SALA -> R.string.ayuda_sala
     IdAjuste.CARTEL -> R.string.ayuda_cartel
+    IdAjuste.CREDITO -> R.string.ayuda_credito
     else -> null
 }
 

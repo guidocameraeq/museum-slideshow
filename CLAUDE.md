@@ -74,6 +74,7 @@ Los rituales viven en `.claude/skills/`: **`/inicio` · `/cierre` · `/instalar`
 | `docs/CHANGELOG.md` | Historia de cambios | `/cierre`: entrada por sesión |
 | `docs/diseno/` | Diseño visual aprobado: borradores HTML + `decisiones.md` (lo aprobado por Guido) | al cambiar el diseño |
 | `docs/formato-galeria.md` | El formato de `galeria.json`, para el agente de arte de Guido | al cambiar el formato (subir `formato`) |
+| `docs/curaduria.md` | Cómo se trabaja con el curador (sesión "Agente Galerias de arte"): quién hace qué, cómo pedirle, reglas acordadas | al cambiar un acuerdo con el curador |
 | `docs/desarrollo.md` | Entorno, clave de Drive, permiso del protector, compilar e instalar | al cambiar herramientas |
 
 **Reglas del sistema**: una sola narrativa por sesión (HANDOFF + CHANGELOG). Un número vive en UN archivo. Lo derivable del código o de git NO se escribe en un doc. Docs nuevos (arquitectura, decisiones, temas) recién cuando duela no tenerlos.

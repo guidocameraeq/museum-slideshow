@@ -22,14 +22,14 @@ class RenglonesTest {
 
     @Test
     fun minimaEsTituloYAutorConAnio() {
-        val r = Renglones.cartel(completa, NivelInfo.MINIMA, false, aviso, fm)
+        val r = Renglones.cartel(completa, NivelInfo.MINIMA, false, aviso, fm, true)
         assertEquals(listOf(Rol.TITULO, Rol.AUTOR), roles(r))
         assertEquals("Claude Monet, 1872", r[1].texto)
     }
 
     @Test
     fun fichaTraeAutorConVidaAnioMovimientoDatosYCredito() {
-        val r = Renglones.cartel(completa, NivelInfo.FICHA, false, aviso, fm)
+        val r = Renglones.cartel(completa, NivelInfo.FICHA, false, aviso, fm, true)
         assertEquals(
             listOf(Rol.TITULO, Rol.AUTOR, Rol.ANIO, Rol.MOVIMIENTO, Rol.DATOS, Rol.DATOS, Rol.CREDITO),
             roles(r),
@@ -43,7 +43,7 @@ class RenglonesTest {
 
     @Test
     fun completaSumaLaExplicacionAntesDelCredito() {
-        val r = Renglones.cartel(completa, NivelInfo.COMPLETA, false, aviso, fm)
+        val r = Renglones.cartel(completa, NivelInfo.COMPLETA, false, aviso, fm, true)
         assertEquals(Rol.EXPLICACION, r[r.size - 2].rol)
         assertEquals(Rol.CREDITO, r.last().rol)
         assertEquals(Datos.EXPLICACION_CORTA, r[r.size - 2].texto)
@@ -51,11 +51,11 @@ class RenglonesTest {
 
     @Test
     fun elAvisoDeOkVaAlFinalSoloSiSePide() {
-        val con = Renglones.cartel(completa, NivelInfo.FICHA, true, aviso, fm)
+        val con = Renglones.cartel(completa, NivelInfo.FICHA, true, aviso, fm, true)
         assertEquals(Rol.AVISO_OK, con.last().rol)
         assertEquals(aviso, con.last().texto)
-        assertFalse(Renglones.cartel(completa, NivelInfo.FICHA, false, aviso, fm).any { it.rol == Rol.AVISO_OK })
-        assertEquals(Rol.AVISO_OK, Renglones.cartel(completa, NivelInfo.MINIMA, true, aviso, fm).last().rol)
+        assertFalse(Renglones.cartel(completa, NivelInfo.FICHA, false, aviso, fm, true).any { it.rol == Rol.AVISO_OK })
+        assertEquals(Rol.AVISO_OK, Renglones.cartel(completa, NivelInfo.MINIMA, true, aviso, fm, true).last().rol)
     }
 
     @Test
@@ -64,7 +64,7 @@ class RenglonesTest {
             vidaAutor = null, anio = "  ", movimiento = null, tecnica = null, medidas = "48 × 63 cm",
             ubicacion = null, explicacion = null, credito = null,
         )
-        val r = Renglones.cartel(pelada, NivelInfo.COMPLETA, false, aviso, fm)
+        val r = Renglones.cartel(pelada, NivelInfo.COMPLETA, false, aviso, fm, true)
         assertEquals(listOf(Rol.TITULO, Rol.AUTOR, Rol.DATOS), roles(r))
         assertEquals("Claude Monet", r[1].texto)       // sin vida: solo el autor
         assertEquals("48 × 63 cm", r[2].texto)          // solo las medidas, sin " · "
@@ -74,7 +74,7 @@ class RenglonesTest {
     @Test
     fun laUbicacionSolaTomaElAireDeUnPrimerDato() {
         val f = completa.copy(tecnica = null, medidas = null)
-        val r = Renglones.cartel(f, NivelInfo.FICHA, false, aviso, fm)
+        val r = Renglones.cartel(f, NivelInfo.FICHA, false, aviso, fm, true)
         val ubi = r.first { it.rol == Rol.DATOS }
         assertNull(ubi.margenSup)
     }
@@ -82,7 +82,7 @@ class RenglonesTest {
     @Test
     fun sinTituloNiAutorNiAnioElMinimoQuedaVacio() {
         val f = completa.copy(titulo = null, autor = null, anio = null)
-        assertTrue(Renglones.cartel(f, NivelInfo.MINIMA, false, aviso, fm).isEmpty())
+        assertTrue(Renglones.cartel(f, NivelInfo.MINIMA, false, aviso, fm, true).isEmpty())
         assertEquals("1872", Renglones.autorYAnio(completa.copy(autor = null), fm))
         assertEquals("Claude Monet", Renglones.autorYAnio(completa.copy(anio = null), fm))
     }
@@ -106,7 +106,16 @@ class RenglonesTest {
         assertEquals(6f, r[0].margenInf, 0f)
         assertEquals(6f, r[4].margenSup!!, 0f)       // técnica · medidas lleva 6 de aire
         assertEquals(0f, r[5].margenSup!!, 0f)
-        assertEquals("Dominio público", Renglones.libroCredito(completa)!!.texto)
-        assertNull(Renglones.libroCredito(completa.copy(credito = null)))
+        assertEquals("Dominio público", Renglones.libroCredito(completa, true)!!.texto)
+        assertNull(Renglones.libroCredito(completa.copy(credito = null), true))
+    }
+
+    @Test
+    fun sinCreditoNoHayRenglonDeCreditoEnElCartelNiEnElLibro() {
+        for (n in NivelInfo.values()) {
+            assertFalse(Renglones.cartel(completa, n, true, aviso, fm, false).any { it.rol == Rol.CREDITO })
+        }
+        assertTrue(Renglones.cartel(completa, NivelInfo.FICHA, false, aviso, fm, true).any { it.rol == Rol.CREDITO })
+        assertNull(Renglones.libroCredito(completa, false))
     }
 }

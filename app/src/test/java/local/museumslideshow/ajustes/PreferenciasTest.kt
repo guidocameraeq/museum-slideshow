@@ -25,6 +25,7 @@ class PreferenciasTest {
         assertNull(p.galeria)
         assertEquals(Pared.HASTA_3, p.pared)
         assertEquals(CartelObra.SIEMPRE, p.cartelObra)
+        assertEquals(false, p.mostrarCredito)
         assertEquals(Transicion.FUNDIDO, p.transicion)
         assertEquals(1500, p.duracionTransicionMs)
         assertEquals(SincronizarCada.SEIS_HORAS, p.sincronizarCada)

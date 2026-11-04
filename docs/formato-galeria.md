@@ -90,7 +90,7 @@ Todos son texto entre comillas.
 | `forma` | no | `"rectangular"` (el valor por defecto), `"redonda"` u `"ovalada"`. Ponela **siempre** en las obras redondas u ovaladas (tondos, medallones): la app no las puede adivinar por los píxeles, y con este dato les pone un marco redondo. |
 | `explicacion` | no | El texto tipo cartel de museo: qué muestra la obra, por qué importa, qué mirar. Entre 80 y 150 palabras es el objetivo: así entra al lado de la obra en la mayoría de los casos (si no entra, la app la muestra aparte con el botón OK). Más corta también vale: la app la muestra igual. Los párrafos se separan con `\n\n`. Texto plano, sin Markdown ni HTML. |
 | `marco` | no | El marco que sugiere el agente para esta obra. La app lo usa solo si Guido elige "el que diga la galería". El catálogo de nombres se define cuando estén los marcos reales; un nombre desconocido se ignora. |
-| `credito` | no | De dónde sale la imagen o su licencia. Se muestra chico. |
+| `credito` | no | De dónde sale la imagen o su licencia. Se muestra chico solo si el ajuste "Mostrar de dónde sale la imagen" está en Sí (por defecto, no se muestra). |
 | `licencia` | no | La licencia de la imagen, por ejemplo `"Dominio público"`. Se guarda aparte de `credito` para poder revisarla. |
 | `fuente` | no | El link de donde salen la imagen y la ficha (Wikimedia, el museo…). Para auditar; la tele no lo muestra. |
 | `id` | no | Un identificador fijo de la obra (el QID de Wikidata, por ejemplo `"Q123456"`, u otro código estable). Si después se reemplaza la imagen por una mejor, con el mismo `id` la app sabe que es la misma obra y no pierde favoritos ni orden. No se repite dentro de una galería. |

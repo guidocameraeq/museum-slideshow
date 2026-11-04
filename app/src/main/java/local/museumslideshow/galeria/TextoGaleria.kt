@@ -125,9 +125,11 @@ class ComposicionTexto(
         return Triple(bloques, y, entra)
     }
 
-    fun cartel(ficha: Ficha, nivel: NivelInfo, conAvisoOk: Boolean, ancho: Float, tema: TemaDef, modo: Modo): TextoMedido {
+    fun cartel(
+        ficha: Ficha, nivel: NivelInfo, conAvisoOk: Boolean, ancho: Float, tema: TemaDef, modo: Modo, conCredito: Boolean,
+    ): TextoMedido {
         val escala = if (ancho < Constantes.ANCHO_CARTEL_CHICO) Constantes.ESCALA_CARTEL_CHICO else 1f
-        val filas = Renglones.cartel(ficha, nivel, conAvisoOk, avisoOk, formatos)
+        val filas = Renglones.cartel(ficha, nivel, conAvisoOk, avisoOk, formatos, conCredito)
         val (bloques, alto, entra) = apilar(filas, tema.tipografia(modo), ancho, escala, centrado = false)
         return TextoMedido(bloques, ancho, alto, entra)
     }
@@ -176,6 +178,7 @@ class ComposicionTexto(
      */
     fun paginaLibro(
         ficha: Ficha, corrido: String?, tamanoExplicacionPx: Float?, conAvisoOk: Boolean, ancho: Float, modo: Modo,
+        conCredito: Boolean,
     ): PaginaMedida {
         val tip = RegistroTemas.de(Tema.LIBRO_DE_ARTE).tipografia(modo)
         val bloques = ArrayList<BloqueTexto>()
@@ -200,7 +203,7 @@ class ComposicionTexto(
             val ex = apilar(listOf(Renglon(Rol.LIBRO_EXPLICACION, explicacion, 0f)), tip, ancho, 1f, false, y) { e }
             bloques += ex.first; y = ex.second; if (!ex.third) entra = false
         }
-        Renglones.libroCredito(ficha)?.let {
+        Renglones.libroCredito(ficha, conCredito)?.let {
             val c = apilar(listOf(it), tip, ancho, 1f, false, y, margenPrimero = true)
             bloques += c.first; y = c.second; if (!c.third) entra = false
         }
@@ -231,8 +234,10 @@ class MedidorTextoCompose(private val composicion: ComposicionTexto) : MedidorTe
     @Suppress("UNCHECKED_CAST")
     private fun <T : Any> recordar(k: Clave, f: () -> T): T = (cache[k] as T?) ?: f().also { cache[k] = it }
 
-    fun cartel(ficha: Ficha, nivel: NivelInfo, aviso: Boolean, ancho: Float, tema: TemaDef, modo: Modo): TextoMedido =
-        recordar(Clave(1, ficha, nivel to aviso, ancho, tema.id, modo)) { composicion.cartel(ficha, nivel, aviso, ancho, tema, modo) }
+    fun cartel(ficha: Ficha, nivel: NivelInfo, aviso: Boolean, ancho: Float, tema: TemaDef, modo: Modo, conCredito: Boolean): TextoMedido =
+        recordar(Clave(1, ficha, Triple(nivel, aviso, conCredito), ancho, tema.id, modo)) {
+            composicion.cartel(ficha, nivel, aviso, ancho, tema, modo, conCredito)
+        }
 
     fun nombre(ficha: Ficha, ancho: Float, tema: TemaDef, modo: Modo): TextoMedido =
         recordar(Clave(2, ficha, ancho, tema.id, modo, null)) { composicion.nombre(ficha, ancho, tema, modo) }
@@ -246,11 +251,15 @@ class MedidorTextoCompose(private val composicion: ComposicionTexto) : MedidorTe
     fun contador(texto: String, tema: TemaDef, modo: Modo): TextoMedido =
         recordar(Clave(5, texto, tema.id, modo, null, null)) { composicion.contador(texto, tema, modo) }
 
-    fun pagina(ficha: Ficha, corrido: String?, tam: Float?, aviso: Boolean, ancho: Float, modo: Modo): PaginaMedida =
-        recordar(Clave(6, ficha, corrido to tam, aviso, ancho, modo)) { composicion.paginaLibro(ficha, corrido, tam, aviso, ancho, modo) }
+    fun pagina(ficha: Ficha, corrido: String?, tam: Float?, aviso: Boolean, ancho: Float, modo: Modo, conCredito: Boolean): PaginaMedida =
+        recordar(Clave(6, ficha, corrido to tam, aviso to conCredito, ancho, modo)) {
+            composicion.paginaLibro(ficha, corrido, tam, aviso, ancho, modo, conCredito)
+        }
 
-    override fun medirCartel(ficha: Ficha, nivel: NivelInfo, conAvisoOk: Boolean, ancho: Float, tema: TemaDef, modo: Modo): MedidaTexto {
-        val m = cartel(ficha, nivel, conAvisoOk, ancho, tema, modo)
+    override fun medirCartel(
+        ficha: Ficha, nivel: NivelInfo, conAvisoOk: Boolean, ancho: Float, tema: TemaDef, modo: Modo, conCredito: Boolean,
+    ): MedidaTexto {
+        val m = cartel(ficha, nivel, conAvisoOk, ancho, tema, modo, conCredito)
         return MedidaTexto(ancho, m.alto, m.entra)
     }
 
@@ -276,9 +285,9 @@ class MedidorTextoCompose(private val composicion: ComposicionTexto) : MedidorTe
 
     override fun medirPaginaLibro(
         ficha: Ficha, nombreSala: String?, conExplicacion: Boolean, tamanoExplicacionPx: Float,
-        conAvisoOk: Boolean, ancho: Float, modo: Modo,
+        conAvisoOk: Boolean, ancho: Float, modo: Modo, conCredito: Boolean,
     ): MedidaTexto {
-        val p = pagina(ficha, nombreSala, if (conExplicacion) tamanoExplicacionPx else null, conAvisoOk, ancho, modo)
+        val p = pagina(ficha, nombreSala, if (conExplicacion) tamanoExplicacionPx else null, conAvisoOk, ancho, modo, conCredito)
         return MedidaTexto(ancho, p.alto, p.entra)
     }
 }

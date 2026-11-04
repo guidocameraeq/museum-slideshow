@@ -58,7 +58,9 @@ object Renglones {
      * Cartel al costado o abajo de la obra. MINIMA = título + "autor, año". FICHA y COMPLETA suman autor (vida),
      * año, movimiento, técnica · medidas, ubicación y crédito; COMPLETA suma además la explicación.
      */
-    fun cartel(ficha: Ficha, nivel: NivelInfo, conAvisoOk: Boolean, avisoOk: String, fm: Formatos): List<Renglon> {
+    fun cartel(
+        ficha: Ficha, nivel: NivelInfo, conAvisoOk: Boolean, avisoOk: String, fm: Formatos, conCredito: Boolean,
+    ): List<Renglon> {
         val r = ArrayList<Renglon>()
         limpio(ficha.titulo)?.let { r += Renglon(Rol.TITULO, it) }
         if (nivel == NivelInfo.MINIMA) {
@@ -71,7 +73,7 @@ object Renglones {
             tecnicaYMedidas(ficha, fm)?.let { r += Renglon(Rol.DATOS, it); hayDato = true }
             limpio(ficha.ubicacion)?.let { r += Renglon(Rol.DATOS, it, if (hayDato) AIRE_SEGUNDO_DATO else null) }
             if (nivel == NivelInfo.COMPLETA) limpio(ficha.explicacion)?.let { r += Renglon(Rol.EXPLICACION, it) }
-            limpio(ficha.credito)?.let { r += Renglon(Rol.CREDITO, it) }
+            if (conCredito) limpio(ficha.credito)?.let { r += Renglon(Rol.CREDITO, it) }
         }
         if (conAvisoOk) r += Renglon(Rol.AVISO_OK, avisoOk)
         return r
@@ -108,5 +110,6 @@ object Renglones {
         return r
     }
 
-    fun libroCredito(ficha: Ficha): Renglon? = limpio(ficha.credito)?.let { Renglon(Rol.LIBRO_CREDITO, it) }
+    fun libroCredito(ficha: Ficha, conCredito: Boolean): Renglon? =
+        if (!conCredito) null else limpio(ficha.credito)?.let { Renglon(Rol.LIBRO_CREDITO, it) }
 }

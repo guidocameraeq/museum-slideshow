@@ -380,9 +380,9 @@ class AcomodadorTest {
         val d = libro(obraConExplicacion(800))
         val s = d.libro!!.tamanoExplicacionPx!!
         assertTrue("letra entre 17 y 25 (fue $s)", s in 17f..25f)
-        val m = med.medirPaginaLibro(d.obras.single().obra.ficha!!, null, true, s, false, Constantes.LIBRO_COLUMNA.ancho, Modo.CLARO)
+        val m = med.medirPaginaLibro(d.obras.single().obra.ficha!!, null, true, s, false, Constantes.LIBRO_COLUMNA.ancho, Modo.CLARO, false)
         assertTrue(m.alto <= Constantes.LIBRO_COLUMNA.alto)
-        val mas = med.medirPaginaLibro(d.obras.single().obra.ficha!!, null, true, s + 1, false, Constantes.LIBRO_COLUMNA.ancho, Modo.CLARO)
+        val mas = med.medirPaginaLibro(d.obras.single().obra.ficha!!, null, true, s + 1, false, Constantes.LIBRO_COLUMNA.ancho, Modo.CLARO, false)
         assertTrue("a un punto más no entraba", mas.alto > Constantes.LIBRO_COLUMNA.alto)
     }
 
@@ -438,5 +438,18 @@ class AcomodadorTest {
     fun libroConVariasObrasMuestraSoloLaElegida() {
         val d = acomodar(pedido(listOf(Datos.gioconda, Datos.armino), tema = Tema.LIBRO_DE_ARTE, elegida = 1))
         assertEquals("armino", d.obras.single().obra.driveId)
+    }
+
+    @Test
+    fun elAcomodadorLePasaAlMedidorSiSeMuestraElCredito() {
+        val sin = MedidorFalso()
+        Acomodador.acomodar(pedido(Datos.monet), sin)
+        assertTrue(sin.pedidosCredito.isNotEmpty() && sin.pedidosCredito.none { it })
+        val con = MedidorFalso()
+        Acomodador.acomodar(pedido(Datos.monet, prefs = Preferencias(mostrarCredito = true)), con)
+        assertTrue(con.pedidosCredito.isNotEmpty() && con.pedidosCredito.all { it })
+        val libroSin = MedidorFalso()
+        Acomodador.acomodar(pedido(obraConExplicacion(300), tema = Tema.LIBRO_DE_ARTE), libroSin)
+        assertTrue(libroSin.pedidosCredito.isNotEmpty() && libroSin.pedidosCredito.none { it })
     }
 }

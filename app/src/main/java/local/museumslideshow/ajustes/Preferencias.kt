@@ -73,6 +73,8 @@ data class Preferencias(
     val galeria: String? = null,
     val pared: Pared = Pared.HASTA_3,
     val cartelObra: CartelObra = CartelObra.SIEMPRE,
+    /** Mostrar el renglón de crédito (de dónde sale la imagen) en el cartel y en el Libro de arte. */
+    val mostrarCredito: Boolean = false,
     val transicion: Transicion = Transicion.FUNDIDO,
     val duracionTransicionMs: Int = 1500,
     val sincronizarCada: SincronizarCada = SincronizarCada.SEIS_HORAS,

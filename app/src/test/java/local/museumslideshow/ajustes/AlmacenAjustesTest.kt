@@ -35,6 +35,7 @@ class CodecPreferenciasTest {
         galeria = "1AbC_dEf-GhI",
         pared = Pared.HASTA_2,
         cartelObra = CartelObra.UNOS_SEGUNDOS,
+        mostrarCredito = true,
         transicion = Transicion.NINGUNA,
         duracionTransicionMs = 2500,
         sincronizarCada = SincronizarCada.SOLO_A_MANO,
@@ -202,5 +203,19 @@ class CarpetaDriveTest {
         assertEquals(RitmoBajada.NORMAL, n.ritmoBajada)
         assertEquals(RitmoBajada.TRANQUILO, PreferenciasDesdeTexto.aplicar(n, mapOf("ritmo" to "tranquilo")).ritmoBajada)
         assertEquals(RitmoBajada.NORMAL, PreferenciasDesdeTexto.aplicar(n, mapOf("ritmo" to "rapidisimo")).ritmoBajada)
+    }
+
+    @Test
+    fun elCreditoPorDefectoEsNoYSeGuardaYSeCambiaPorIntent() {
+        assertEquals(false, Preferencias().mostrarCredito)
+        val guardado = CodecPreferencias.codificar(Preferencias(mostrarCredito = true))
+        assertEquals("true", guardado["credito"])
+        assertEquals(true, CodecPreferencias.decodificar(guardado).mostrarCredito)
+        assertEquals(false, CodecPreferencias.decodificar(emptyMap()).mostrarCredito)
+        assertEquals(false, CodecPreferencias.decodificar(mapOf("credito" to "quizas")).mostrarCredito)
+        val si = PreferenciasDesdeTexto.aplicar(Preferencias(), mapOf("credito" to "si"))
+        assertEquals(true, si.mostrarCredito)
+        assertEquals(false, PreferenciasDesdeTexto.aplicar(si, mapOf("credito" to "no")).mostrarCredito)
+        assertEquals(true, PreferenciasDesdeTexto.aplicar(si, mapOf("credito" to "tal vez")).mostrarCredito)
     }
 }

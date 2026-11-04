@@ -16,7 +16,13 @@ class MedidorFalso : MedidorTexto {
     private fun lineas(chars: Int, tamano: Float, ancho: Float): Int =
         max(1, ceil(chars * 0.5f * tamano / ancho).toInt())
 
-    override fun medirCartel(ficha: Ficha, nivel: NivelInfo, conAvisoOk: Boolean, ancho: Float, tema: TemaDef, modo: Modo): MedidaTexto {
+    /** Lo que se pidió medir con el crédito (para probar que el Acomodador pasa el ajuste). */
+    val pedidosCredito = ArrayList<Boolean>()
+
+    override fun medirCartel(
+        ficha: Ficha, nivel: NivelInfo, conAvisoOk: Boolean, ancho: Float, tema: TemaDef, modo: Modo, conCredito: Boolean,
+    ): MedidaTexto {
+        pedidosCredito += conCredito
         if (ancho < 150f) return MedidaTexto(ancho, 0f, false)
         var h = lineas((ficha.titulo ?: "").length, 32f, ancho) * 38f + 31f
         if (nivel != NivelInfo.MINIMA) {
@@ -36,8 +42,9 @@ class MedidorFalso : MedidorTexto {
 
     override fun medirPaginaLibro(
         ficha: Ficha, nombreSala: String?, conExplicacion: Boolean, tamanoExplicacionPx: Float,
-        conAvisoOk: Boolean, ancho: Float, modo: Modo,
+        conAvisoOk: Boolean, ancho: Float, modo: Modo, conCredito: Boolean,
     ): MedidaTexto {
+        pedidosCredito += conCredito
         var h = 330f + 40f
         if (conExplicacion) {
             val chars = (ficha.explicacion ?: "").length

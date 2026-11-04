@@ -167,7 +167,7 @@ object Acomodador {
                 else min(min(aw, max(w, 640f)), if (nivel == NivelInfo.COMPLETA) 1000f else 820f),
             )
             if (lw < anchoMin) continue
-            val m = medidor.medirCartel(ficha, nivel, ok, lw, p.tema, p.modo)
+            val m = medidor.medirCartel(ficha, nivel, ok, lw, p.tema, p.modo, prefs.mostrarCredito)
             if (!m.entra || m.alto > ah) continue
             val ox: Float
             val oy: Float
@@ -297,7 +297,7 @@ object Acomodador {
         if (hayExp && ((!sinCartel && prefs.explicacionEnPantalla == ExplicacionEnPantalla.CUANDO_ENTRA) || p.forzarExplicacion)) {
             // La letra de la explicación baja de 26 a 17 hasta que entra entera; si no entra, no se muestra.
             for (s in Constantes.LIBRO_EXPLICACION_MAX downTo Constantes.LIBRO_EXPLICACION_MIN) {
-                val m = medidor.medirPaginaLibro(ficha, corrido, true, s.toFloat(), false, columna.ancho, p.modo)
+                val m = medidor.medirPaginaLibro(ficha, corrido, true, s.toFloat(), false, columna.ancho, p.modo, prefs.mostrarCredito)
                 if (m.entra && m.alto <= columna.alto) {
                     return Disposicion(listOf(obra), emptyList(), pagina(s.toFloat(), false), false, NivelInfo.COMPLETA)
                 }

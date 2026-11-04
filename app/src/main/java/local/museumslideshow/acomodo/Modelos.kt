@@ -16,7 +16,9 @@ data class MedidaTexto(val ancho: Float, val alto: Float, val entra: Boolean = t
 /** Lo implementa quien dibuja (con las fuentes de verdad); en las pruebas hay uno falso. Todo en px del escenario de 1920x1080. */
 interface MedidorTexto {
     /** Alto en px del cartel de una obra con ese nivel y ese ancho; `entra=false` si alguna palabra no entra a lo ancho. */
-    fun medirCartel(ficha: Ficha, nivel: NivelInfo, conAvisoOk: Boolean, ancho: Float, tema: TemaDef, modo: Modo): MedidaTexto
+    fun medirCartel(
+        ficha: Ficha, nivel: NivelInfo, conAvisoOk: Boolean, ancho: Float, tema: TemaDef, modo: Modo, conCredito: Boolean,
+    ): MedidaTexto
 
     /** Nombre bajo la obra en la Pared. */
     fun medirNombre(ficha: Ficha, ancho: Float, tema: TemaDef, modo: Modo): MedidaTexto
@@ -29,7 +31,7 @@ interface MedidorTexto {
     /** Libro de arte: alto de la columna derecha completa con la explicación a ese tamaño de letra. */
     fun medirPaginaLibro(
         ficha: Ficha, nombreSala: String?, conExplicacion: Boolean, tamanoExplicacionPx: Float,
-        conAvisoOk: Boolean, ancho: Float, modo: Modo,
+        conAvisoOk: Boolean, ancho: Float, modo: Modo, conCredito: Boolean,
     ): MedidaTexto
 }
 

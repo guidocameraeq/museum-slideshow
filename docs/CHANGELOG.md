@@ -2,6 +2,13 @@
 
 > Historia permanente. `/cierre` agrega una entrada AL TOPE en cada sesión. Orden descendente estricto, sin excepciones. Nada de versiones duplicadas en otros docs.
 
+## 2026-11-03 (noche) — Portada del repo, curaduría y crédito oculto
+
+### Added
+- Portada: `README.md` nuevo con banner (`docs/assets/banner.svg`, templo griego) y capturas de los diseños aprobados.
+- `docs/curaduria.md`: quién hace qué con el agente curador, cómo pedirle y las reglas acordadas (originales en Drive, copia 4K, ids estables, curar borrando).
+- Ajuste "Mostrar de dónde sale la imagen" (Sí / No, por defecto No): el crédito "Dominio público, vía Wikimedia Commons" ya no se ve. 403 tests. Probado en la TV.
+
 ## 2026-11-03 — Obras por la copia 4K de Drive
 
 ### Changed

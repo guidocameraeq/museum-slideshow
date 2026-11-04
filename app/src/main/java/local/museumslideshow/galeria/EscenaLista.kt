@@ -182,7 +182,7 @@ class ConstructorEscena(
                 disp = dV
             } else {
                 lomo = ConstantesGaleria.VISTA_LOMO_X
-                disp = vistaAncha(obra, modo, nombreSala)
+                disp = vistaAncha(obra, modo, nombreSala, prefs.mostrarCredito)
             }
         }
 
@@ -209,7 +209,7 @@ class ConstructorEscena(
         for (t in disp.textos) {
             when (t) {
                 is Texto.Cartel -> disp.obras.firstOrNull()?.obra?.ficha?.let { f ->
-                    val m = medidor.cartel(f, t.nivel, t.avisoOk, t.rect.ancho, tema, modo)
+                    val m = medidor.cartel(f, t.nivel, t.avisoOk, t.rect.ancho, tema, modo, prefs.mostrarCredito)
                     dibujables += Dibujable(TipoDibujable.CARTEL, t.rect, m.bloques, tip.fondoCartel?.toInt(), 0f, 0, sombraTexto)
                 }
                 is Texto.Nombre -> disp.obras.getOrNull(t.obraIndice)?.obra?.ficha?.let { f ->
@@ -237,7 +237,7 @@ class ConstructorEscena(
         val pl = disp.libro
         val fichaLibro = disp.obras.firstOrNull()?.obra?.ficha
         if (pl != null && fichaLibro != null) {
-            val p = medidor.pagina(fichaLibro, pl.corrido, pl.tamanoExplicacionPx, pl.avisoOk, pl.columna.ancho, modo)
+            val p = medidor.pagina(fichaLibro, pl.corrido, pl.tamanoExplicacionPx, pl.avisoOk, pl.columna.ancho, modo, prefs.mostrarCredito)
             val regla = tip[Rol.LIBRO_REGLA]
             libro = LibroDibujable(p, pl.columna, regla.color.toInt(), regla.tamanoPx)
         }
@@ -257,7 +257,7 @@ class ConstructorEscena(
      * angosta y el texto usa una columna más ancha. La letra baja de 26 a lo que haga falta (mínimo
      * [ConstantesGaleria.VISTA_EXPLICACION_MIN_PX]); el texto nunca se corta.
      */
-    private fun vistaAncha(obra: Obra, modo: Modo, nombreSala: String): Disposicion {
+    private fun vistaAncha(obra: Obra, modo: Modo, nombreSala: String, conCredito: Boolean): Disposicion {
         val lomo = ConstantesGaleria.VISTA_LOMO_X
         val libro = Constantes.LIBRO
         val area = Rect(libro.x + 44f, Constantes.LIBRO_OBRA.y, lomo - libro.x - 44f - 64f, Constantes.LIBRO_OBRA.alto)
@@ -273,7 +273,7 @@ class ConstructorEscena(
         var tam = ConstantesGaleria.VISTA_EXPLICACION_MIN_PX.toFloat()
         if (ficha != null) {
             for (s in Constantes.LIBRO_EXPLICACION_MAX downTo ConstantesGaleria.VISTA_EXPLICACION_MIN_PX) {
-                val m = medidor.pagina(ficha, nombreSala, s.toFloat(), false, columna.ancho, modo)
+                val m = medidor.pagina(ficha, nombreSala, s.toFloat(), false, columna.ancho, modo, conCredito)
                 if (m.entra && m.alto <= columna.alto) { tam = s.toFloat(); break }
             }
         }

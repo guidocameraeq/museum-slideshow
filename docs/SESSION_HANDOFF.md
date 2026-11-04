@@ -14,7 +14,7 @@
 ## Estado
 - TV: última versión instalada. **Protector = Museum Slideshow** (Guido pidió dejarlo puesto; el anterior guardado es el Ambient). Tema galería moderna, pared gris cálido, 10 min por obra (ajustes de Guido).
 - Bloqueo: desde la PC se levantó 23:15; a las 23:39 la tele reintentó SOLA y sincronizó bien (44 bajadas, 0 problemas); a las 23:41 la primera obra de la reserva volvió a recibir el 403 → pausa hasta 00:11 (manejada bien, sin cierres). La reserva quedó VACÍA (la versión vieja borró Rococó): **al prender la tele el protector puede no tener obras** hasta que baje. Estado: 11 de 23 galerías (el resto seguramente sigue subiendo a Drive).
-- La TV quedó apagada (pedido de Guido).
+- 03/11: TV prendida y en uso por Guido; última versión instalada (copia 4K + crédito oculto).
 
 ## En curso
 - Drive para escritorio de la PC sube los 7 GB a la nube en segundo plano (puede tardar horas).
@@ -22,6 +22,7 @@
 ## Próximo paso CONCRETO
 1. **03/11: las obras ya bajan por la copia 4K de Drive** (`thumbnailLink` `=s3840`, Google no la bloquea; original de respaldo, pausa por camino; ajuste "Bajar las obras de"). Probado en la TV: reserva "por copia s3840". Falta ver en la TV el caso con originales bloqueados y las 23 galerías en Estado.
 2. Originales vs copias en Drive: ya no importa (la app pide la copia 4K); quedan los originales.
+   - 03/11 noche: repo ordenado (README con banner, `docs/curaduria.md`), ajuste "Mostrar de dónde sale la imagen" (por defecto No, probado en la TV). Guido da la app por buena "por ahora".
 3. Sesión 5: prueba de 2 horas y criterios que faltan del SPEC-0 (ver TODO).
 
 ## Bloqueos
@@ -29,8 +30,8 @@
 
 ## Contexto que no está en otro doc
 - **Forma de trabajo de Guido**: Opus coordina y revisa; construcción con subagentes `model: sonnet`; borrador HTML + OK antes de UI; subir a GitHub cada parte que anda.
-- Probar por adb: `--es pantalla <inicio|galeria|galerias|apariencia|pase|conexion|protector|estado>`, `--es protector usar|volver`, `--es ritmo normal`, ajustes como extras (claves en `ajustes/PreferenciasDesdeTexto.kt`). Mostrar un PNG a 4K: `am start -S -n com.droidlogic.imageplayer/.FullImageActivity -a android.intent.action.VIEW -d file:///sdcard/... -t image/png`.
+- Probar por adb: `--es pantalla <inicio|galeria|galerias|apariencia|pase|conexion|protector|estado>`, `--es protector usar|volver`, `--es ritmo normal`, `--es camino copia|original`, `--es credito si|no`, ajustes como extras (claves en `ajustes/PreferenciasDesdeTexto.kt`). Mostrar un PNG a 4K: `am start -S -n com.droidlogic.imageplayer/.FullImageActivity -a android.intent.action.VIEW -d file:///sdcard/... -t image/png`.
 - Con el protector corriendo, `am start` no llega a la app: despertar con `service call dreams 2` (abre el inicio de Google TV encima, con la foto de Guido: no capturar) y volver a abrir la app.
 - Lint da 5 errores viejos `NewApi` (API 29 en `PintorSuperficie`, minSdk 28): inofensivos en la TV (API 31). Antes de usar APIs de Java nuevas, mirar que existan en Android 12.
-- Compilar: `$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'; .\gradlew.bat assembleRelease testDebugUnitTest` (374 tests).
+- Compilar: `$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'; .\gradlew.bat assembleRelease testDebugUnitTest` (403 tests).
 - La clave nunca se mira ni va al chat. Cuenta Google del proyecto: guido.camera12.

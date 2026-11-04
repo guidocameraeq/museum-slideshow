@@ -26,6 +26,7 @@ object CodecPreferencias {
         const val GALERIA = "galeria"
         const val PARED = "pared"
         const val CARTEL = "cartel"
+        const val CREDITO = "credito"
         const val TRANSICION = "transicion"
         const val DURACION = "duracion"
         const val SINCRONIZAR_CADA = "sincronizar_cada"
@@ -40,7 +41,7 @@ object CodecPreferencias {
 
         val TODAS = listOf(
             TEMA, MODO, HORA_DIA, HORA_NOCHE, PARED_CLARO, PARED_OSCURO, MARCO, TAMANO, COMPLETA_CON_MARCO, EXPLICACION,
-            SALA, CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, TRANSICION, DURACION, SINCRONIZAR_CADA, ESPACIO_MAXIMO, CARPETA,
+            SALA, CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, CREDITO, TRANSICION, DURACION, SINCRONIZAR_CADA, ESPACIO_MAXIMO, CARPETA,
             GALERIAS_SELECCION, GALERIAS_NUEVAS, RESERVA, VISTA_GALERIAS, RITMO_BAJADA, CAMINO_OBRAS,
         )
     }
@@ -75,6 +76,7 @@ object CodecPreferencias {
         p.galeria?.let { m[K.GALERIA] = it }
         m[K.PARED] = p.pared.name
         m[K.CARTEL] = p.cartelObra.name
+        m[K.CREDITO] = p.mostrarCredito.toString()
         m[K.TRANSICION] = p.transicion.name
         m[K.DURACION] = p.duracionTransicionMs.toString()
         m[K.SINCRONIZAR_CADA] = p.sincronizarCada.name
@@ -113,6 +115,11 @@ object CodecPreferencias {
             galeria = m[K.GALERIA]?.takeIf { it.isNotBlank() },
             pared = enum<Pared>(m[K.PARED]) ?: d.pared,
             cartelObra = enum<CartelObra>(m[K.CARTEL]) ?: d.cartelObra,
+            mostrarCredito = when (m[K.CREDITO]) {
+                "true" -> true
+                "false" -> false
+                else -> d.mostrarCredito
+            },
             transicion = enum<Transicion>(m[K.TRANSICION]) ?: d.transicion,
             duracionTransicionMs = m[K.DURACION]?.toIntOrNull()?.takeIf { it in Preferencias.DURACION_TRANSICION_MS }
                 ?: d.duracionTransicionMs,

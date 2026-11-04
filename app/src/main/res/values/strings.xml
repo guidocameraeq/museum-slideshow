@@ -83,6 +83,7 @@
     <string name="aj_galeria">Galería</string>
     <string name="aj_pared">Pared de verticales</string>
     <string name="aj_cartel">Cartel de la obra</string>
+    <string name="aj_credito">Mostrar de dónde sale la imagen</string>
     <string name="aj_transicion">Transición</string>
     <string name="aj_duracion">Duración de la transición</string>
     <string name="aj_sincronizar">Sincronizar cada</string>
@@ -330,4 +331,5 @@
     <string name="ayuda_explicacion">Si entra al lado de la obra, o nunca.</string>
     <string name="ayuda_sala">Cuándo se ve el nombre de la sala.</string>
     <string name="ayuda_cartel">Cuándo se ve el cartel de cada obra.</string>
+    <string name="ayuda_credito">Si el cartel dice de dónde sale la imagen (por ejemplo, Wikimedia Commons).</string>
 </resources>
