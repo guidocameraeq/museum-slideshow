@@ -3,8 +3,18 @@ package local.museumslideshow.sync
 import java.io.File
 import local.museumslideshow.ajustes.CaminoObras
 
-/** Por dónde se le pide algo a Google: el ORIGINAL (la API: listado y `alt=media`, incluye los JSON) o la COPIA (`lh3`, la miniatura grande). */
-enum class CaminoDrive(val clave: String) { ORIGINAL("original"), COPIA("copia") }
+/**
+ * Por dónde se le pide algo a Google: el ORIGINAL (`alt=media`, incluye los JSON), la COPIA (`lh3`, la miniatura grande) o el
+ * LISTADO (los `files?q=...` de las carpetas). Cada uno tiene su propia pausa.
+ */
+enum class CaminoDrive(val clave: String) {
+    ORIGINAL("original"), COPIA("copia"), LISTADO("listado");
+
+    companion object {
+        /** Los caminos por los que se bajan OBRAS (el listado no baja nada). */
+        val DE_OBRAS: List<CaminoDrive> = listOf(ORIGINAL, COPIA)
+    }
+}
 
 /** Cómo salió una bajada de obra, para el registro. Nunca lleva URLs. */
 data class ViaBajada(val camino: CaminoDrive, val lado: Int?) {

@@ -55,10 +55,10 @@ object ClasificadorRespuestaDrive {
 
 /**
  * "No le pidas nada a Drive por este camino hasta T", guardado en un archivo para que lo respeten la app, el protector, el Worker
- * y la reserva (y sobreviva a un reinicio). Hay una pausa por camino ([CaminoDrive.ORIGINAL] y [CaminoDrive.COPIA]) y son
+ * y la reserva (y sobreviva a un reinicio). Hay una pausa por camino ([CaminoDrive.ORIGINAL], [CaminoDrive.COPIA] y [CaminoDrive.LISTADO]) y son
  * independientes. La espera es 30 min la primera vez y se duplica en pausas seguidas hasta 6 h; una bajada buena la vuelve a 30 min.
  *
- * Archivo: una línea por camino, `original=hasta;espera` y `copia=hasta;espera`. El formato viejo (`hasta;espera`, una sola línea,
+ * Archivo: una línea por camino, `original=hasta;espera`, `copia=hasta;espera` y `listado=hasta;espera`. El formato viejo (`hasta;espera`, una sola línea,
  * de cuando había un solo camino) se lee como ORIGINAL.
  */
 class PausaDrive(private val archivo: File, private val ahora: () -> Long = System::currentTimeMillis) {
@@ -74,9 +74,9 @@ class PausaDrive(private val archivo: File, private val ahora: () -> Long = Syst
         return estados.getValue(camino).hasta.takeIf { it > ahoraMs }
     }
 
-    /** ¿Están en pausa los dos caminos a la vez? Ahí no se puede bajar nada. */
+    /** ¿Están en pausa los dos caminos de obras (original y copia) a la vez? Ahí no se puede bajar ninguna obra. El listado no cuenta. */
     @Synchronized
-    fun todosEnPausa(ahoraMs: Long = ahora()): Boolean = CaminoDrive.values().all { hastaActivo(ahoraMs, it) != null }
+    fun todosEnPausa(ahoraMs: Long = ahora()): Boolean = CaminoDrive.DE_OBRAS.all { hastaActivo(ahoraMs, it) != null }
 
     /**
      * Anota una pausa nueva de ese camino y devuelve hasta cuándo. Si ya hay una vigente no la alarga ni duplica la espera
@@ -168,7 +168,7 @@ class TurnoDescargas {
 /**
  * Envuelve a la API de Drive: respeta la pausa de cada camino (con la pausa vigente no sale ni un pedido por ese camino),
  * convierte el "pará un rato" de Google en [PausaDriveException] y anota la pausa, y baja de a una con el ritmo elegido.
- * Listar y bajar el original son el camino ORIGINAL; bajar la copia (incluye pedir su `thumbnailLink`) es el camino COPIA.
+ * Listar es el camino LISTADO; bajar el original es el camino ORIGINAL; bajar la copia (incluye pedir su `thumbnailLink`) es el camino COPIA.
  */
 class DriveApiConPausa(
     private val api: DriveApi,
@@ -182,7 +182,7 @@ class DriveApiConPausa(
 ) : DriveApi {
     override val disponible: Boolean get() = api.disponible
 
-    override fun listar(carpetaId: String): List<ArchivoDrive> = conPausa(CaminoDrive.ORIGINAL) { api.listar(carpetaId) }
+    override fun listar(carpetaId: String): List<ArchivoDrive> = conPausa(CaminoDrive.LISTADO) { api.listar(carpetaId) }
 
     override fun bajar(archivoId: String, destino: File, maxBytes: Long) {
         conTurno(CaminoDrive.ORIGINAL) { api.bajar(archivoId, destino, maxBytes) }
@@ -198,7 +198,8 @@ class DriveApiConPausa(
     private fun conTurno(camino: CaminoDrive, bajada: () -> Unit) {
         synchronized(turno) {
             conPausa(camino) {
-                val ritmo = ritmoMs()
+                // El respiro solo va por el camino ORIGINAL (el que Google bloquea); la copia no se bloquea y baja sin pausa.
+                val ritmo = if (camino == CaminoDrive.ORIGINAL) ritmoMs() else 0L
                 if (ritmo > 0) {
                     val falta = ritmo - (ahora() - turno.ultimaTerminada)
                     if (falta > 0) esperar(minOf(falta, ritmo))
@@ -219,7 +220,11 @@ class DriveApiConPausa(
         } catch (e: ErrorDrive) {
             val motivo = e.pausa ?: throw e
             val hasta = pausa.registrar(ahora(), camino)
-            val de = if (camino == CaminoDrive.COPIA) " de la copia" else ""
+            val de = when (camino) {
+                CaminoDrive.COPIA -> " de la copia"
+                CaminoDrive.LISTADO -> " del listado"
+                CaminoDrive.ORIGINAL -> ""
+            }
             registrar("Drive pidió pausa$de hasta ${PausaDrive.horaTexto(hasta)} (motivo: ${motivo.etiqueta})")
             try { alPausar(hasta) } catch (x: Exception) { /* el reintento es un extra: la pausa ya está anotada */ }
             throw PausaDriveException(hasta, motivo, camino)

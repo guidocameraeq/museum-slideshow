@@ -171,10 +171,9 @@ class DriveApiConPausaTest {
     fun conLaPausaVigenteNoSaleNiUnPedido() {
         val api = ApiQueFalla { throw ErrorDrive(403, "X1", MotivoPausa.DEMASIADOS_PEDIDOS) }
         val d = envuelta(api)
-        try { d.listar("C") } catch (e: PausaDriveException) {}
+        try { d.bajar("A", File("x"), 1) } catch (e: PausaDriveException) {}
         assertEquals(1, api.pedidos)
         repeat(3) {
-            try { d.listar("C"); fail() } catch (e: PausaDriveException) {}
             try { d.bajar("A", File("x"), 1); fail() } catch (e: PausaDriveException) {}
         }
         assertEquals("ni un pedido más", 1, api.pedidos)
@@ -274,20 +273,180 @@ class SincronizacionEnPausaTest {
         }
         val s = Sincronizador(DriveApiConPausa(api, pausa, ahora = { reloj }), base, ProcesadorFalso()) { reloj }
         val r = s.sincronizar("RAIZ")
-        assertFalse(r.ok)
+        // La pausa de las descargas no corta: se lista todo, se escribe el índice y las fichas quedan esperando.
+        assertTrue(r.ok)
         assertEquals(reloj + 30 * MIN, r.pausaHastaMs)
+        assertEquals(23, r.fichasEsperando)
         assertTrue("sin problemas por archivo", r.problemas.isEmpty())
         assertEquals("24 listados + 1 descarga que dio la pausa, ni uno más", 24 + 1, pedidos)
         assertEquals(0, (File(base, "tmp").listFiles()?.size ?: 0))
         val c = Catalogo.cargar(base)
-        assertTrue("el índice no se tocó", c.problemas.isEmpty() && c.ultimoIntento == null)
+        assertEquals(23, c.galerias.size)
+        assertEquals(reloj, c.ultimoIntento)
 
-        // "Sincronizar ahora" durante la pausa: no pide nada.
+        // "Sincronizar ahora" durante la pausa: lista de nuevo, pero no pide ninguna descarga.
         val antes = pedidos
         val r2 = s.sincronizar("RAIZ")
         assertEquals(r.pausaHastaMs, r2.pausaHastaMs)
-        assertEquals(antes, pedidos)
-        assertTrue(r2.problemas.isEmpty())
+        assertEquals(antes + 24, pedidos)
+        assertEquals(23, r2.fichasEsperando)
+    }
+
+    // --- El listado tiene su propia pausa
+
+    private fun escenarioDe(vararg ids: Int): ApiFalsa {
+        val falsa = ApiFalsa()
+        falsa.carpetas["RAIZ"] = ids.map { carpeta("G$it", "Galería $it") }
+        for (i in ids) {
+            falsa.carpetas["G$i"] = listOf(json("J$i"), ArchivoDrive("A$i", "a.jpg", "image/jpeg", "ma$i", "t", 500, 40, 30))
+            falsa.contenido["J$i"] = """{"formato":1,"titulo":"Titulo $i","obras":[{"archivo":"a.jpg"}]}""".toByteArray()
+            falsa.contenido["A$i"] = ByteArray(10)
+        }
+        return falsa
+    }
+
+    private fun sincronizador(api: DriveApi) = Sincronizador(DriveApiConPausa(api, pausa, ahora = { reloj }), base, ProcesadorFalso()) { reloj }
+
+    @Test
+    fun conLosOriginalesEnPausaIgualListaAnotaGaleriasNuevasYEscribeElIndice() {
+        pausa.registrar(reloj, CaminoDrive.ORIGINAL)
+        val falsa = escenarioDe(1)
+        val r = sincronizador(falsa).sincronizar("RAIZ")
+        assertTrue(r.ok)
+        assertEquals(1, r.fichasEsperando)
+        assertEquals(reloj + 30 * MIN, r.pausaHastaMs)
+        assertTrue(falsa.bajadas.isEmpty()) // ni una descarga original
+        val c = Catalogo.cargar(base)
+        assertEquals(1, c.galerias.size)
+        assertEquals(1, c.galerias[0].obras.size) // la obra nueva ya figura
+        assertEquals(reloj, c.ultimoIntento)
+    }
+
+    @Test
+    fun unaFichaCambiadaQueRecibePausaConservaLaViejaYSigueConLasDemasGalerias() {
+        val falsa = escenarioDe(1, 2)
+        sincronizador(falsa).sincronizar("RAIZ")
+        assertEquals("Titulo 1", Catalogo.cargar(base).galerias[0].titulo)
+
+        // En Drive cambian las dos fichas y las galerias nueva; las descargas del original quedan en pausa.
+        falsa.carpetas["G1"] = listOf(
+            ArchivoDrive("J1", "galeria.json", "application/json", "NUEVO1", "t", 50),
+            ArchivoDrive("A1", "a.jpg", "image/jpeg", "ma1", "t", 500, 40, 30),
+        )
+        falsa.carpetas["G2"] = listOf(
+            ArchivoDrive("J2", "galeria.json", "application/json", "NUEVO2", "t", 50),
+            ArchivoDrive("A2", "a.jpg", "image/jpeg", "ma2", "t", 500, 40, 30),
+            ArchivoDrive("A2b", "b.jpg", "image/jpeg", "mb2", "t", 500, 40, 30),
+        )
+        falsa.contenido["A2b"] = ByteArray(10)
+        falsa.bajadas.clear()
+        reloj += 1000
+        val hasta = pausa.registrar(reloj, CaminoDrive.ORIGINAL)
+        val r = sincronizador(falsa).sincronizar("RAIZ")
+        assertTrue(r.ok)
+        assertEquals(2, r.fichasEsperando)
+        assertEquals(hasta, r.pausaHastaMs)
+        assertTrue(File(base, "json/J1.json").isFile && File(base, "json/J2.json").isFile) // quedaron las viejas
+        val c = Catalogo.cargar(base)
+        assertEquals("Titulo 1", c.galerias[0].titulo)
+        assertEquals("la galería 2 siguió: ya figura la obra nueva", 2, c.galerias[1].obras.size)
+        assertEquals(reloj, c.ultimaSincronizacionBuena)
+
+        // Cuando Google deja, se bajan las dos fichas (el índice se acordó del md5 viejo).
+        reloj = hasta + 1
+        val r2 = sincronizador(falsa).sincronizar("RAIZ")
+        assertEquals(0, r2.fichasEsperando)
+        assertNull(r2.pausaHastaMs)
+        assertTrue(falsa.bajadas.containsAll(listOf("J1", "J2")))
+    }
+
+    @Test
+    fun unaFichaConElMismoMd5NoSeBajaAunqueNoHayaPausa() {
+        val falsa = escenarioDe(1)
+        sincronizador(falsa).sincronizar("RAIZ")
+        falsa.bajadas.clear()
+        val r = sincronizador(falsa).sincronizar("RAIZ")
+        assertFalse("J1" in falsa.bajadas)
+        assertEquals(0, r.fichasEsperando)
+    }
+
+    @Test
+    fun conLosOriginalesEnPausaUnaFichaConElMismoMd5NiSiquieraEsperaNada() {
+        val falsa = escenarioDe(1)
+        sincronizador(falsa).sincronizar("RAIZ")
+        pausa.registrar(reloj, CaminoDrive.ORIGINAL)
+        val r = sincronizador(falsa).sincronizar("RAIZ")
+        assertTrue(r.ok)
+        assertEquals(0, r.fichasEsperando)
+        assertNull(r.pausaHastaMs)
+    }
+
+    @Test
+    fun laPausaAlListarLaRaizCortaComoAntesYNoTocaElIndice() {
+        val falsa = escenarioDe(1)
+        sincronizador(falsa).sincronizar("RAIZ")
+        val antes = Catalogo.cargar(base)
+        pausa.registrar(reloj, CaminoDrive.LISTADO)
+        reloj += 1000
+        val r = sincronizador(falsa).sincronizar("RAIZ")
+        assertFalse(r.ok)
+        assertEquals(pausa.hastaActivo(camino = CaminoDrive.LISTADO), r.pausaHastaMs)
+        assertEquals(0, r.fichasEsperando)
+        val c = Catalogo.cargar(base)
+        assertEquals(antes.ultimoIntento, c.ultimoIntento)
+        assertEquals(1, c.galerias.size)
+    }
+
+    @Test
+    fun laPausaAlListarUnaSubcarpetaConservaEseSubarbol() {
+        val falsa = escenarioDe(1, 2)
+        sincronizador(falsa).sincronizar("RAIZ")
+        val api = object : DriveApi {
+            override fun listar(carpetaId: String): List<ArchivoDrive> {
+                if (carpetaId == "G2") throw ErrorDrive(403, carpetaId, MotivoPausa.CONSULTAS_AUTOMATICAS)
+                return falsa.listar(carpetaId)
+            }
+            override fun bajar(archivoId: String, destino: File, maxBytes: Long) = falsa.bajar(archivoId, destino, maxBytes)
+        }
+        reloj += 1000
+        val r = sincronizador(api).sincronizar("RAIZ")
+        assertFalse("no cuenta como sincronización buena", r.ok)
+        assertEquals(reloj + 30 * MIN, r.pausaHastaMs)
+        assertEquals(2, Catalogo.cargar(base).galerias.size)
+    }
+
+    // --- Archivo de pausas
+
+    @Test
+    fun laLineaListadoSeGuardaSeLeeYElFormatoViejoSigueAndando() {
+        val archivoPausa = File(Files.createTempDirectory("pausa-listado").toFile(), "p.txt")
+        val p = PausaDrive(archivoPausa) { reloj }
+        val hasta = p.registrar(reloj, CaminoDrive.LISTADO)
+        assertTrue(archivoPausa.readLines().any { it == "listado=$hasta;${30 * MIN}" })
+        val otra = PausaDrive(archivoPausa) { reloj }
+        assertEquals(hasta, otra.hastaActivo(camino = CaminoDrive.LISTADO))
+        assertNull(otra.hastaActivo(camino = CaminoDrive.ORIGINAL))
+
+        archivoPausa.writeText("${reloj + 5 * MIN};${30 * MIN}") // formato de un solo camino
+        val vieja = PausaDrive(archivoPausa) { reloj }
+        assertEquals(reloj + 5 * MIN, vieja.hastaActivo(camino = CaminoDrive.ORIGINAL))
+        assertNull(vieja.hastaActivo(camino = CaminoDrive.LISTADO))
+
+        archivoPausa.writeText("original=${reloj + 5 * MIN};1\ncopia=0;0") // sin línea de listado
+        assertNull(PausaDrive(archivoPausa) { reloj }.hastaActivo(camino = CaminoDrive.LISTADO))
+    }
+
+    @Test
+    fun todosEnPausaIgnoraElListado() {
+        pausa.registrar(reloj, CaminoDrive.LISTADO)
+        pausa.registrar(reloj, CaminoDrive.ORIGINAL)
+        assertFalse(pausa.todosEnPausa(reloj))
+        pausa.registrar(reloj, CaminoDrive.COPIA)
+        assertTrue(pausa.todosEnPausa(reloj))
+        val sinListado = PausaDrive(File(Files.createTempDirectory("p2").toFile(), "p.txt")) { reloj }
+        sinListado.registrar(reloj, CaminoDrive.ORIGINAL)
+        sinListado.registrar(reloj, CaminoDrive.COPIA)
+        assertTrue(sinListado.todosEnPausa(reloj))
     }
 
     @Test

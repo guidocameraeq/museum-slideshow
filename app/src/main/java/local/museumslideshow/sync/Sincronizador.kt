@@ -25,6 +25,11 @@ data class ResultadoSync(
     val problemas: List<Problema>,
     /** Si Google pidió una pausa: hasta cuándo no se le pide nada a Drive. En ese caso no hay problemas por archivo. */
     val pausaHastaMs: Long? = null,
+    /**
+     * Cuántos `galeria.json` no se pudieron actualizar porque Google tenía en pausa las descargas: quedó la ficha vieja (si había)
+     * y se reintenta sola. Si es > 0 también viene `pausaHastaMs` (hasta cuándo), y `ok` puede ser true.
+     */
+    val fichasEsperando: Int = 0,
 )
 
 /**
@@ -48,6 +53,10 @@ class Sincronizador(
     private var salteadas = 0
     private val problemas = ArrayList<Problema>()
     private var huboErrorRed = false
+    private var fichasEsperando = 0
+
+    /** La pausa más larga que apareció a mitad de camino (ficha, tapa o subcarpeta que esperan); null si no hubo. */
+    private var pausaHasta: Long? = null
 
     private class Plan(val carpeta: ArchivoDrive, val padreId: String?, val json: ArchivoDrive?, val imagenes: List<ArchivoDrive>)
 
@@ -71,6 +80,7 @@ class Sincronizador(
 
     private fun sincronizarBloqueado(carpetaId: String): ResultadoSync {
         bajadas = 0; borradas = 0; salteadas = 0; problemas.clear(); huboErrorRed = false
+        fichasEsperando = 0; pausaHasta = null
         planes.clear(); gruposNuevos.clear(); conservadas.clear(); gruposConservados.clear()
 
         if (!api.disponible || carpetaId.isBlank()) {
@@ -161,7 +171,13 @@ class Sincronizador(
             galeriasNuevas.keys,
         )
         tmp.deleteRecursively()
-        return ResultadoSync(buena, bajadas, borradas, salteadas, problemas.toList())
+        if (fichasEsperando > 0) registrar("Fichas esperando que Google libere las descargas: $fichasEsperando")
+        return ResultadoSync(buena, bajadas, borradas, salteadas, problemas.toList(), pausaHasta, fichasEsperando)
+    }
+
+    /** Algo quedó esperando una pausa de Google: se recuerda la más larga para agendar el reintento. */
+    private fun esperaPausa(e: PausaDriveException) {
+        pausaHasta = maxOf(pausaHasta ?: 0L, e.hastaMs)
     }
 
     // ---------------------------------------------------------------- recorrido
@@ -170,6 +186,12 @@ class Sincronizador(
     private fun explorar(carpeta: ArchivoDrive, padreId: String?, nivel: Int) {
         val archivos = try {
             api.listar(carpeta.id)
+        } catch (e: PausaDriveException) {
+            // El listado en pausa: esta subcarpeta queda como estaba y la sincronización no cuenta como buena.
+            huboErrorRed = true
+            esperaPausa(e)
+            conservarSubarbol(carpeta, padreId)
+            return
         } catch (e: ErrorDrive) {
             huboErrorRed = true
             problemas += Problema(carpeta.nombre, null, TipoProblema.ERROR_RED, codigo(e))
@@ -269,6 +291,12 @@ class Sincronizador(
             salteadas++
             borrarJson(j.id)
             return null
+        } catch (e: PausaDriveException) {
+            // Google tiene en pausa las descargas: queda la ficha vieja (con su md5 viejo, así se reintenta) y se sigue.
+            tmpArchivo.delete()
+            fichasEsperando++
+            esperaPausa(e)
+            return viejo?.takeIf { destino.isFile }
         } catch (e: ErrorDrive) {
             return falloRed(galeria, j.nombre, e, viejo?.takeIf { destino.isFile })
         }
@@ -312,6 +340,9 @@ class Sincronizador(
                 } catch (e: ArchivoExcedeTope) {
                     problemas += Problema(p.carpeta.nombre, primera.nombre, TipoProblema.IMAGEN_MUY_GRANDE, null)
                     salteadas++
+                    return conservada
+                } catch (e: PausaDriveException) {
+                    esperaPausa(e) // la tapa nueva espera: queda la anterior y se reintenta
                     return conservada
                 } catch (e: ErrorDrive) {
                     huboErrorRed = true

@@ -28,6 +28,7 @@ import local.museumslideshow.reserva.DescargadorDrive
 import local.museumslideshow.reserva.GestorReserva
 import local.museumslideshow.reserva.ObraRef
 import local.museumslideshow.reserva.ParametrosReserva
+import local.museumslideshow.sync.CaminoDrive
 import local.museumslideshow.sync.PausaDrive
 import local.museumslideshow.sync.ProcesadorImagenAndroid
 import local.museumslideshow.sync.ReglaSincronizacion
@@ -201,7 +202,7 @@ class MotorApp private constructor(context: Context) {
         scope.launch {
             arranque?.join()
             if (sincronizando) return@launch
-            PausaDrive.de(ctx).hastaActivo()?.let {
+            PausaDrive.de(ctx).hastaActivo(camino = CaminoDrive.LISTADO)?.let {
                 Log.i(Registro.TAG, "Protector: Drive en pausa hasta ${PausaDrive.horaTexto(it)}; no se sincroniza")
                 return@launch
             }
@@ -213,7 +214,12 @@ class MotorApp private constructor(context: Context) {
     }
 
     private fun mensajeDe(r: ResultadoSync): String = when {
-        r.pausaHastaMs != null -> ctx.getString(
+        r.pausaHastaMs != null && r.ok && r.fichasEsperando > 0 -> ctx.getString(
+            R.string.sync_fichas_esperando,
+            ctx.resources.getQuantityString(R.plurals.cantidad_fichas, r.fichasEsperando, r.fichasEsperando),
+            PausaDrive.horaTexto(r.pausaHastaMs),
+        )
+        r.pausaHastaMs != null && !r.ok -> ctx.getString(
             if (preferencias?.sincronizarCada?.horas == null) R.string.sync_pausa_mano else R.string.sync_pausa,
             PausaDrive.horaTexto(r.pausaHastaMs),
         )

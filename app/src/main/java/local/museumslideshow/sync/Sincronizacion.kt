@@ -61,14 +61,20 @@ object Sincronizacion {
         }
         val pausa = r.pausaHastaMs
         if (pausa != null) {
-            Log.i(Registro.TAG, Registro.limpiar("Sincronización en pausa hasta ${PausaDrive.horaTexto(pausa)}: no se pidió nada más a Drive"))
+            val que = if (r.ok) "Sincronización lista, con ${r.fichasEsperando} fichas esperando" else "Sincronización en pausa"
+            Log.i(Registro.TAG, Registro.limpiar("$que hasta ${PausaDrive.horaTexto(pausa)}: no se pidió nada más a Drive"))
             try { SincronizarWorker.reintentarTrasPausa(ctx, p.sincronizarCada, pausa) } catch (e: Exception) {
                 Log.w(Registro.TAG, "No se pudo agendar el reintento (${e.javaClass.simpleName})")
             }
-            return r
         }
-        if (r.ok) PausaDrive.de(ctx).reiniciar()
-        Log.i(Registro.TAG, Registro.limpiar("Sincronización: ok=${r.ok} bajadas=${r.bajadas} borradas=${r.borradas} salteadas=${r.salteadas} problemas=${r.problemas.size}"))
+        if (r.ok) {
+            // Se listó bien: la espera del listado vuelve a 30 min. La de originales solo si no quedó nada esperándola
+            // (una pausa vigente no se toca; si ya venció, la próxima arranca de nuevo en 30 min).
+            val pausas = PausaDrive.de(ctx)
+            pausas.reiniciar(CaminoDrive.LISTADO)
+            if (r.fichasEsperando == 0 && pausas.hastaActivo(camino = CaminoDrive.ORIGINAL) == null) pausas.reiniciar(CaminoDrive.ORIGINAL)
+        }
+        Log.i(Registro.TAG, Registro.limpiar("Sincronización: ok=${r.ok} bajadas=${r.bajadas} borradas=${r.borradas} salteadas=${r.salteadas} problemas=${r.problemas.size} fichasEsperando=${r.fichasEsperando}"))
         for (pr in r.problemas) {
             Log.i(Registro.TAG, Registro.limpiar("  problema ${pr.tipo} galería='${pr.galeria}' archivo='${pr.archivo ?: ""}' detalle='${pr.detalle ?: ""}'"))
         }

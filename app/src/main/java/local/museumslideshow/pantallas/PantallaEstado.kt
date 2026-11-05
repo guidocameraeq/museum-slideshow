@@ -133,7 +133,9 @@ private fun armarLineas(
     val pausaOriginal = pausas.hastaActivo(camino = CaminoDrive.ORIGINAL)
     val pausaCopia = pausas.hastaActivo(camino = CaminoDrive.COPIA)
     // Los dos caminos en pausa: el aviso de siempre. Uno solo: las obras siguen bajando por el otro (renglÃ³n tranquilo).
-    val pausaHasta = if (pausaOriginal != null && pausaCopia != null) minOf(pausaOriginal, pausaCopia) else null
+    val pausaListado = pausas.hastaActivo(camino = CaminoDrive.LISTADO)
+    // Sin listado no se puede sincronizar, y sin los dos caminos de obras no se baja nada: en los dos casos, el aviso fuerte.
+    val pausaHasta = pausaListado ?: if (pausaOriginal != null && pausaCopia != null) minOf(pausaOriginal, pausaCopia) else null
     val intento = cat?.ultimoIntento
     val pIntento = cat?.problemaUltimoIntento
     l += when {

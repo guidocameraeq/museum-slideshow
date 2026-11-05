@@ -213,12 +213,13 @@ class PausaPorCaminoTest {
         } catch (e: PausaDriveException) {
             assertTrue(e.todosEnPausa)
         }
-        try { envuelta.listar("C"); fail() } catch (e: PausaDriveException) { assertEquals(CaminoDrive.ORIGINAL, e.camino) }
+        try { envuelta.bajar("J", destino, 100); fail() } catch (e: PausaDriveException) { assertEquals(CaminoDrive.ORIGINAL, e.camino) }
         assertTrue(base.llamadas.isEmpty())
+        envuelta.listar("C") // el listado tiene su pausa aparte: sigue andando
     }
 
     @Test
-    fun elListadoYLosJsonSonOriginalYLaPausaDeLaCopiaNoLosFrena() {
+    fun elListadoYLosJsonSonDeOtroCaminoYLaPausaDeLaCopiaNoLosFrena() {
         pausa.registrar(reloj, CaminoDrive.COPIA)
         envuelta.listar("C")
         envuelta.bajar("J", destino, 100)
@@ -226,9 +227,9 @@ class PausaPorCaminoTest {
     }
 
     @Test
-    fun unaPausaDelOriginalCortaElListadoYElJsonPeroNoLaCopia() {
+    fun unaPausaDelOriginalCortaElJsonPeroNiLaCopiaNiElListado() {
         pausa.registrar(reloj, CaminoDrive.ORIGINAL)
-        try { envuelta.listar("C"); fail() } catch (e: PausaDriveException) {}
+        envuelta.listar("C")
         try { envuelta.bajar("J", destino, 100); fail() } catch (e: PausaDriveException) {}
         envuelta.bajarCopia("A", 480, destino, 100)
         assertEquals(listOf("copia:A:480"), base.llamadas)
