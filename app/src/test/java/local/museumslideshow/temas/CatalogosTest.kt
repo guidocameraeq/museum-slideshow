@@ -24,7 +24,6 @@ class CatalogosTest {
         val filete = CatalogoMarcos.porId("filete")!!
         assertEquals(listOf(4, 3, 2), listOf(Tamano.NORMAL, Tamano.GRANDE, Tamano.MAXIMO).map { filete.fileteDe(it) })
         assertEquals(listOf(44, 30, 16), listOf(Tamano.NORMAL, Tamano.GRANDE, Tamano.MAXIMO).map { CatalogoMarcos.porId("dorado")!!.grosorDe(it) })
-        assertEquals(CatalogoMarcos.porId("dorado")!!.grosor, CatalogoMarcos.porId("dorado-redondo")!!.grosor)
         assertTrue(CatalogoMarcos.porId("dorado-redondo")!!.redondo)
     }
 
@@ -37,15 +36,14 @@ class CatalogosTest {
     }
 
     @Test
-    fun hoyNingunMarcoTieneFotoSalvoSinMarco() {
-        assertTrue(CatalogoMarcos.todos.filter { it.id != "sin" }.none { it.imagenDisponible })
+    fun tienenFotoTodosLosMarcosSalvoFino() {
+        assertTrue(CatalogoMarcos.todos.filter { it.id != "fino" }.all { it.imagenDisponible })
+        assertFalse(CatalogoMarcos.porId("fino")!!.imagenDisponible)
     }
 
     @Test
-    fun unMarcoSinFotoSeResuelveAFinoYElDoradoRedondoASin() {
-        for (id in listOf("fino", "filete", "madera", "dorado")) assertEquals(id, "fino", CatalogoMarcos.resolver(id).id)
-        assertEquals("sin", CatalogoMarcos.resolver("dorado-redondo").id)
-        assertEquals("sin", CatalogoMarcos.resolver("sin").id)
+    fun unMarcoConFotoSeDevuelveTalCualYUnoDesconocidoCaeEnFino() {
+        for (id in listOf("fino", "filete", "madera", "dorado", "dorado-redondo", "sin")) assertEquals(id, id, CatalogoMarcos.resolver(id).id)
         assertEquals("fino", CatalogoMarcos.resolver("inexistente").id)
     }
 

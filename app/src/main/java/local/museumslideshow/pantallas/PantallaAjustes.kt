@@ -3,7 +3,7 @@ package local.museumslideshow.pantallas
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +30,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -47,6 +50,8 @@ import local.museumslideshow.ajustes.ItemInfo
 import local.museumslideshow.ajustes.ListaAjustes
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.catalogo.Obra
+import local.museumslideshow.galeria.Marcos
+import local.museumslideshow.temas.CatalogoMarcos
 import local.museumslideshow.reserva.EstadoReserva
 
 @Composable
@@ -270,12 +275,23 @@ private fun VistaPrevia(prefs: Preferencias, items: List<ItemAjuste>, obra: Obra
                 .background(Brush.verticalGradient(listOf(Color(d.paredArriba), Color(d.paredAbajo)))),
             contentAlignment = Alignment.Center,
         ) {
-            val forma = RoundedCornerShape(0.dp)
+            val ctx = LocalContext.current
+            // El mismo dibujante que la galería (Marcos.para), con el grosor del tamaño elegido a escala de la vista previa.
+            val dibujante = remember(d.marco) { CatalogoMarcos.porId(d.marco)?.let { Marcos.para(it, ctx) } }
+            val pincel = remember { android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG) }
+            val area = remember { android.graphics.RectF() }
             Box(
                 Modifier
                     .width((364 * d.escala).dp).height((280 * d.escala).dp)
-                    .then(if (d.marco == "sin") Modifier else Modifier.border(12.dp, Color(0xFF0B0B0B), forma))
-                    .background(Color(0xFF2A2A2E)),
+                    .background(Color(0xFF2A2A2E))
+                    .drawWithContent {
+                        drawContent()
+                        if (dibujante != null && d.marco != "sin") {
+                            val k = 540.dp.toPx() / 1920f
+                            area.set(0f, 0f, size.width, size.height)
+                            drawIntoCanvas { c -> dibujante.dibujar(c.nativeCanvas, pincel, area, d.grosor * k, d.filete * k, d.modo, 1f) }
+                        }
+                    },
             ) {
                 imagen?.let { Image(it, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
             }

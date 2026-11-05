@@ -34,7 +34,7 @@ object Acomodador {
         if (tema.sinMarcoSiempre) return "sin"
         val forma = obra.ficha?.forma ?: Forma.RECTANGULAR
         if (forma != Forma.RECTANGULAR) return "dorado-redondo"
-        return when (val m = prefs.marco) {
+        val id = when (val m = prefs.marco) {
             MarcoElegido.DEL_TEMA -> tema.marcoDelTema
             is MarcoElegido.FIJO -> if (m.id in CatalogoMarcos.ids) m.id else tema.marcoDelTema
             MarcoElegido.AL_AZAR -> {
@@ -44,6 +44,8 @@ object Acomodador {
             MarcoElegido.DE_LA_GALERIA ->
                 obra.ficha?.marco?.trim()?.lowercase()?.takeIf { it in CatalogoMarcos.ids } ?: tema.marcoDelTema
         }
+        // el redondo es solo para obras redondas u ovaladas: una rectangular que lo pide usa el dorado
+        return if (id == "dorado-redondo") "dorado" else id
     }
 
     fun acomodar(p: PedidoEscena, medidor: MedidorTexto): Disposicion {

@@ -53,13 +53,16 @@ object CatalogoMarcos {
     private val CERO = porTamano(0, 0, 0)
     private val GROSOR_DORADO = porTamano(44, 30, 16)
 
-    /** Ninguno tiene foto todavía; "sin marco" no la necesita. */
+    /** El marco redondo es una corona ancha (~20 % del ancho de su foto): más grueso para no tapar la obra. */
+    private val GROSOR_REDONDO = porTamano(120, 84, 44)
+
+    /** Todos tienen foto salvo "fino" (se dibuja en código) y "sin marco". */
     val todos: List<MarcoDef> = listOf(
         MarcoDef("fino", porTamano(14, 10, 5), CERO, redondo = false, imagenDisponible = false),
-        MarcoDef("filete", porTamano(20, 14, 8), porTamano(4, 3, 2), redondo = false, imagenDisponible = false),
-        MarcoDef("madera", porTamano(32, 22, 11), CERO, redondo = false, imagenDisponible = false),
-        MarcoDef("dorado", GROSOR_DORADO, CERO, redondo = false, imagenDisponible = false),
-        MarcoDef("dorado-redondo", GROSOR_DORADO, CERO, redondo = true, imagenDisponible = false),
+        MarcoDef("filete", porTamano(20, 14, 8), porTamano(4, 3, 2), redondo = false, imagenDisponible = true),
+        MarcoDef("madera", porTamano(32, 22, 11), CERO, redondo = false, imagenDisponible = true),
+        MarcoDef("dorado", GROSOR_DORADO, CERO, redondo = false, imagenDisponible = true),
+        MarcoDef("dorado-redondo", GROSOR_REDONDO, CERO, redondo = true, imagenDisponible = true),
         MarcoDef("sin", CERO, CERO, redondo = false, imagenDisponible = true),
     )
 

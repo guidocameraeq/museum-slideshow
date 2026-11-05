@@ -147,7 +147,7 @@ class AcomodadorTest {
         val o = d.obras.single()
         assertEquals(Forma.REDONDA, o.forma)
         assertEquals(o.interior.ancho, o.interior.alto, 0.5f)
-        assertEquals("sin", o.marco.id) // dorado-redondo todavía no tiene foto
+        assertEquals("dorado-redondo", o.marco.id)
     }
 
     @Test
@@ -171,7 +171,7 @@ class AcomodadorTest {
     @Test
     fun salaOscuraSinPaspartuYConFilete() {
         val o = acomodar(pedido(Datos.monet, tema = Tema.SALA_OSCURA, modo = Modo.OSCURO)).obras.single()
-        assertEquals("fino", o.marco.id) // el filete no tiene foto: se resuelve a fino
+        assertEquals("filete", o.marco.id)
         assertEquals(0f, o.paspartu, 0.01f)
     }
 
@@ -192,6 +192,14 @@ class AcomodadorTest {
         assertEquals(a, b)
         assertTrue(a.toSet().size >= 3)
         assertTrue(a.all { it in local.museumslideshow.temas.CatalogoMarcos.rectangulares })
+    }
+
+    @Test
+    fun elMarcoRedondoNoSeUsaEnObrasRectangulares() {
+        val tema = Datos.tema(Tema.GALERIA_MODERNA)
+        assertEquals("dorado", Acomodador.idMarco(Datos.obra("a", 10, 10), tema, Preferencias(marco = MarcoElegido.FIJO("dorado-redondo"))))
+        assertEquals("dorado", Acomodador.idMarco(Datos.obra("a", 10, 10, Datos.ficha(marco = "dorado-redondo")), tema, Preferencias(marco = MarcoElegido.DE_LA_GALERIA)))
+        assertEquals("dorado-redondo", Acomodador.idMarco(Datos.obra("a", 10, 10, forma = Forma.REDONDA), tema, Preferencias(marco = MarcoElegido.FIJO("madera"))))
     }
 
     @Test

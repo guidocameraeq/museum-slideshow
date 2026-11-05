@@ -19,3 +19,6 @@ local.properties
 # Claude Code: ajustes personales de esta máquina
 .claude/settings.local.json
 .claude/launch.json
+
+# Caché de Kotlin
+.kotlin/

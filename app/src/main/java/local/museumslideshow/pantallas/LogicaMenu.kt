@@ -139,6 +139,10 @@ data class DatosVistaPrevia(
     val marco: String,
     /** Cuánto del lugar ocupa la obra (0,7 a 1). */
     val escala: Float,
+    /** Grosor del marco y del filete en px del escenario de 1920x1080 para el tamaño elegido (la vista previa los escala). */
+    val grosor: Int = 0,
+    val filete: Int = 0,
+    val modo: Modo = Modo.CLARO,
 ) {
     companion object {
         fun de(prefs: Preferencias, minutos: Int): DatosVistaPrevia {
@@ -146,23 +150,25 @@ data class DatosVistaPrevia(
             val modo = prefs.modoEfectivo(minutos)
             val elegido = if (modo == Modo.OSCURO) prefs.colorParedOscuro else prefs.colorParedClaro
             val color = tema.colorPared(modo, elegido)
-            // El marco que de verdad se dibuja hoy (los que no tienen foto caen en "fino", como en la galería).
+            // El marco que de verdad se dibuja (una obra rectangular nunca usa el redondo: va con el dorado).
             val pedido = when {
                 tema.sinMarcoSiempre -> "sin"
                 else -> when (val m = prefs.marco) {
                     is MarcoElegido.FIJO -> m.id
                     MarcoElegido.DEL_TEMA -> tema.marcoDelTema
-                    MarcoElegido.AL_AZAR, MarcoElegido.DE_LA_GALERIA -> "fino"
+                    MarcoElegido.AL_AZAR, MarcoElegido.DE_LA_GALERIA -> "fino"   // depende de cada obra: se muestra el fino
                 }
             }
-            val marco = CatalogoMarcos.resolver(pedido).id
+            val def = CatalogoMarcos.resolver(if (pedido == "dorado-redondo") "dorado" else pedido)
+            val marco = def.id
             val tamano = tema.tamanoFijo ?: prefs.tamano
+            val tam = if (tamano == Tamano.PANTALLA_COMPLETA) Tamano.MAXIMO else tamano
             val escala = when (tamano) {
                 Tamano.NORMAL -> 0.7f
                 Tamano.GRANDE -> 0.85f
                 Tamano.MAXIMO, Tamano.PANTALLA_COMPLETA -> 1f
             }
-            return DatosVistaPrevia(color.c1, color.c2, color.id, marco, escala)
+            return DatosVistaPrevia(color.c1, color.c2, color.id, marco, escala, def.grosorDe(tam), def.fileteDe(tam), modo)
         }
     }
 }

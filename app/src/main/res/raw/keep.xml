@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Las fotos de los marcos se buscan por nombre (getIdentifier): que el release no las borre como "sin uso". -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/marco_*" />
