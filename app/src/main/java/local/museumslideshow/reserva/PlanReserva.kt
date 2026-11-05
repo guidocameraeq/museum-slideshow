@@ -20,8 +20,11 @@ data class PlanReserva(
     val vistasGuardadas: Int,
     /** Qué bajar, en orden (vacío si todavía no toca una tanda). */
     val aBajar: List<String>,
-    /** Qué copias borrar: todo lo bajado que quedó fuera de la ventana. */
-    val aBorrar: Set<String>,
+    /**
+     * Lo bajado que quedó fuera de la ventana (y no es extra), de la más vieja a la más nueva. No se borra por estar afuera:
+     * solo se sacan, de a una y de la más vieja, cuando hace falta lugar.
+     */
+    val sobrantes: List<String>,
     /** ¿Toca una tanda? (quedan menos de la mitad por delante, o falta una de las dos próximas). */
     val tanda: Boolean,
 )
@@ -49,7 +52,7 @@ object Reserva {
     /**
      * Con la posición actual y lo que hay bajado: qué bajar y qué borrar. Cuando quedan menos de N/2 bajadas por delante
      * (o una de las dos próximas no está) toca una tanda que completa hasta N; si no, no se baja nada. Lo bajado que quedó
-     * fuera de la ventana se borra siempre.
+     * fuera de la ventana se devuelve como `sobrantes`, ordenado por `fechas` (id -> lastModified; sin fecha = la más vieja).
      */
     fun planificar(
         orden: List<String>,
@@ -58,6 +61,7 @@ object Reserva {
         bajadas: Set<String>,
         vistas: Int = VISTAS,
         extras: List<String> = emptyList(),
+        fechas: Map<String, Long> = emptyMap(),
     ): PlanReserva {
         val v = ventana(orden, posicion, n, vistas)
         val listas = v.adelante.count { it in bajadas }
@@ -66,13 +70,19 @@ object Reserva {
         val deLaTanda = if (tanda) v.adelante.filter { it !in bajadas } else emptyList()
         // Las obras sin medidas (Drive no las dio) se bajan siempre que falten: sin la copia nunca entran al pase.
         val aBajar = deLaTanda + extras.filter { it !in bajadas && it !in deLaTanda }
-        val aBorrar = bajadas.filterTo(LinkedHashSet()) { it !in v.todas && it !in extras }
-        return PlanReserva(v, listas, vistasGuardadas, aBajar, aBorrar, tanda)
+        val sobrantes = bajadas.filter { it !in v.todas && it !in extras }
+            .sortedWith(compareBy<String>({ fechas[it] ?: 0L }, { it }))
+        return PlanReserva(v, listas, vistasGuardadas, aBajar, sobrantes, tanda)
     }
 
-    /** Cuántas de las obras a bajar entran en el espacio que queda (`estimadoPorObra` = lo que pesa una copia). Siempre las primeras. */
-    fun recortarPorEspacio(aBajar: List<String>, usadoBytes: Long, topeBytes: Long, estimadoPorObra: Long): List<String> {
-        val libre = topeBytes - usadoBytes
+    /**
+     * Cuántas de las obras a bajar entran en el espacio que queda (`estimadoPorObra` = lo que pesa una copia). Siempre las
+     * primeras. Los `bytesSobrantes` (lo que ocupan las copias de afuera de la ventana) cuentan como espacio que se puede liberar.
+     */
+    fun recortarPorEspacio(
+        aBajar: List<String>, usadoBytes: Long, topeBytes: Long, estimadoPorObra: Long, bytesSobrantes: Long = 0L,
+    ): List<String> {
+        val libre = topeBytes - (usadoBytes - bytesSobrantes.coerceAtLeast(0L))
         if (libre <= 0) return emptyList()
         val unidad = estimadoPorObra.coerceAtLeast(1L)
         val caben = ((libre + unidad - 1) / unidad).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()

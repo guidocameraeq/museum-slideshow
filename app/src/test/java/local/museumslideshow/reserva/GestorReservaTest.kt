@@ -147,6 +147,7 @@ class GestorReservaTest {
     @Test
     fun nuncaGuardaMasDeNMasDiezCopias() = runBlocking {
         n = 20
+        tope = 30_300L // N + 10 copias de 1010 bytes
         val g = gestor()
         var maximo = 0
         for (pos in 0 until 100) {
@@ -159,26 +160,112 @@ class GestorReservaTest {
         assertTrue(g.estaBajada("o99"))
     }
 
-    @Test
-    fun borraLasCopiasQueQuedaronFueraDeLaVentana() = runBlocking {
-        val g = gestor()
-        g.procesar(pedido(orden(100), 0))
-        // salta lejos (como si cambiara de galería): las viejas ya no valen
-        g.procesar(pedido(orden(100), 50))
-        val esperado = (50 until 55).map { "o$it" }.toSet()
-        assertEquals(esperado, enDisco())
-        assertFalse(File(dir, "obras/o0.chica.jpg").exists())
+    private fun envejecer(id: String, ms: Long) {
+        Catalogo.archivoObra(dir, id).setLastModified(ms)
     }
 
     @Test
-    fun loQueSeDestildaDejaDeEstarEnElPaseYSeBorra() = runBlocking {
+    fun cambiarDeGaleriaConLugarDeSobraNoBorraNada() = runBlocking {
+        val g = gestor()
+        g.procesar(pedido(orden(100), 0))
+        // salta lejos (como si cambiara de galería): lo viejo se queda y se baja lo nuevo
+        g.procesar(pedido(orden(100), 50))
+        val esperado = (0 until 5).map { "o$it" }.toSet() + (50 until 55).map { "o$it" }
+        assertEquals(esperado, enDisco())
+        assertTrue(File(dir, "obras/o0.chica.jpg").exists())
+        assertFalse(registro.any { it.contains("para hacer lugar") })
+    }
+
+    @Test
+    fun conElTopeLlenoBorraLasMasViejasDeAfueraSoloDespuesDeBajar() = runBlocking {
+        n = 3
+        val g = gestor()
+        g.procesar(pedido(orden(100), 0)) // o0..o2
+        for (i in 0..2) envejecer("o$i", 1_000L + i) // o0 la más vieja
+        // el tope deja entrar 3 obras de 1010 bytes
+        tope = 3_100L
+        val vistoAlBajar = Collections.synchronizedList(ArrayList<String>())
+        val d = DescargadorObras { obra ->
+            // al empezar a bajar todavía no se borró nada de lo anterior
+            vistoAlBajar += obra.id + ":" + enDisco().count { it in setOf("o0", "o1", "o2") }
+            descargador.bajar(obra)
+        }
+        val g2 = GestorReserva(
+            scope = CoroutineScope(Dispatchers.Default), dirBase = dir, descargador = d,
+            parametros = { ParametrosReserva(n, tope) }, registrar = { registro += it }, iniciar = false,
+        )
+        g2.procesar(pedido(orden(100), 50))
+        assertEquals((50..52).map { "o$it" }.toSet(), enDisco())
+        // al bajar la primera todavía estaban las 3; al bajar la segunda ya se había sacado la más vieja; etc.
+        assertEquals(listOf("o50:3", "o51:2", "o52:1"), vistoAlBajar.toList())
+        val borrados = registro.filter { it.contains("para hacer lugar") }
+        assertEquals(
+            listOf("Reserva: se borró obra0.jpg para hacer lugar", "Reserva: se borró obra1.jpg para hacer lugar", "Reserva: se borró obra2.jpg para hacer lugar"),
+            borrados,
+        )
+        assertTrue(g2.estaBajada("o50"))
+    }
+
+    @Test
+    fun siLaBajadaFallaNoSeBorraNada() = runBlocking {
+        n = 3
+        val g = gestor()
+        g.procesar(pedido(orden(100), 0))
+        tope = 3_100L
+        for (i in 50..52) descargador.fallan["o$i"] = ErrorReserva.DRIVE
+        g.procesar(pedido(orden(100), 50))
+        assertEquals(setOf("o0", "o1", "o2"), enDisco())
+        assertTrue(registro.none { it.contains("para hacer lugar") })
+    }
+
+    @Test
+    fun nuncaBorraLaVentanaNiLosExtrasAunqueSePaseDelTope() = runBlocking {
+        n = 3
+        tope = 4_100L // la ventana y el extra apenas entran, viejaX sobra
+        val g = gestor()
+        val extra = ObraRef("sm1", "sin1.jpg")
+        val previa = Catalogo.archivoObra(dir, "viejaX")
+        previa.parentFile.mkdirs()
+        previa.writeBytes(ByteArray(1000))
+        g.procesar(pedido(orden(100), 0, extras = listOf(extra)))
+        val e = enDisco()
+        assertTrue("sm1" in e)
+        assertTrue(setOf("o0", "o1", "o2").all { it in e })
+        assertFalse("viejaX" in e) // la única de afuera se sacó para hacer lugar
+    }
+
+    @Test
+    fun conElTopeLlenoYNadaParaSacarNoBaja() = runBlocking {
+        n = 3
+        val g = gestor()
+        g.procesar(pedido(orden(100), 0))
+        tope = 3_000L
+        descargador.pedidas.clear()
+        g.procesar(pedido(orden(6), 0)) // adelante o0..o2: no hay sobrantes
+        assertEquals(setOf("o0", "o1", "o2"), enDisco())
+        assertTrue(descargador.pedidas.isEmpty())
+    }
+
+    @Test
+    fun siBajanElTopeSeSacanLasViejasDeAfuera() = runBlocking {
+        n = 3
+        val g = gestor()
+        g.procesar(pedido(orden(100), 0))
+        for (i in 0..2) envejecer("o$i", 1_000L + i)
+        g.procesar(pedido(orden(100), 50))
+        assertEquals(6, enDisco().size)
+        tope = 3_100L
+        g.procesar(pedido(orden(100), 50)) // nada que bajar: igual hace lugar
+        assertEquals((50..52).map { "o$it" }.toSet(), enDisco())
+    }
+
+    @Test
+    fun loQueSeDestildaSeQuedaMientrasHayaLugar() = runBlocking {
         val g = gestor()
         val todas = orden(30)
         g.procesar(pedido(todas, 0))
-        // se destilda la galería de o0..o9: el pase queda con o10..o29
         g.procesar(pedido(todas.drop(10), 0))
-        assertTrue(enDisco().none { it in (0 until 10).map { i -> "o$i" } })
-        assertEquals((10 until 15).map { "o$it" }.toSet(), enDisco())
+        assertEquals((0 until 5).map { "o$it" }.toSet() + (10 until 15).map { "o$it" }, enDisco())
     }
 
     @Test

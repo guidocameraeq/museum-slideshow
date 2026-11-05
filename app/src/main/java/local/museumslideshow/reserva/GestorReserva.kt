@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import local.museumslideshow.Registro
 import local.museumslideshow.catalogo.Catalogo
 import local.museumslideshow.ajustes.CaminoObras
@@ -114,8 +113,8 @@ class PedidoReserva(
 )
 
 /**
- * Mantiene la reserva: con cada pedido calcula la ventana ([Reserva.planificar]), borra lo que quedó afuera, y si toca una
- * tanda baja lo que falta de a varias obras a la vez. Todo en segundo plano. Un pedido nuevo corta la tanda en curso (la
+ * Mantiene la reserva: con cada pedido calcula la ventana ([Reserva.planificar]) y, si toca una tanda, baja lo que falta. Lo que queda fuera de
+ * la ventana NO se borra: se saca (lo más viejo primero) solo cuando, con la obra nueva ya lista, se pasa del espacio máximo. Todo en segundo plano. Un pedido nuevo corta la tanda en curso (la
  * obra que ya se está bajando termina) y empieza otra con la ventana nueva.
  */
 class GestorReserva(
@@ -138,6 +137,9 @@ class GestorReserva(
     @Volatile private var generacion = 0
     @Volatile private var ventana = VentanaReserva(emptyList(), emptyList())
     private var ultimaLinea = ""
+    @Volatile private var extrasVigentes: Set<String> = emptySet()
+    /** Id -> nombre de las obras que pasaron por algún pedido (solo para el registro). */
+    private val nombresVistos = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     init {
         File(dirBase, DescargadorDrive.TMP).deleteRecursively()
@@ -176,17 +178,46 @@ class GestorReserva(
         Catalogo.archivoObraChica(dirBase, id).delete()
     }
 
-    /** Un pedido entero: borra, y si toca, baja. `gen` = la generación del pedido (si cambia, se corta la tanda). */
+    /** Cuándo se bajó cada copia (id -> lastModified). Si el archivo desapareció (la sincronización también borra) vale 0. */
+    private fun fechasEnDisco(ids: Collection<String>): Map<String, Long> =
+        ids.associateWith { Catalogo.archivoObra(dirBase, it).lastModified() }
+
+    /** Lo guardado que está fuera de la ventana VIGENTE y no es extra, de la copia más vieja a la más nueva. */
+    private fun sobrantesVigentes(): List<String> {
+        val vent = ventana.todas
+        val extras = extrasVigentes
+        val fuera = bajadasEnDisco().filter { it !in vent && it !in extras }
+        val fechas = fechasEnDisco(fuera)
+        return fuera.sortedWith(compareBy<String>({ fechas[it] ?: 0L }, { it }))
+    }
+
+    /** Mientras se pase del tope, borra sobrantes de a uno (el más viejo primero). Nunca toca la ventana vigente ni los extras. */
+    @Synchronized
+    private fun limpiarSobrantes(topeBytes: Long) {
+        while (bytesTodo() > topeBytes) {
+            val id = sobrantesVigentes().firstOrNull() ?: return
+            borrarCopia(id)
+            registrar("Reserva: se borró ${Registro.limpiar(nombresVistos[id] ?: id)} para hacer lugar")
+        }
+    }
+
+    /** Un pedido entero: baja y, si hace falta lugar, saca lo más viejo de afuera. `gen` = la generación del pedido (si cambia, se corta la tanda). */
     suspend fun procesar(p: PedidoReserva, gen: Int = generacion) {
         val ids = p.orden.map { it.id }
         if (ids.isEmpty() && p.extras.isEmpty()) return // sin obras en el pase no se toca nada (puede ser un catalogo que todavia no cargo)
         val par = p.parametros
-        val plan = Reserva.planificar(ids, p.posicion, par.n, bajadasEnDisco(), extras = p.extras.map { it.id })
+        for (o in p.orden) nombresVistos[o.id] = o.nombre
+        for (o in p.extras) nombresVistos[o.id] = o.nombre
+        val enDisco = bajadasEnDisco()
+        val plan = Reserva.planificar(ids, p.posicion, par.n, enDisco, extras = p.extras.map { it.id }, fechas = fechasEnDisco(enDisco))
+        extrasVigentes = p.extras.mapTo(HashSet()) { it.id }
         ventana = plan.ventana
-        for (id in plan.aBorrar) borrarCopia(id)
         _estado.update { it.copy(conPedido = true) }
         refrescar(0)
-        if (plan.aBajar.isEmpty()) return
+        if (plan.aBajar.isEmpty()) {
+            if (generacion == gen) limpiarSobrantes(par.topeBytes) // por si bajaron el espacio máximo
+            return
+        }
         if (enPausa()) {
             registrar("Reserva: Drive pidió una pausa; no se baja nada hasta que termine")
             return
@@ -194,7 +225,10 @@ class GestorReserva(
 
         val guardadas = bajadasEnDisco()
         val estimado = if (guardadas.isEmpty()) Reserva.BYTES_POR_OBRA_ESTIMADO else (bytesObras() / guardadas.size).coerceAtLeast(1L)
-        val permitidas = Reserva.recortarPorEspacio(plan.aBajar, bytesTodo(), par.topeBytes, estimado)
+        val bytesSobrantes = plan.sobrantes.sumOf { Catalogo.archivoObra(dirBase, it).length() + Catalogo.archivoObraChica(dirBase, it).length() }
+        var permitidas = Reserva.recortarPorEspacio(plan.aBajar, bytesTodo(), par.topeBytes, estimado, bytesSobrantes)
+        // Si hay algo para sacar, la obra que está en pantalla se baja igual (después se hace lugar).
+        if (permitidas.isEmpty() && plan.sobrantes.isNotEmpty()) permitidas = plan.aBajar.take(1)
         val sinEspacio = AtomicBoolean(permitidas.size < plan.aBajar.size)
         if (sinEspacio.get()) {
             registrar("Reserva: no entra todo en el espacio máximo; se bajan ${permitidas.size} de ${plan.aBajar.size}")
@@ -208,17 +242,19 @@ class GestorReserva(
         withContext(Dispatchers.IO) {
             val turnos = Semaphore(paralelo)
             for (id in permitidas) {
+                // El turno se pide acá, en orden: así las obras salen en el orden del plan (primero la que está en pantalla).
+                turnos.acquire()
                 launch {
-                    turnos.withPermit {
-                        try {
-                            bajarUna(id, nombres[id] ?: id, par, gen, corte, sinEspacio, fallas)
-                        } finally {
-                            refrescar(pendientes.decrementAndGet())
-                        }
+                    try {
+                        bajarUna(id, nombres[id] ?: id, par, gen, corte, sinEspacio, fallas)
+                    } finally {
+                        turnos.release()
+                        refrescar(pendientes.decrementAndGet())
                     }
                 }
             }
         }
+        if (generacion == gen) limpiarSobrantes(par.topeBytes)
         // Al terminar la tanda: el aviso de espacio se queda si faltó lugar; si todo salió bien se limpian los errores.
         _estado.update { s ->
             when {
@@ -240,7 +276,7 @@ class GestorReserva(
         fallas: AtomicInteger,
     ) {
         if (corte.get() || generacion != gen) return
-        if (bytesTodo() >= par.topeBytes) {
+        if (bytesTodo() >= par.topeBytes && sobrantesVigentes().isEmpty()) {
             corte.set(true)
             sinEspacio.set(true)
             return
@@ -253,6 +289,8 @@ class GestorReserva(
             is ResultadoBajada.Lista -> {
                 registrar("Reserva: obra lista ${Registro.limpiar(nombre)} en ${r.ms} ms" + (r.via?.let { " (por $it)" } ?: ""))
                 _estado.update { it.copy(version = it.version + 1, sinInternet = false) }
+                // Recién con la obra lista se hace lugar; si llegó un pedido nuevo, ese es el que limpia.
+                if (generacion == gen) limpiarSobrantes(par.topeBytes)
             }
             is ResultadoBajada.Falla -> {
                 if (r.error == ErrorReserva.PAUSA_ESTA_OBRA) {

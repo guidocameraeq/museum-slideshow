@@ -63,7 +63,7 @@ class ReservaTest {
         val p = Reserva.planificar(ids(200), 0, 50, emptySet())
         assertTrue(p.tanda)
         assertEquals(ids(200).subList(0, 50), p.aBajar)
-        assertTrue(p.aBorrar.isEmpty())
+        assertTrue(p.sobrantes.isEmpty())
         assertEquals(0, p.listasPorDelante)
     }
 
@@ -100,7 +100,7 @@ class ReservaTest {
         repeat(200) {
             pos++
             val p = Reserva.planificar(orden, pos, 50, bajadas)
-            bajadas = (bajadas - p.aBorrar) + p.aBajar
+            bajadas = (bajadas - p.sobrantes.toSet()) + p.aBajar
             if (p.tanda) tandas++
             // nunca queda una de las dos próximas sin bajar
             assertTrue(orden[pos % 200] in bajadas && orden[(pos + 1) % 200] in bajadas)
@@ -117,7 +117,7 @@ class ReservaTest {
         val bajadas = orden.subList(90, 150).toSet()
         val p = Reserva.planificar(orden, 95, 50, bajadas)
         // al retroceder a la 95: adelante 95..144, vistas 85..94 -> sobran 145..149 y falta la 85..89
-        assertEquals((145..149).map { "o$it" }.toSet(), p.aBorrar)
+        assertEquals((145..149).map { "o$it" }.toSet(), p.sobrantes.toSet())
         assertFalse(p.tanda) // las 50 de adelante están (95..144)
         assertEquals(5, p.vistasGuardadas) // solo 90..94 de las vistas
     }
@@ -127,14 +127,14 @@ class ReservaTest {
         val orden = ids(20)
         val bajadas = orden.toSet() + setOf("destildada-1", "destildada-2")
         val p = Reserva.planificar(orden, 0, 50, bajadas)
-        assertEquals(setOf("destildada-1", "destildada-2"), p.aBorrar)
+        assertEquals(setOf("destildada-1", "destildada-2"), p.sobrantes.toSet())
     }
 
     @Test
     fun unaObraSinMedidasSeBajaAunqueNoEntreAlPaseYNoSeBorra() {
         val p = Reserva.planificar(ids(10), 0, 50, ids(10).toSet() + "sinmedidas-ya", extras = listOf("sinmedidas-ya", "sinmedidas-nueva"))
         assertEquals(listOf("sinmedidas-nueva"), p.aBajar)
-        assertTrue("sinmedidas-ya" !in p.aBorrar)
+        assertTrue("sinmedidas-ya" !in p.sobrantes.toSet())
     }
 
     @Test
@@ -168,5 +168,25 @@ class ReservaTest {
         // lleno o pasado: nada
         assertTrue(Reserva.recortarPorEspacio(aBajar, 100 * mb, 100 * mb, 5 * mb).isEmpty())
         assertTrue(Reserva.recortarPorEspacio(aBajar, 120 * mb, 100 * mb, 5 * mb).isEmpty())
+    }
+
+    @Test
+    fun losSobrantesSalenOrdenadosDeLaMasVieja() {
+        val bajadas = setOf("a", "b", "c", "o0")
+        val p = Reserva.planificar(ids(10), 0, 5, bajadas, fechas = mapOf("a" to 300L, "b" to 100L, "c" to 200L, "o0" to 1L))
+        assertEquals(listOf("b", "c", "a"), p.sobrantes)
+        // sin fecha cuenta como la más vieja
+        val q = Reserva.planificar(ids(10), 0, 5, setOf("a", "b"), fechas = mapOf("a" to 5L))
+        assertEquals(listOf("b", "a"), q.sobrantes)
+    }
+
+    @Test
+    fun losSobrantesCuentanComoEspacioQueSePuedeLiberar() {
+        val aBajar = ids(10)
+        val mb = 1024L * 1024
+        // lleno (100 de 100) pero 20 MB son sobrantes: hay lugar para 4 de 5 MB
+        assertEquals(aBajar.take(4), Reserva.recortarPorEspacio(aBajar, 100 * mb, 100 * mb, 5 * mb, bytesSobrantes = 20 * mb))
+        // sin sobrantes sigue igual
+        assertTrue(Reserva.recortarPorEspacio(aBajar, 100 * mb, 100 * mb, 5 * mb, bytesSobrantes = 0).isEmpty())
     }
 }
