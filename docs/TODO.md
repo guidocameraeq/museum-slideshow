@@ -5,6 +5,11 @@
 2026-11-02 — ver SESSION_HANDOFF.md
 
 ## 🔴 Crítico
+- [ ] **Misión 05/11 (pedido de Guido usándola), en este orden:**
+  1. **Drive — fichas**: los `galeria.json` bajan por `alt=media` (el camino que Google bloquea); la copia 4K es solo para imágenes. Bajar una ficha solo si cambió (fecha/md5 del listado, que no se bloquea); revisar primero qué hace hoy.
+  2. **Drive — "Preparando obras"**: al cambiar de galería la reserva tira TODO lo guardado (TV 05/11 16:00: 50 obras/134 MB → 0, y baja 50 de cero). No borrar al cambiar de galería (solo por espacio), primera obra ya, sin pausa de ritmo por el camino copia.
+  3. **Barra (Abajo)**: en el protector no abre (Guido la quiere ahí, sobre todo para elegir galería); elegir galerías en la Barra navega mal (se va al costado; una o "Todas" está bien). Borrador HTML antes de construir.
+  4. **Marcos**: la vista previa de Apariencia no muestra el marco elegido (hoy todos son el negro provisorio porque faltan las fotos). Fotos pedidas al curador el 05/11.
 - [ ] Verificar en la TV el caso "originales bloqueados, copias siguen" (probado en la PC y en tests; el 03/11 en la TV los originales no estaban bloqueados) y que Estado muestre el renglón tranquilo. Ver que aparezcan las 23 galerías.
 
 ## 🟠 Importante

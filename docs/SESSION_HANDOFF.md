@@ -20,6 +20,7 @@
 - Drive para escritorio de la PC sube los 7 GB a la nube en segundo plano (puede tardar horas).
 
 ## Próximo paso CONCRETO
+0. **Misión del 05/11**: la lista de 4 puntos al tope de `docs/TODO.md` (fichas por Drive, no tirar la reserva al cambiar de galería, Barra en el protector + rediseño de elegir galería, marcos). Guido la usó y le encanta; esto es lo que pidió.
 1. **03/11: las obras ya bajan por la copia 4K de Drive** (`thumbnailLink` `=s3840`, Google no la bloquea; original de respaldo, pausa por camino; ajuste "Bajar las obras de"). Probado en la TV: reserva "por copia s3840". Falta ver en la TV el caso con originales bloqueados y las 23 galerías en Estado.
 2. Originales vs copias en Drive: ya no importa (la app pide la copia 4K); quedan los originales.
    - 03/11 noche: repo ordenado (README con banner, `docs/curaduria.md`), ajuste "Mostrar de dónde sale la imagen" (por defecto No, probado en la TV). Guido da la app por buena "por ahora".
