@@ -258,6 +258,9 @@ private fun FilaSincronizar(sync: DatosSync, conFoco: Boolean) {
     }
 }
 
+/** Grosor mínimo del marco en la vista previa (dp), para que se reconozca cuál es. */
+private const val GROSOR_MIN_PREVIA = 16
+
 /** La vista previa chiquita: la pared del color elegido con una obra con su marco, y qué hace el ajuste enfocado. */
 @Composable
 private fun VistaPrevia(prefs: Preferencias, items: List<ItemAjuste>, obra: Obra?, galeriaId: String?, @StringRes ayuda: Int?, modifier: Modifier) {
@@ -287,7 +290,10 @@ private fun VistaPrevia(prefs: Preferencias, items: List<ItemAjuste>, obra: Obra
                     .drawWithContent {
                         drawContent()
                         if (dibujante != null && d.marco != "sin") {
-                            val k = 540.dp.toPx() / 1920f
+                            // A escala real el marco queda de 2-3 px (no se reconoce): nunca más fino que GROSOR_MIN_PREVIA.
+                            val real = 540.dp.toPx() / 1920f
+                            val minimo = GROSOR_MIN_PREVIA.dp.toPx()
+                            val k = if (d.grosor > 0) maxOf(real, minimo / d.grosor) else real
                             area.set(0f, 0f, size.width, size.height)
                             drawIntoCanvas { c -> dibujante.dibujar(c.nativeCanvas, pincel, area, d.grosor * k, d.filete * k, d.modo, 1f) }
                         }
