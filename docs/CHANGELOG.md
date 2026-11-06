@@ -2,6 +2,23 @@
 
 > Historia permanente. `/cierre` agrega una entrada AL TOPE en cada sesión. Orden descendente estricto, sin excepciones. Nada de versiones duplicadas en otros docs.
 
+## 2026-11-05 — Misión del 05/11: fichas, reserva, Barra lateral y marcos reales
+
+### Added
+- **Barra lateral** (borrador `07-barra-lateral.html`, aprobado): Abajo abre un panel vertical a la izquierda con Galería ▸ (lista con tapas y grupos), Tema ▸ (miniaturas y vista en vivo), Pantalla completa, Explicación, Ajustes ▸ y Sincronizar. Ajuste nuevo "Cerrar la Barra sola" (5/10/20 s/Nunca, 10 s por defecto; adb `--es barra`). También en el protector (Ajustes ▸ cierra el protector y abre Apariencia).
+- **Marcos con fotos reales** CC0 del Met (madera, dorado, dorado redondo, filete), preparadas con `herramientas/marcos/PrepararMarcos.java` (fondo y hueco transparentes, grosor por lado). Créditos en `docs/marcos.md`.
+
+### Changed
+- La reserva ya no tira lo guardado al salir de la ventana: solo saca lo más viejo de afuera cuando falta espacio, y recién con la obra nueva lista. Obras en el orden del pase.
+- La copia 4K baja sin la pausa del "Ritmo de bajada" (queda solo para los originales).
+- El listado de Drive tiene su propia pausa: el bloqueo de los originales ya no frena la sincronización.
+- En una pared, Abajo después de la última obra abre la Barra.
+
+### Fixed
+- Las fichas (`galeria.json`) no se actualizaban cuando Google bloqueaba los originales: ahora una ficha cambiada espera con la vieja y las demás siguen (las de igual md5 nunca se bajan).
+- La vista previa de Apariencia mostraba siempre un borde negro: ahora dibuja el marco elegido.
+- Elegir galería en la Barra "se iba al costado"; en el protector la Barra no abría. 444 tests. Todo probado en la TV.
+
 ## 2026-11-03 (noche) — Portada del repo, curaduría y crédito oculto
 
 ### Added

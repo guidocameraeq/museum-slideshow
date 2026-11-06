@@ -2,37 +2,37 @@
 
 > Save game del proyecto. `/cierre` lo SOBREESCRIBE ENTERO en cada sesión — acá nunca se apila historia (eso vive en CHANGELOG). El hook SessionStart lo inyecta en cada chat nuevo: **tope de 5.500 bytes** (unas 70 líneas); si se pasa, el hook lo corta y avisa "CORTADO".
 
-**Cierre**: 2026-11-02 (noche, Guido dormido; cierre autónomo) · **Último commit**: ver `git log -1`
+**Cierre**: 2026-11-05 (noche) · **Último commit**: ver `git log -1`
 
-## Qué se hizo
-- **Sesión 4 del SPEC-0 hecha y probada en la TV**: protector `local.museumslideshow.protector.ProtectorMuseo` (nombre FIJO, identidad), `MotorApp` (una reserva por proceso, compartida app/protector), interruptor (una sola función escribe `screensaver_components`; "el anterior" en DataStore `protector`).
-- Pantalla Protector (borrador `docs/diseno/05-protector.html`, aprobado): Usar / Volver al anterior (nombre) / Probarlo ahora; sin permiso, botón apagado + comando.
-- VERIFICADO en la TV: arranca sola al quedar quieta, 4K (3840×2160) dentro del protector, Derecha/OK/Atrás (Atrás cierra lo abierto antes de salir), volumen (Guido vio el cartel), Usar×2 + Volver → Ambient exacto. Permiso dado con `pm grant`.
-- **Biblioteca real conectada**: carpeta "Galerías" (ID `1crKbvETrz6wbF_XmJ0tkGor__uQih2oO`, compartida por Guido) puesta en la TV y en `local.properties` (`drive.carpeta`). Rococó se vio en la tele. El curador exportó las 23 colecciones (1382 obras, ~7,4 GB, ORIGINALES; Eakins reducido); Guido decidió publicar todo, también lo con copyright, y curar borrando.
-- **Bloqueo de Google**: al sincronizar 23 galerías, Drive respondió 403 "automated queries" a TODA la red de la casa (también la PC). Arreglo: pausa persistente 30 min→6 h que respetan sincronización, protector, Worker y reserva; reintento por WorkManager; Estado lo explica; descargas de a una con ajuste nuevo **Ritmo de bajada** (Tranquilo 2 s, default / Normal). Fix aparte: `readNBytes` no existe en Android 12 y cerraba la app.
+## Qué se hizo (misión del 05/11, completa; detalle en CHANGELOG)
+- **Fichas**: el md5 ya evitaba bajar fichas iguales; el problema real era que el listado compartía la pausa de los originales y la sync entera se salteaba. Camino nuevo `CaminoDrive.LISTADO` con pausa propia; una ficha cambiada que recibe el bloqueo espera con la vieja (`fichasEsperando`) y se baja en el reintento.
+- **Reserva**: ya no borra al salir de la ventana; saca lo más viejo de afuera solo si falta espacio y después de tener la obra nueva. La copia 4K baja sin el respiro del ritmo (solo los originales lo tienen).
+- **Barra lateral** (borrador `docs/diseno/07-barra-lateral.html`, aprobado, decisión en `decisiones.md`): `pantallas/PanelLateral.kt` + lógica pura `LogicaPanel.kt`; vista en vivo del tema; ajuste "Cerrar la Barra sola" (10 s); también en el protector. En una pared, Abajo pasada la última obra abre la Barra (antes no se podía).
+- **Marcos reales**: 4 PNG en `res/drawable-nodpi/marco_*.png` (de las fotos del curador, con `herramientas/marcos/PrepararMarcos.java`), `res/raw/keep.xml` para que `shrinkResources` no los borre; vista previa de Apariencia con el marco real (grosor mínimo 16 dp).
+- Todo construido por subagentes Sonnet, revisado, probado en la TV y subido en commits separados. 444 tests.
 
-## Estado
-- TV: última versión instalada. **Protector = Museum Slideshow** (Guido pidió dejarlo puesto; el anterior guardado es el Ambient). Tema galería moderna, pared gris cálido, 10 min por obra (ajustes de Guido).
-- Bloqueo: desde la PC se levantó 23:15; a las 23:39 la tele reintentó SOLA y sincronizó bien (44 bajadas, 0 problemas); a las 23:41 la primera obra de la reserva volvió a recibir el 403 → pausa hasta 00:11 (manejada bien, sin cierres). La reserva quedó VACÍA (la versión vieja borró Rococó): **al prender la tele el protector puede no tener obras** hasta que baje. Estado: 11 de 23 galerías (el resto seguramente sigue subiendo a Drive).
-- 03/11: TV prendida y en uso por Guido; última versión instalada (copia 4K + crédito oculto).
+## Estado (verificado en la TV al cerrar)
+- TV con la última versión. Protector = Museum Slideshow (el anterior guardado es el Ambient). Ajustes de Guido intactos: galería `1PH7nTu…` (Doré, La Divina Comedia), Galería moderna, marco madera, tamaño Máximo, cierre de la Barra 10 s.
+- Volumen: el cartel de Volumen Maestro aparece con la galería en pantalla. Registro sin `key=`.
+- La reserva ahora guarda más que N+10 obras mientras haya lugar (1 GB): es lo esperado.
 
 ## En curso
-- Drive para escritorio de la PC sube los 7 GB a la nube en segundo plano (puede tardar horas).
+- Nada.
 
 ## Próximo paso CONCRETO
-0. **Misión del 05/11**: la lista de 4 puntos al tope de `docs/TODO.md` (fichas por Drive, no tirar la reserva al cambiar de galería, Barra en el protector + rediseño de elegir galería, marcos). Guido la usó y le encanta; esto es lo que pidió.
-1. **03/11: las obras ya bajan por la copia 4K de Drive** (`thumbnailLink` `=s3840`, Google no la bloquea; original de respaldo, pausa por camino; ajuste "Bajar las obras de"). Probado en la TV: reserva "por copia s3840". Falta ver en la TV el caso con originales bloqueados y las 23 galerías en Estado.
-2. Originales vs copias en Drive: ya no importa (la app pide la copia 4K); quedan los originales.
-   - 03/11 noche: repo ordenado (README con banner, `docs/curaduria.md`), ajuste "Mostrar de dónde sale la imagen" (por defecto No, probado en la TV). Guido da la app por buena "por ahora".
-3. Sesión 5: prueba de 2 horas y criterios que faltan del SPEC-0 (ver TODO).
+1. Que Guido use la Barra lateral y los marcos y diga qué ajustar (ver 🟠 del TODO: alineación de valores, tiempo de cierre, filete).
+2. Verificar en la TV el caso "Google bloquea los originales" (🔴 del TODO).
+3. Sesión 5: prueba de 2 horas y criterios que faltan del SPEC-0.
 
 ## Bloqueos
-- Ninguno. El bloqueo de Google sobre `alt=media` (originales) puede volver; ya no frena las obras.
+- Ninguno.
 
 ## Contexto que no está en otro doc
 - **Forma de trabajo de Guido**: Opus coordina y revisa; construcción con subagentes `model: sonnet`; borrador HTML + OK antes de UI; subir a GitHub cada parte que anda.
-- Probar por adb: `--es pantalla <inicio|galeria|galerias|apariencia|pase|conexion|protector|estado>`, `--es protector usar|volver`, `--es ritmo normal`, `--es camino copia|original`, `--es credito si|no`, ajustes como extras (claves en `ajustes/PreferenciasDesdeTexto.kt`). Mostrar un PNG a 4K: `am start -S -n com.droidlogic.imageplayer/.FullImageActivity -a android.intent.action.VIEW -d file:///sdcard/... -t image/png`.
+- **Probar la Barra por adb**: se cierra sola a los 10 s; si la prueba es lenta (captura + mirarla) las teclas siguientes caen en la galería o el inicio. Poner `--es barra nunca` mientras se prueba y volver a `--es barra 10`. Mandar las teclas encadenadas en un solo `adb shell "...; sleep 1; ..."`.
+- Probar por adb: `--es pantalla <inicio|galeria|galerias|apariencia|pase|conexion|protector|estado>`, `--es protector usar|volver`, `--es galeria <id|todas>`, `--es barra 5|10|20|nunca`, ajustes como extras (claves en `ajustes/PreferenciasDesdeTexto.kt`). Los extras SE GUARDAN: anotar el valor de Guido antes y restaurarlo.
 - Con el protector corriendo, `am start` no llega a la app: despertar con `service call dreams 2` (abre el inicio de Google TV encima, con la foto de Guido: no capturar) y volver a abrir la app.
-- Lint da 5 errores viejos `NewApi` (API 29 en `PintorSuperficie`, minSdk 28): inofensivos en la TV (API 31). Antes de usar APIs de Java nuevas, mirar que existan en Android 12.
-- Compilar: `$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'; .\gradlew.bat assembleRelease testDebugUnitTest` (403 tests).
+- `run-as` no anda (APK release): el estado se mira por `logcat -s MuseumSlideshow` (renglones `Reserva:`, `Sincronización:`, `Escena`, `Barra:`).
+- Lint da 5 errores viejos `NewApi` (API 29 en `PintorSuperficie`, minSdk 28): inofensivos en la TV (API 31).
+- Compilar: `$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'; .\gradlew.bat assembleRelease testDebugUnitTest` desde la raíz.
 - La clave nunca se mira ni va al chat. Cuenta Google del proyecto: guido.camera12.

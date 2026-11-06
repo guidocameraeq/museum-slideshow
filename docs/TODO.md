@@ -2,21 +2,16 @@
 
 > ÚNICA fuente de pendientes del proyecto. Completado → SE BORRA (la historia vive en CHANGELOG y git). Header de 1 línea, sin narrativa de sesión.
 
-2026-11-02 — ver SESSION_HANDOFF.md
+2026-11-05 — ver SESSION_HANDOFF.md
 
 ## 🔴 Crítico
-- [ ] **Misión 05/11 (pedido de Guido usándola), en este orden:**
-  1. **Drive — fichas**: los `galeria.json` bajan por `alt=media` (el camino que Google bloquea); la copia 4K es solo para imágenes. Bajar una ficha solo si cambió: comparar el **md5** del listado (no la fecha; desde el 05/11 el curador no reescribe un JSON sin cambios); revisar primero qué hace hoy.
-  2. **Drive — "Preparando obras"**: al cambiar de galería la reserva tira TODO lo guardado (TV 05/11 16:00: 50 obras/134 MB → 0, y baja 50 de cero). No borrar al cambiar de galería (solo por espacio), primera obra ya, sin pausa de ritmo por el camino copia.
-  3. **Barra (Abajo)**: en el protector no abre (Guido la quiere ahí, sobre todo para elegir galería); elegir galerías en la Barra navega mal (se va al costado; una o "Todas" está bien). Borrador HTML antes de construir.
-  4. **Marcos**: la vista previa de Apariencia no muestra el marco elegido (hoy todos son el negro provisorio porque faltan las fotos). El curador consiguió 4 fotos CC0 (Met/Rijksmuseum): dorado, dorado-redondo, madera, negro-filete (aproximado) + dorado-alt, JPG con fondo liso (sin transparencia) y un `marcos.json` con hueco interior y licencia; negro fino se dibuja en la app. Van **empaquetadas en la app**, no se leen de Drive. Están en `E:\Guido\Fotos & Videos\Banco_Galerias_De_Arte\_marcos\` (los JPG + `marcos.json`).
-- [ ] Verificar en la TV el caso "originales bloqueados, copias siguen" (probado en la PC y en tests; el 03/11 en la TV los originales no estaban bloqueados) y que Estado muestre el renglón tranquilo. Ver que aparezcan las 23 galerías.
+- [ ] Verificar en la TV el caso "Google bloquea los originales": las obras siguen por copia, las fichas cambiadas esperan con la vieja y se bajan en el reintento, y Estado muestra el renglón tranquilo (probado solo en tests). Ver que aparezcan las 23 galerías.
 
 ## 🟠 Importante
-- [ ] La reserva borra lo guardado aunque no pueda bajar lo que lo reemplaza (pasó con Rococó antes de la pausa): no borrar una obra hasta tener lista la que entra.
+- [ ] Guido mira a ojo la Barra lateral (tamaño de letra, valores de la derecha no alineados entre renglones, si 10 s alcanzan, Abajo varias veces en una pared), las pantallas de ajustes y Estado.
+- [ ] Guido mira los marcos a ojo: "filete" es una foto aproximada (banda oscura entre molduras doradas) y además suma 4 px de filete del catálogo; si queda feo, filete 0 o pedir otra foto. El redondo no se vio nunca (no hay obras redondas).
+- [ ] Pasar los ids de marco (`fino`, `filete`, `madera`, `dorado`, `dorado-redondo`, `sin`) al campo `marco` de `docs/formato-galeria.md` y avisarle al curador.
 - [ ] Probar en la TV lo que falta: sin internet (el pase sigue con la reserva), "Sincronizar cada: Solo a mano" (desaparece de `dumpsys jobscheduler`), cambiar Tiempo por obra, reinicio real de la tele, pantalla Protector sin permiso.
-- [ ] Guido mira a ojo la Barra, las pantallas de ajustes y Estado.
-- [ ] Conseguir fotos de marcos reales libres de derechos (negro fino, negro con filete dorado, madera con adornos, dorado, **dorado redondo**) y fijar sus nombres cortos para el campo `marco` de `docs/formato-galeria.md`. El código ya está listo (`MarcoImagen`, `res/drawable-nodpi/marco_<id>.png`); cuidar que `shrinkResources` no los borre.
 - [ ] Tondos: ninguna obra de la biblioteca real trae `forma`; si Guido ve alguno redondo, avisarle al curador para marcarlo.
 - [ ] Sesión 5: prueba de 2 horas y todos los criterios del SPEC-0 en la TV.
 
