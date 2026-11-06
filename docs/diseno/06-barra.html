@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Borrador 6 — La Barra</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fondo:#0E0E10; --panel:#1F1F22; --texto:#E8E6E1; --tenue:#A19D95;
+    --dorado:#C9A54E; --bien:#8FBF8F; --foco:#F4F1EA; --focotx:#1A1A1C;
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; background:#18181b; color:var(--texto); font:400 16px Inter, sans-serif; }
+  header { padding:14px 22px; background:#111; border-bottom:1px solid #2a2a2e; }
+  header h1 { font:600 18px Inter; margin:0; }
+  main { padding:18px 22px 40px; max-width:1500px; margin:0 auto; }
+  .titulo-lienzo { margin:30px 0 10px; font:600 20px Inter; }
+  .titulo-lienzo span { color:var(--tenue); font-weight:400; }
+  .wrap { position:relative; width:100%; max-width:960px; background:#000; overflow:hidden; border-radius:10px; }
+  .stage { position:absolute; left:0; top:0; width:1920px; height:1080px; transform-origin:0 0; overflow:hidden; background:var(--fondo); font-family:Inter, sans-serif; }
+  .nota { margin-top:22px; padding:22px 28px; background:#1d1d21; border:1px solid #3a3a40; border-radius:12px; font-size:16px; line-height:1.6; max-width:1100px; }
+  .nota h2 { font:600 18px Inter; margin:0 0 10px; }
+  .nota ul { margin:0 0 6px; padding-left:22px; }
+  .nota b { color:var(--dorado); font-weight:600; }
+  .intro { max-width:1100px; font-size:18px; line-height:1.6; }
+  .intro b { color:var(--dorado); }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:18px; max-width:1100px; margin-top:18px; }
+  .col { padding:18px 24px; background:#1d1d21; border:1px solid #3a3a40; border-radius:12px; line-height:1.55; }
+  .col h3 { margin:0 0 8px; font:600 18px Inter; }
+  .col.rec { border-color:var(--dorado); }
+  .col ul { margin:0; padding-left:20px; }
+  @media (max-width:700px){ .cols{grid-template-columns:1fr;} }
+
+  /* ---- piezas dentro del lienzo ---- */
+  .obra { position:absolute; inset:0; background-size:cover; background-position:center; }
+  .obra.dim::after { content:""; position:absolute; inset:0; background:rgba(0,0,0,.35); }
+  .barra { position:absolute; left:0; right:0; bottom:0; height:380px; background:rgba(14,14,16,.88); padding:26px 70px 0; border-top:2px solid rgba(255,255,255,.1); }
+  .fila { display:flex; align-items:center; gap:18px; height:96px; }
+  .rot { width:190px; flex:none; font:500 28px Inter; color:var(--tenue); }
+  .chip { display:flex; align-items:center; gap:12px; height:72px; padding:0 30px; border-radius:16px; background:rgba(255,255,255,.14); color:var(--texto); font:500 30px Inter; white-space:nowrap; }
+  .foco { background:var(--foco) !important; color:var(--focotx) !important; font-weight:600; box-shadow:0 0 0 6px rgba(244,241,234,.28), 0 12px 34px rgba(0,0,0,.55); transform:scale(1.03); }
+  .sel { box-shadow:inset 0 0 0 3px var(--dorado); }
+  .estado { margin-left:auto; font:500 28px Inter; color:var(--dorado); }
+  .dim-el { opacity:.45; }
+  .panelv { position:absolute; left:0; top:0; bottom:0; width:820px; background:rgba(14,14,16,.92); border-right:2px solid rgba(255,255,255,.12); padding:34px 0 0; overflow:hidden; }
+  .panelv h4 { margin:0 0 14px; padding:0 44px; font:600 34px Inter; }
+  .fila-g { display:flex; align-items:center; gap:24px; height:104px; margin:0 24px; padding:0 20px; border-radius:16px; }
+  .fila-g .tapa { width:116px; height:78px; border-radius:8px; background-size:cover; background-position:center; flex:none; background-color:#333; }
+  .fila-g .tapa.todas { display:flex; align-items:center; justify-content:center; font:600 40px Inter; background:#34343A; color:var(--texto); }
+  .fila-g .n { font:500 32px Inter; }
+  .fila-g .c { font:400 24px Inter; color:var(--tenue); }
+  .fila-g .tk { margin-left:auto; font:600 40px Inter; color:var(--dorado); }
+  .fila-g.foco .c { color:#55524a; }
+  .grupo { height:62px; margin:0 44px; display:flex; align-items:flex-end; padding-bottom:8px; font:600 22px Inter; letter-spacing:.14em; text-transform:uppercase; color:#7d7a72; }
+  .mas { position:absolute; left:0; right:0; height:90px; display:flex; justify-content:center; font:500 24px Inter; color:var(--tenue); }
+  .mas.arr { top:92px; background:linear-gradient(rgba(14,14,16,.97) 40%, rgba(14,14,16,0)); align-items:flex-start; padding-top:8px; }
+  .mas.aba { bottom:84px; background:linear-gradient(rgba(14,14,16,0), rgba(14,14,16,.97) 60%); align-items:flex-end; padding-bottom:8px; }
+  .ayuda { position:absolute; left:0; bottom:0; height:84px; padding:0 44px; display:flex; align-items:center; gap:34px; background:rgba(0,0,0,.85); font:400 24px Inter; color:var(--tenue); }
+  .ayuda b { display:inline-block; padding:3px 12px; margin-right:10px; border-radius:9px; background:rgba(255,255,255,.14); color:var(--texto); font:600 22px Inter; }
+  .aviso { position:absolute; left:50%; top:50px; transform:translateX(-50%); padding:18px 48px; border-radius:40px; background:rgba(14,14,16,.82); font:500 42px 'EB Garamond',serif; color:#F2E7C4; }
+  .cartel { position:absolute; left:60px; bottom:60px; padding:18px 30px; border-radius:12px; background:rgba(14,14,16,.8); font:500 30px 'EB Garamond',serif; }
+  .badge { position:absolute; right:40px; top:36px; padding:10px 24px; border-radius:30px; background:rgba(201,165,78,.9); color:#1A1A1C; font:600 26px Inter; }
+  .globo { position:absolute; border-radius:14px; background:#F2E7C4; color:#1A1A1C; font:500 28px/1.35 Inter; padding:18px 26px; box-shadow:0 10px 30px rgba(0,0,0,.5); }
+  .carril { position:relative; flex:1; height:72px; overflow:hidden; }
+  .carril .tira { position:absolute; left:-120px; top:0; display:flex; gap:16px; }
+  html.solo, html.solo body { margin:0; padding:0; width:1920px; height:1080px; overflow:hidden; background:#000; }
+  html.solo header, html.solo .nota, html.solo .titulo-lienzo, html.solo .wrap.oculto, html.solo .intro, html.solo .cols { display:none !important; }
+  html.solo main { padding:0; margin:0; max-width:none; }
+  html.solo .wrap { position:fixed; left:0; top:0; width:1920px; max-width:none; height:1080px; border-radius:0; }
+  html.solo .stage { transform:none !important; }
+</style>
+</head>
+<body>
+<header><h1>La Barra — borrador 6</h1></header>
+<main>
+
+<div class="intro">
+  <p><b>Qué cambia:</b> hoy, para elegir galería, la Barra te muestra las 23 galerías en una fila y, al recorrerla, la fila se mueve sola hacia el costado y se pierde. La idea es que <b>Galería</b> sea un solo botón que dice cuál tenés puesta; con OK se abre una <b>lista vertical</b> con la tapa de cada galería, y ahí te movés para arriba y para abajo con calma.</p>
+  <p>Lo otro que pediste: que la Barra <b>también aparezca en el protector de pantalla</b>, igual que en la galería.</p>
+</div>
+
+<div class="titulo-lienzo">A · Cuadro 1 de 3 — La Barra abierta <span>(el foco está en el botón de Galería)</span></div>
+<div class="wrap" data-n="1"><div class="stage">
+  <div class="obra" style="background-image:url(img/perla.jpg)"></div>
+  <div class="barra">
+    <div class="fila"><span class="rot">Galería</span><div class="chip foco" style="min-width:520px">Galería: Rococó &nbsp;▸</div></div>
+    <div class="fila"><span class="rot">Tema</span><div class="chip">Galería moderna</div><div class="chip sel">Sala oscura</div><div class="chip">Inmersivo</div><div class="chip">Libro de arte</div></div>
+    <div class="fila"><span class="rot">Acciones</span><div class="chip">Pantalla completa: no</div><div class="chip">Explicación: sí</div><div class="chip">Ajustes</div><div class="chip">Sincronizar</div><span class="estado">Al día</span></div>
+  </div>
+  <div class="globo" style="left:880px;bottom:400px">OK abre la lista de galerías</div>
+</div></div>
+
+<div class="titulo-lienzo">A · Cuadro 2 de 3 — El panel de galerías <span>(el foco a mitad de una lista larga)</span></div>
+<div class="wrap" data-n="2"><div class="stage">
+  <div class="obra dim" style="background-image:url(img/perla.jpg)"></div>
+  <div class="barra dim-el"><div class="fila"><span class="rot">Galería</span><div class="chip" style="min-width:520px">Galería: Rococó &nbsp;▸</div></div></div>
+  <div class="panelv">
+    <h4>Elegí una galería</h4>
+    <div class="fila-g" style="margin-top:6px"><div class="tapa todas">★</div><div><div class="n">Todas</div><div class="c">314 obras</div></div></div>
+    <div class="grupo">Pintura europea</div>
+    <div class="fila-g"><div class="tapa" style="background-image:url(img/rafael.jpg)"></div><div><div class="n">Renacimiento</div><div class="c">18 obras</div></div></div>
+    <div class="fila-g"><div class="tapa" style="background-image:url(img/perla.jpg)"></div><div><div class="n">Barroco</div><div class="c">22 obras</div></div></div>
+    <div class="fila-g"><div class="tapa" style="background-image:url(img/caminante.jpg)"></div><div><div class="n">Rococó</div><div class="c">24 obras</div></div><span class="tk">✓</span></div>
+    <div class="fila-g foco"><div class="tapa" style="background-image:url(img/monet.jpg)"></div><div><div class="n">Impresionismo</div><div class="c">24 obras</div></div></div>
+    <div class="fila-g"><div class="tapa" style="background-image:url(img/gogh.jpg)"></div><div><div class="n">Posimpresionismo</div><div class="c">16 obras</div></div></div>
+    <div class="fila-g"><div class="tapa" style="background-image:url(img/caminante.jpg)"></div><div><div class="n">Romanticismo</div><div class="c">20 obras</div></div></div>
+    <div class="grupo">Arte moderno</div>
+    <div class="mas arr">▲ &nbsp;9 más arriba</div>
+    <div class="mas aba">▼ &nbsp;12 más abajo</div>
+    <div class="ayuda" style="width:820px"><span><b>▲▼</b>Moverse</span><span><b>OK</b>Elegir</span><span><b>Atrás</b>Volver</span></div>
+  </div>
+  <div class="globo" style="left:880px;top:420px">Arriba / Abajo mueven el foco y la lista se corre sola.<br>OK elige · Atrás vuelve a la Barra</div>
+</div></div>
+
+<div class="titulo-lienzo">A · Cuadro 3 de 3 — La galería nueva en pantalla <span>(el aviso se va solo a los pocos segundos)</span></div>
+<div class="wrap" data-n="3"><div class="stage">
+  <div class="obra" style="background-image:url(img/monet.jpg)"></div>
+  <div class="aviso">Impresionismo</div>
+  <div class="cartel">Claude Monet · Impresión, sol naciente</div>
+</div></div>
+
+<div class="nota">
+  <h2>Cómo anda la Propuesta A</h2>
+  <ul>
+    <li>Con <b>OK</b> en una galería: la elige, se cierran el panel y la Barra, y cambia la galería.</li>
+    <li>Con <b>Atrás</b>: se cierra el panel y volvés a la Barra, sin cambiar nada.</li>
+    <li>Los <b>encabezados de grupo</b> (carpetas con galerías adentro) son solo títulos grises: el foco los salta.</li>
+    <li>La tilde marca la galería que está puesta ahora.</li>
+  </ul>
+</div>
+
+<div class="titulo-lienzo">B · La alternativa barata <span>(los chips en fila, pero el foco no se corre)</span></div>
+<div class="wrap" data-n="4"><div class="stage">
+  <div class="obra" style="background-image:url(img/gogh.jpg)"></div>
+  <div class="barra">
+    <div class="fila"><span class="rot">Galería</span>
+      <div class="carril"><div class="tira">
+        <div class="chip dim-el">Renacimiento</div><div class="chip dim-el">Barroco</div><div class="chip dim-el">Rococó</div><div class="chip foco">Impresionismo</div><div class="chip dim-el">Posimpresionismo</div><div class="chip dim-el">Romanticismo</div><div class="chip dim-el">Cubismo</div>
+      </div></div>
+      <span class="estado" style="margin-left:0;min-width:170px;text-align:right">12 de 23</span>
+    </div>
+    <div class="fila"><span class="rot">Tema</span><div class="chip">Galería moderna</div><div class="chip sel">Sala oscura</div><div class="chip">Inmersivo</div><div class="chip">Libro de arte</div></div>
+    <div class="fila"><span class="rot">Acciones</span><div class="chip">Pantalla completa: no</div><div class="chip">Explicación: sí</div><div class="chip">Ajustes</div><div class="chip">Sincronizar</div><span class="estado">Al día</span></div>
+  </div>
+  <div class="globo" style="left:880px;bottom:400px">El foco queda siempre cerca del centro; las galerías pasan por debajo</div>
+</div></div>
+
+<div class="cols">
+  <div class="col rec"><h3>A · Botón + lista vertical (recomendada)</h3>
+    <ul><li>Se ve la tapa de cada galería.</li><li>Cómodo aunque haya muchas galerías.</li><li>Los grupos se entienden de un vistazo.</li><li>Más trabajo de armar.</li></ul></div>
+  <div class="col"><h3>B · Chips con el foco fijo</h3>
+    <ul><li>Cambio chico, rápido de hacer.</li><li>Con 23 nombres en fila, recorrerlos sigue siendo largo.</li><li>No se ve la tapa.</li><li>Los grupos no se pueden mostrar bien.</li></ul></div>
+</div>
+
+<div class="titulo-lienzo">En el protector de pantalla <span>(la misma Barra, igual en todo)</span></div>
+<div class="wrap" data-n="5"><div class="stage">
+  <div class="obra" style="background-image:url(img/rafael.jpg)"></div>
+  <div class="badge">Protector de pantalla</div>
+  <div class="barra">
+    <div class="fila"><span class="rot">Galería</span><div class="chip" style="min-width:520px">Galería: Todas &nbsp;▸</div></div>
+    <div class="fila"><span class="rot">Tema</span><div class="chip">Galería moderna</div><div class="chip sel">Sala oscura</div><div class="chip">Inmersivo</div><div class="chip">Libro de arte</div></div>
+    <div class="fila"><span class="rot">Acciones</span><div class="chip">Pantalla completa: no</div><div class="chip">Explicación: sí</div><div class="chip foco">Ajustes</div><div class="chip">Sincronizar</div><span class="estado">Al día</span></div>
+  </div>
+  <div class="globo" style="left:760px;bottom:400px;width:920px">Ajustes: cierra el protector y abre los Ajustes de la app (el protector no puede mostrar esa pantalla)</div>
+</div></div>
+<div class="nota">
+  <ul style="margin-bottom:0">
+    <li>Se abre con <b>Abajo</b>, como en la galería.</li>
+    <li><b>OK</b> sigue sin cerrar el protector.</li>
+    <li><b>Atrás</b> con la Barra cerrada cierra el protector, como hoy. Con la Barra abierta, la cierra.</li>
+  </ul>
+</div>
+
+<div class="nota" style="border-color:var(--dorado)">
+  <h2>Para decidir</h2>
+  <ul style="margin-bottom:0">
+    <li><b>¿A o B?</b> Yo iría por A: con 23 galerías la lista con tapas es mucho más cómoda.</li>
+    <li><b>¿Qué galerías muestra la lista?</b> Solo las tildadas en Galerías (como hoy) o todas las de Drive.</li>
+    <li><b>¿El botón Ajustes en el protector?</b> Que vaya (cierra el protector y abre los Ajustes) o que se esconda ahí.</li>
+  </ul>
+</div>
+</main>
+<script>
+const qs = new URLSearchParams(location.search);
+const solo = qs.get('lienzo');
+if (solo) document.documentElement.classList.add('solo');
+function ajustar() {
+  document.querySelectorAll('.wrap').forEach(w => {
+    const st = w.firstElementChild;
+    if (solo) { if (w.dataset.n !== solo) w.classList.add('oculto'); return; }
+    const s = w.clientWidth / 1920;
+    st.style.transform = 'scale(' + s + ')';
+    w.style.height = (1080 * s) + 'px';
+  });
+}
+addEventListener('resize', ajustar);
+ajustar();
+</script>
+</body>
+</html>

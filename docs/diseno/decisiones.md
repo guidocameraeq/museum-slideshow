@@ -54,3 +54,11 @@
 
 ## Pantalla Protector (borrador 5, 02/11)
 - Aprobado tal cual `05-protector.html`: un botón grande según el estado ("Usar Museum Slideshow como protector" / "Volver al anterior (<nombre>)"), "Probarlo ahora" cuando ya es el nuestro, franja verde "Listo" al activar, panel con el protector de hoy y el anterior, y sin permiso el botón apagado con el comando.
+
+## La Barra lateral (borradores 6 y 7, 05/11)
+- La Barra de abajo con filas horizontales se reemplaza por la **Propuesta C de `07-barra-lateral.html`**: Abajo abre un **panel vertical a la izquierda** (un tercio del ancho, translúcido) con Galería ▸, Tema ▸, Pantalla completa (interruptor), Explicación (interruptor), Ajustes ▸ y Sincronizar (con el estado abajo). Arriba/Abajo + OK; Atrás vuelve al menú o cierra.
+- **Galería ▸**: lista vertical con la tapa, el nombre y la cantidad de obras (la Propuesta A de `06-barra.html`, que gustó mucho); "Todas" arriba; grupos como encabezado gris que no se elige; solo las galerías tildadas (como hoy).
+- **Tema ▸**: lista con una miniatura de cada tema y **vista en vivo**: con el foco sobre un tema la obra de atrás ya se ve así; sin OK, al salir vuelve el que estaba.
+- **Se cierra solo** si no se toca nada: ajuste nuevo 5 s / **10 s (defecto)** / 20 s / Nunca. Cualquier tecla reinicia la cuenta.
+- **También en el protector**, igual en todo. Ajustes ▸ cierra el protector y abre los Ajustes de la app; OK nunca cierra el protector; Atrás con el panel cerrado sí.
+- Guido lo aprobó para construir (05/11).
