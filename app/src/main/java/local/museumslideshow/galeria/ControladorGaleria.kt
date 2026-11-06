@@ -235,6 +235,11 @@ class ControladorGaleria(
         val a = actual ?: return
         val n = a.def.obras.size
         if (n < 2 || a.esVista) return
+        // Abajo después de la última obra de la pared abre la Barra (si no, en una pared la Barra no se abría nunca).
+        if (d > 0 && marcaElegida && elegida == n - 1 && barraDisponible) {
+            abrirBarra()
+            return
+        }
         elegida = Math.floorMod(elegida + d, n)
         marcaElegida = true
         Log.i(Registro.TAG, "Control: obra elegida = $elegida")

@@ -31,61 +31,6 @@ class TeclasPantallasTest {
     }
 }
 
-class NavegacionBarraTest {
-    // Galería (Todas + 2), Tema (4), Acciones (4)
-    private val tamanos = listOf(3, 4, 4)
-    private val seleccion = listOf(1, 2, -1)
-
-    private fun paso(f: FocoBarra, t: Tecla) = NavegacionBarra.paso(f, t, tamanos, seleccion)
-
-    @Test
-    fun abajoYArribaCambianDeFilaYCaenEnElValorActual() {
-        val p = paso(FocoBarra(0, 0), Tecla.ABAJO)
-        assertEquals(FocoBarra(1, 2), p.foco)      // el tema actual (índice 2)
-        assertNull(p.evento)
-        assertEquals(FocoBarra(0, 1), paso(FocoBarra(1, 3), Tecla.ARRIBA).foco)   // la galería actual (índice 1)
-    }
-
-    @Test
-    fun abajoEnLasAccionesNoSale() {
-        assertEquals(FocoBarra(2, 1), paso(FocoBarra(2, 1), Tecla.ABAJO).foco)
-    }
-
-    @Test
-    fun enLaFilaDeAccionesElColumnaSeConserva() {
-        assertEquals(FocoBarra(2, 1), paso(FocoBarra(1, 1), Tecla.ABAJO).foco.copy(columna = 1))
-    }
-
-    @Test
-    fun arribaDesdeLaPrimeraFilaCierra() {
-        assertEquals(EventoBarra.Cerrar, paso(FocoBarra(0, 1), Tecla.ARRIBA).evento)
-    }
-
-    @Test
-    fun atrasCierraDesdeCualquierLado() {
-        assertEquals(EventoBarra.Cerrar, paso(FocoBarra(2, 3), Tecla.ATRAS).evento)
-    }
-
-    @Test
-    fun izquierdaYDerechaFrenanEnLasPuntas() {
-        assertEquals(FocoBarra(0, 0), paso(FocoBarra(0, 0), Tecla.IZQUIERDA).foco)
-        assertEquals(FocoBarra(0, 2), paso(FocoBarra(0, 2), Tecla.DERECHA).foco)
-        assertEquals(FocoBarra(1, 3), paso(FocoBarra(1, 2), Tecla.DERECHA).foco)
-        assertEquals(FocoBarra(1, 1), paso(FocoBarra(1, 2), Tecla.IZQUIERDA).foco)
-    }
-
-    @Test
-    fun okEligeLoQueTieneElFoco() {
-        assertEquals(EventoBarra.Elegir(1, 3), paso(FocoBarra(1, 3), Tecla.OK).evento)
-    }
-
-    @Test
-    fun unFocoFueraDeRangoSeCorrige() {
-        assertEquals(FocoBarra(0, 2), paso(FocoBarra(0, 9), Tecla.OK).foco)
-        assertEquals(EventoBarra.Cerrar, NavegacionBarra.paso(FocoBarra(0, 0), Tecla.ATRAS, emptyList(), emptyList()).evento)
-    }
-}
-
 class NavegacionListaTest {
     private fun paso(i: Int, t: Tecla, n: Int = 5, abre: (Int) -> Boolean = { it == 4 }) = NavegacionLista.paso(i, t, n, abre)
 

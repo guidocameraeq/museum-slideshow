@@ -35,6 +35,9 @@ enum class GaleriasNuevas { TILDADAS, DESTILDADAS }
 /** Cómo se ven las galerías en la pantalla Galerías: tarjetas con tapa o lista con tildes. */
 enum class VistaGalerias { TARJETAS, LISTA }
 
+/** A los cuántos segundos sin tocar nada se cierra sola la Barra (el panel de la izquierda). */
+enum class CierreBarra(val segundos: Int?) { S5(5), S10(10), S20(20), NUNCA(null) }
+
 /** `maximo` = cuántas verticales cuelgan juntas como mucho (1 = de a una). */
 enum class Pared(val maximo: Int) { APAGADA(1), HASTA_2(2), HASTA_3(3) }
 enum class CartelObra { SIEMPRE, UNOS_SEGUNDOS, NUNCA }
@@ -90,6 +93,8 @@ data class Preferencias(
     val reservaObras: Int = 50,
     /** Cómo se ve la pantalla Galerías (no cambia cómo se ve una escena). */
     val vistaGalerias: VistaGalerias = VistaGalerias.TARJETAS,
+    /** Cuánto tarda en cerrarse sola la Barra si no se toca nada (no cambia cómo se ve una escena). */
+    val cierreBarra: CierreBarra = CierreBarra.S10,
 ) {
     companion object {
         val TIEMPO_POR_OBRA_SEG = 10..600
@@ -117,6 +122,7 @@ fun Preferencias.paraEscena(): Preferencias {
         galeriasNuevas = d.galeriasNuevas,
         reservaObras = d.reservaObras,
         vistaGalerias = d.vistaGalerias,
+        cierreBarra = d.cierreBarra,
     )
 }
 

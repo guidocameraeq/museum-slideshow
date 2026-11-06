@@ -7,7 +7,7 @@ import java.text.Normalizer
 /**
  * Para probar en la tele por adb: `am start ... --es tema sala-oscura --es tam maximo`.
  * Claves: tema, modo, pared-claro, pared-oscuro, marco, tam, completa-con-marco, expl, sala, calidad,
- * tiempo, orden, galeria, pared, cartel, credito (si|no), transicion, duracion, sincronizar, espacio, ritmo, camino (copia|original), carpeta, nuevas, reserva. Un valor inválido se ignora.
+ * tiempo, orden, galeria, pared, cartel, credito (si|no), transicion, duracion, sincronizar, espacio, ritmo, camino (copia|original), carpeta, nuevas, reserva, barra (5|10|20|nunca). Un valor inválido se ignora.
  * (`tildar` y `destildar` necesitan el catálogo: los resuelve la pantalla, no esta función.)
  * Estos cambios se GUARDAN en el almacén de ajustes (`reset=si` los vuelve todos a los valores por defecto).
  */
@@ -146,6 +146,13 @@ object PreferenciasDesdeTexto {
                 "camino", "camino-obras" -> when (v) {
                     "copia", "copia-primero" -> p.copy(caminoObras = CaminoObras.COPIA_PRIMERO)
                     "original", "original-primero" -> p.copy(caminoObras = CaminoObras.ORIGINAL_PRIMERO)
+                    else -> p
+                }
+                "barra", "cierre-barra" -> when (v) {
+                    "5", "5s" -> p.copy(cierreBarra = CierreBarra.S5)
+                    "10", "10s" -> p.copy(cierreBarra = CierreBarra.S10)
+                    "20", "20s" -> p.copy(cierreBarra = CierreBarra.S20)
+                    "nunca" -> p.copy(cierreBarra = CierreBarra.NUNCA)
                     else -> p
                 }
                 // Solo para probar por adb (la pantalla de Ajustes ofrece 20 / 50 / 100 / 200).

@@ -38,11 +38,12 @@ object CodecPreferencias {
         const val VISTA_GALERIAS = "vista_galerias"
         const val RITMO_BAJADA = "ritmo_bajada"
         const val CAMINO_OBRAS = "camino_obras"
+        const val CIERRE_BARRA = "cierre_barra"
 
         val TODAS = listOf(
             TEMA, MODO, HORA_DIA, HORA_NOCHE, PARED_CLARO, PARED_OSCURO, MARCO, TAMANO, COMPLETA_CON_MARCO, EXPLICACION,
             SALA, CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, CREDITO, TRANSICION, DURACION, SINCRONIZAR_CADA, ESPACIO_MAXIMO, CARPETA,
-            GALERIAS_SELECCION, GALERIAS_NUEVAS, RESERVA, VISTA_GALERIAS, RITMO_BAJADA, CAMINO_OBRAS,
+            GALERIAS_SELECCION, GALERIAS_NUEVAS, RESERVA, VISTA_GALERIAS, RITMO_BAJADA, CAMINO_OBRAS, CIERRE_BARRA,
         )
     }
 
@@ -88,6 +89,7 @@ object CodecPreferencias {
         m[K.VISTA_GALERIAS] = p.vistaGalerias.name
         m[K.RITMO_BAJADA] = p.ritmoBajada.name
         m[K.CAMINO_OBRAS] = p.caminoObras.name
+        m[K.CIERRE_BARRA] = p.cierreBarra.name
         return m
     }
 
@@ -132,6 +134,7 @@ object CodecPreferencias {
             vistaGalerias = enum<VistaGalerias>(m[K.VISTA_GALERIAS]) ?: d.vistaGalerias,
             ritmoBajada = enum<RitmoBajada>(m[K.RITMO_BAJADA]) ?: d.ritmoBajada,
             caminoObras = enum<CaminoObras>(m[K.CAMINO_OBRAS]) ?: d.caminoObras,
+            cierreBarra = enum<CierreBarra>(m[K.CIERRE_BARRA]) ?: d.cierreBarra,
         )
     }
 

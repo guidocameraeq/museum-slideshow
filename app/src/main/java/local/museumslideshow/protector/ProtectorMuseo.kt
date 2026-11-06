@@ -1,5 +1,6 @@
 package local.museumslideshow.protector
 
+import android.content.Intent
 import android.service.dreams.DreamService
 import android.util.Log
 import android.view.KeyEvent
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -20,17 +22,20 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import local.museumslideshow.MainActivity
 import local.museumslideshow.MotorApp
 import local.museumslideshow.Registro
 import local.museumslideshow.ajustes.estaTildada
+import local.museumslideshow.galeria.AccionesApp
 import local.museumslideshow.galeria.GaleriaEnPantalla
 import local.museumslideshow.galeria.esTeclaVolumen
+import local.museumslideshow.pantallas.PantallaApp
 import local.museumslideshow.pantallas.PantallaSinObras
 import local.museumslideshow.pantallas.SinObras
 
 /**
- * El protector de pantalla: la misma galería que la app (con el motor compartido), sin Barra. Interactivo: Izquierda/Derecha,
- * OK (Pantalla completa) y mantener OK (Explicación) funcionan; Atrás cierra lo abierto y, si no hay nada, vuelve a la tele;
+ * El protector de pantalla: la misma galería que la app (con el motor compartido), con la misma Barra lateral (Abajo la abre). Interactivo: Izquierda/Derecha,
+ * OK (Pantalla completa) y mantener OK (Explicación) funcionan; Atrás cierra lo abierto (el panel, la Explicación) y, si no hay nada, vuelve a la tele;
  * OK nunca lo cierra; las teclas de volumen nunca se consumen; Home es del sistema.
  *
  * IDENTIDAD FIJA: el nombre de esta clase está en el ajuste del sistema; cambiarlo obliga a reinstalar y elegir el protector de nuevo.
@@ -124,13 +129,30 @@ class ProtectorMuseo : DreamService(), LifecycleOwner, SavedStateRegistryOwner {
             return
         }
         val cat = motor.catalogo
+        val acciones = remember {
+            AccionesApp(
+                cambiar = { t -> motor.cambiarAjustes(t) },
+                sincronizar = { motor.sincronizarAhora() },
+                // El protector no puede mostrar los Ajustes: abre la app en Apariencia y se cierra.
+                abrirAjustes = {
+                    startActivity(
+                        Intent(applicationContext, MainActivity::class.java)
+                            .putExtra("pantalla", PantallaApp.APARIENCIA.id)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
+                    finish()
+                },
+            )
+        }
         val tildadas = cat?.galerias.orEmpty().filter { p.estaTildada(it.driveId) }
         val hayObras = tildadas.sumOf { it.obras.size } > 0
         if (cat != null && hayObras) {
             GaleriaEnPantalla(
                 cat, p,
                 alSalir = { finish() },
-                app = null,   // sin Barra: Abajo no abre nada
+                app = acciones,
+                sincronizando = motor.sincronizando,
+                mensajeSync = motor.mensajeSync,
                 teclasActivas = true,
                 reserva = motor.reserva,
             )

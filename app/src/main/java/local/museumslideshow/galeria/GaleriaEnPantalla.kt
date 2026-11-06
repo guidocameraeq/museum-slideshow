@@ -38,14 +38,23 @@ import local.museumslideshow.ajustes.Tema
 import local.museumslideshow.ajustes.estaTildada
 import local.museumslideshow.reserva.GestorReserva
 import androidx.compose.runtime.collectAsState
-import local.museumslideshow.pantallas.Barra
-import local.museumslideshow.pantallas.DatosBarra
-import local.museumslideshow.pantallas.EventoBarra
-import local.museumslideshow.pantallas.FocoBarra
+import local.museumslideshow.pantallas.CierreAutomatico
+import local.museumslideshow.pantallas.ContextoPanel
+import local.museumslideshow.pantallas.DatosPanel
+import local.museumslideshow.pantallas.EstadoPanel
+import local.museumslideshow.pantallas.EventoPanel
 import local.museumslideshow.pantallas.IndicadorSincronizando
+import local.museumslideshow.pantallas.ListaGaleriasPanel
+import local.museumslideshow.pantallas.NavegacionPanel
+import local.museumslideshow.pantallas.NivelPanel
+import local.museumslideshow.pantallas.PanelLateral
 import local.museumslideshow.pantallas.PantallaPreparando
-import local.museumslideshow.pantallas.NavegacionBarra
+import local.museumslideshow.pantallas.Tecla
 import local.museumslideshow.pantallas.teclaDe
+import local.museumslideshow.catalogo.Arbol
+import kotlinx.coroutines.delay
+import android.os.SystemClock
+import androidx.compose.runtime.mutableFloatStateOf
 import local.museumslideshow.catalogo.CatalogoCargado
 import local.museumslideshow.sync.Sincronizacion
 
@@ -96,63 +105,92 @@ fun GaleriaEnPantalla(
     val foco = remember { FocusRequester() }
 
     LaunchedEffect(controlador) { controlador.correr() }
-    LaunchedEffect(catalogo, preferencias) { controlador.configurar(catalogo, preferencias) }
     LaunchedEffect(salto) { if (salto != null) controlador.saltarA(salto.indice) }
     // Cada vez que la reserva termina una obra, la galería reintenta (por si estaba esperando la primera).
     val versionReserva = reserva?.estado?.collectAsState()?.value?.version ?: 0
     LaunchedEffect(versionReserva) { controlador.reintentar() }
     LaunchedEffect(teclasActivas) { if (teclasActivas) try { foco.requestFocus() } catch (e: Exception) { /* todavía no está listo */ } }
 
-    // La Barra
+    // La Barra: el panel de la izquierda. Su estado (menú / sublista / foco) es puro: ver NavegacionPanel.
     controlador.barraDisponible = app != null
-    val galeriasBarra = catalogo.galerias.filter { preferencias.estaTildada(it.driveId) }.map { it.driveId to it.titulo }
-    val indiceGaleria = galeriasBarra.indexOfFirst { (id, titulo) -> preferencias.galeria != null && (id == preferencias.galeria || titulo.equals(preferencias.galeria, ignoreCase = true)) }
-    val datosBarra = DatosBarra(
-        galerias = galeriasBarra,
-        galeriaElegida = indiceGaleria,
-        tema = preferencias.tema,
-        pantallaCompleta = controlador.pantallaCompleta,
-        explicacion = controlador.explicacionVisible,
-        sincronizando = sincronizando,
-        mensaje = mensajeSync,
-    )
-    val datosActuales by rememberUpdatedState(datosBarra)
+    var panel by remember { mutableStateOf(EstadoPanel()) }
+    val tildadas = remember(catalogo, preferencias.seleccionGalerias, preferencias.galeriasNuevas) {
+        catalogo.galerias.filter { preferencias.estaTildada(it.driveId) }
+    }
+    val arbol = remember(catalogo) { Arbol(catalogo) }
+    val items = remember(tildadas, arbol) { ListaGaleriasPanel.armar(tildadas) { arbol.titulo(it) } }
+    val puesta = ListaGaleriasPanel.posicionElegida(items, preferencias.galeria)
+
+    // Vista en vivo: con el foco sobre un tema, la galería se arma con ese tema SIN guardarlo (solo al mover el foco).
+    // Al elegirlo se mantiene hasta que el ajuste guardado llegue (para que no parpadee el tema viejo).
+    val temaEnPrueba = if (controlador.barraAbierta) panel.temaEnPrueba else null
+    var temaElegido by remember { mutableStateOf<Tema?>(null) }
+    LaunchedEffect(preferencias.tema) { temaElegido = null }
+    val prefsGaleria = remember(preferencias, temaEnPrueba, temaElegido) {
+        val t = temaEnPrueba ?: temaElegido
+        if (t != null && t != preferencias.tema) preferencias.copy(tema = t) else preferencias
+    }
+    LaunchedEffect(catalogo, prefsGaleria) { controlador.configurar(catalogo, prefsGaleria) }
+
+    val contexto = ContextoPanel(items, puesta, preferencias.tema)
+    val contextoActual by rememberUpdatedState(contexto)
     val appActual by rememberUpdatedState(app)
     val teclasActual by rememberUpdatedState(teclasActivas)
-    var focoBarra by remember { mutableStateOf(FocoBarra(0, 0)) }
-    LaunchedEffect(controlador.barraAbierta) { if (controlador.barraAbierta) focoBarra = FocoBarra(0, datosActuales.galeriaElegida + 1) }
+    val prefsActual by rememberUpdatedState(preferencias)
+
+    // Se cierra sola si no se toca ninguna tecla (cualquiera, menos el volumen, reinicia la cuenta).
+    val limiteMs = preferencias.cierreBarra.segundos?.let { it * 1000L }
+    val cierre = remember(limiteMs) { CierreAutomatico(limiteMs) { SystemClock.uptimeMillis() } }
+    val cierreActual by rememberUpdatedState(cierre)
+    var restante by remember { mutableFloatStateOf(1f) }
+
+    fun cerrarPanel() {
+        panel = EstadoPanel()          // el tema en prueba se descarta
+        controlador.cerrarBarra()
+    }
+    LaunchedEffect(controlador.barraAbierta, cierre) {
+        if (!controlador.barraAbierta) return@LaunchedEffect
+        panel = EstadoPanel()
+        cierre.reiniciar()
+        while (true) {
+            restante = cierre.restante() ?: 1f
+            if (cierre.vencido()) { cerrarPanel(); break }
+            delay(50)
+        }
+    }
     LaunchedEffect(controlador.barraAbierta, teclasActivas) { controlador.suspender(controlador.barraAbierta || !teclasActivas) }
 
-    fun elegirEnBarra(fila: Int, columna: Int) {
+    fun alEventoPanel(e: EventoPanel) {
         val a = appActual ?: return
-        when (fila) {
-            DatosBarra.FILA_GALERIA -> {
-                val id = if (columna == 0) null else datosActuales.galerias.getOrNull(columna - 1)?.first ?: return
-                a.cambiar { it.copy(galeria = id) }
+        when (e) {
+            EventoPanel.Cerrar -> cerrarPanel()
+            is EventoPanel.ElegirGaleria -> { a.cambiar { it.copy(galeria = e.id) }; cerrarPanel() }
+            is EventoPanel.ElegirTema -> {
+                if (e.tema != prefsActual.tema) { temaElegido = e.tema; a.cambiar { it.copy(tema = e.tema) } }
+                cerrarPanel()
             }
-            DatosBarra.FILA_TEMA -> Tema.values().getOrNull(columna)?.let { t -> a.cambiar { it.copy(tema = t) } }
-            DatosBarra.FILA_ACCIONES -> when (columna) {
-                DatosBarra.ACC_PANTALLA_COMPLETA -> controlador.alternarPantallaCompleta()
-                DatosBarra.ACC_EXPLICACION -> controlador.alternarExplicacionDesdeBarra()
-                DatosBarra.ACC_AJUSTES -> { controlador.cerrarBarra(); a.abrirAjustes() }
-                DatosBarra.ACC_SINCRONIZAR -> a.sincronizar()
-            }
+            EventoPanel.AlternarPantallaCompleta -> controlador.alternarPantallaCompleta()
+            EventoPanel.AlternarExplicacion -> controlador.alternarExplicacionDesdeBarra()
+            EventoPanel.AbrirAjustes -> { cerrarPanel(); a.abrirAjustes() }
+            EventoPanel.Sincronizar -> a.sincronizar()
         }
     }
 
-    /** Las teclas con la Barra abierta: las maneja la navegación pura de la Barra; las de volumen nunca se consumen. */
+    /**
+     * Las teclas con el panel abierto: las maneja la navegación pura; las de volumen nunca se consumen. Las flechas se repiten
+     * solo en la lista de galerías (la de temas rearma la escena en cada paso).
+     */
     fun teclaEnBarra(action: Int, keyCode: Int, repeatCount: Int): Boolean {
         if (esTeclaVolumen(keyCode)) return false
+        if (action == KeyEvent.ACTION_DOWN) cierreActual.reiniciar()
         val tecla = teclaDe(keyCode) ?: return false
-        if (action == KeyEvent.ACTION_DOWN && repeatCount == 0) {
-            val d = datosActuales
-            val paso = NavegacionBarra.paso(focoBarra, tecla, d.tamanos, d.seleccion)
-            focoBarra = paso.foco
-            when (val e = paso.evento) {
-                EventoBarra.Cerrar -> controlador.cerrarBarra()
-                is EventoBarra.Elegir -> elegirEnBarra(e.fila, e.columna)
-                null -> Unit
-            }
+        if (action == KeyEvent.ACTION_DOWN) {
+            val repite = repeatCount > 0
+            val vertical = tecla == Tecla.ARRIBA || tecla == Tecla.ABAJO
+            if (repite && !(vertical && panel.nivel == NivelPanel.GALERIAS)) return true
+            val paso = NavegacionPanel.paso(panel, tecla, contextoActual)
+            panel = paso.estado
+            paso.evento?.let { alEventoPanel(it) }
         }
         return true
     }
@@ -207,6 +245,22 @@ fun GaleriaEnPantalla(
         }
         if (controlador.preparando && controlador.actual == null) PantallaPreparando()
         if (sincronizando && !controlador.barraAbierta) IndicadorSincronizando(Modifier.align(Alignment.TopEnd))
-        if (controlador.barraAbierta) Barra(datosBarra, focoBarra, Modifier.align(Alignment.BottomCenter))
+        if (controlador.barraAbierta) {
+            PanelLateral(
+                DatosPanel(
+                    estado = panel,
+                    items = items,
+                    galeriaPuesta = puesta,
+                    tema = preferencias.tema,
+                    pantallaCompleta = controlador.pantallaCompleta,
+                    explicacion = controlador.explicacionVisible,
+                    sincronizando = sincronizando,
+                    mensaje = mensajeSync,
+                    conCierre = limiteMs != null,
+                    restante = { restante },
+                ),
+                Modifier.align(Alignment.CenterStart),
+            )
+        }
     }
 }

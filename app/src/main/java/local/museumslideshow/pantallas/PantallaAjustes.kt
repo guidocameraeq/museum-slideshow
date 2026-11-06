@@ -188,6 +188,7 @@ fun PantallaAjustesGrupo(
     IdAjuste.SALA -> R.string.ayuda_sala
     IdAjuste.CARTEL -> R.string.ayuda_cartel
     IdAjuste.CREDITO -> R.string.ayuda_credito
+    IdAjuste.CIERRE_BARRA -> R.string.ayuda_cierre_barra
     else -> null
 }
 

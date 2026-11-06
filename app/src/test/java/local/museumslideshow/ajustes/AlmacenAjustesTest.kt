@@ -46,6 +46,7 @@ class CodecPreferenciasTest {
         galeriasNuevas = GaleriasNuevas.DESTILDADAS,
         reservaObras = 100,
         vistaGalerias = VistaGalerias.LISTA,
+        cierreBarra = CierreBarra.NUNCA,
     )
 
     @Test
@@ -217,5 +218,27 @@ class CarpetaDriveTest {
         assertEquals(true, si.mostrarCredito)
         assertEquals(false, PreferenciasDesdeTexto.aplicar(si, mapOf("credito" to "no")).mostrarCredito)
         assertEquals(true, PreferenciasDesdeTexto.aplicar(si, mapOf("credito" to "tal vez")).mostrarCredito)
+    }
+
+    @Test
+    fun elCierreDeLaBarraPorDefectoEsDiezSegundosYSeGuardaYSeCambiaPorIntent() {
+        assertEquals(CierreBarra.S10, Preferencias().cierreBarra)
+        assertEquals(listOf(5, 10, 20, null), CierreBarra.values().map { it.segundos })
+        val guardado = CodecPreferencias.codificar(Preferencias(cierreBarra = CierreBarra.S20))
+        assertEquals("S20", guardado["cierre_barra"])
+        assertEquals(CierreBarra.S20, CodecPreferencias.decodificar(guardado).cierreBarra)
+        assertEquals(CierreBarra.S10, CodecPreferencias.decodificar(mapOf("cierre_barra" to "S3")).cierreBarra)
+        assertEquals(CierreBarra.S10, CodecPreferencias.decodificar(emptyMap()).cierreBarra)
+        fun barra(v: String) = PreferenciasDesdeTexto.aplicar(Preferencias(), mapOf("barra" to v)).cierreBarra
+        assertEquals(CierreBarra.S5, barra("5"))
+        assertEquals(CierreBarra.S10, barra("10"))
+        assertEquals(CierreBarra.S20, barra("20"))
+        assertEquals(CierreBarra.NUNCA, barra("Nunca"))
+        assertEquals(CierreBarra.S10, barra("7"))   // un valor inválido se ignora
+    }
+
+    @Test
+    fun elCierreDeLaBarraNoRearmaLaEscena() {
+        assertEquals(Preferencias().paraEscena(), Preferencias(cierreBarra = CierreBarra.NUNCA).paraEscena())
     }
 }

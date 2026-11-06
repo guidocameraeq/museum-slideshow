@@ -21,7 +21,7 @@ class Opcion(
 /** Los ajustes de la pantalla, en el orden de la tabla del SPEC-0 (y al final, la entrada que abre Estado). */
 enum class IdAjuste {
     TEMA, MODO, HORA_DIA, HORA_NOCHE, PARED_CLARO, PARED_OSCURO, MARCO, TAMANO, COMPLETA_CON_MARCO, EXPLICACION, SALA,
-    CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, CREDITO, TRANSICION, DURACION, SINCRONIZAR, RESERVA, ESPACIO, RITMO, CAMINO, CARPETA, GALERIAS_NUEVAS,
+    CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, CREDITO, CIERRE_BARRA, TRANSICION, DURACION, SINCRONIZAR, RESERVA, ESPACIO, RITMO, CAMINO, CARPETA, GALERIAS_NUEVAS,
     PROTECTOR, ESTADO,
 }
 
@@ -236,6 +236,9 @@ object ListaAjustes {
                 res(when (it) { CartelObra.SIEMPRE -> R.string.v_siempre; CartelObra.UNOS_SEGUNDOS -> R.string.cartel_unos_segundos; CartelObra.NUNCA -> R.string.v_nunca })
             },
             siNo(IdAjuste.CREDITO, R.string.aj_credito, { it.mostrarCredito }, { p, v -> p.copy(mostrarCredito = v) }),
+            lista(IdAjuste.CIERRE_BARRA, R.string.aj_cierre_barra, CierreBarra.values().toList(), { it.cierreBarra }, { p, v -> p.copy(cierreBarra = v) }) {
+                if (it == CierreBarra.NUNCA) res(R.string.v_nunca) else Etiqueta.Res(R.string.formato_segundos, listOf(it.segundos ?: 0))
+            },
             lista(IdAjuste.TRANSICION, R.string.aj_transicion, Transicion.values().toList(), { it.transicion }, { p, v -> p.copy(transicion = v) }) {
                 res(if (it == Transicion.FUNDIDO) R.string.transicion_fundido else R.string.transicion_ninguna)
             },
@@ -287,7 +290,7 @@ enum class GrupoAjustes(val ids: List<IdAjuste>) {
         listOf(
             IdAjuste.TEMA, IdAjuste.MODO, IdAjuste.HORA_DIA, IdAjuste.HORA_NOCHE, IdAjuste.PARED_CLARO, IdAjuste.PARED_OSCURO,
             IdAjuste.MARCO, IdAjuste.TAMANO, IdAjuste.COMPLETA_CON_MARCO, IdAjuste.EXPLICACION, IdAjuste.SALA, IdAjuste.CARTEL,
-            IdAjuste.CREDITO,
+            IdAjuste.CREDITO, IdAjuste.CIERRE_BARRA,
         ),
     ),
     PASE(

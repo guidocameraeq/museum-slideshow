@@ -45,8 +45,24 @@
     <string name="barra_explicacion">Explicación</string>
     <string name="barra_ajustes">Ajustes</string>
     <string name="barra_sincronizar">Sincronizar ahora</string>
-    <string name="barra_interruptor_si">%1$s: sí</string>
-    <string name="barra_interruptor_no">%1$s: no</string>
+    <string name="panel_flecha">▸</string>
+    <string name="panel_valor_flecha">%1$s  ▸</string>
+    <string name="panel_atras_titulo">‹  %1$s</string>
+    <string name="panel_estrella">★</string>
+    <string name="panel_tilde">✓</string>
+    <plurals name="panel_mas_arriba">
+        <item quantity="one">▲  %d más arriba</item>
+        <item quantity="other">▲  %d más arriba</item>
+    </plurals>
+    <plurals name="panel_mas_abajo">
+        <item quantity="one">▼  %d más abajo</item>
+        <item quantity="other">▼  %d más abajo</item>
+    </plurals>
+    <string name="ayuda_cerrar">Cerrar</string>
+    <string name="ayuda_al_menu">Al menú</string>
+    <string name="ayuda_probar">Probar</string>
+    <string name="ayuda_quedarme">Quedarme</string>
+    <string name="ayuda_cancelar">Cancelar</string>
     <string name="sync_listo">Listo: %1$s · %2$s</string>
     <string name="sync_al_dia">Todo al día</string>
     <string name="sync_con_avisos">Listo, con avisos. Mirá Estado.</string>
@@ -89,6 +105,7 @@
     <string name="aj_pared">Pared de verticales</string>
     <string name="aj_cartel">Cartel de la obra</string>
     <string name="aj_credito">Mostrar de dónde sale la imagen</string>
+    <string name="aj_cierre_barra">Cerrar la Barra sola</string>
     <string name="aj_transicion">Transición</string>
     <string name="aj_duracion">Duración de la transición</string>
     <string name="aj_sincronizar">Sincronizar cada</string>
@@ -336,5 +353,6 @@
     <string name="ayuda_explicacion">Si entra al lado de la obra, o nunca.</string>
     <string name="ayuda_sala">Cuándo se ve el nombre de la sala.</string>
     <string name="ayuda_cartel">Cuándo se ve el cartel de cada obra.</string>
+    <string name="ayuda_cierre_barra">Si no tocás ninguna tecla, la Barra de la izquierda se cierra sola después de este tiempo.</string>
     <string name="ayuda_credito">Si el cartel dice de dónde sale la imagen (por ejemplo, Wikimedia Commons).</string>
 </resources>

@@ -62,7 +62,7 @@ class ListaAjustesTest {
             listOf(
                 IdAjuste.TEMA, IdAjuste.MODO, IdAjuste.HORA_DIA, IdAjuste.HORA_NOCHE, IdAjuste.PARED_CLARO, IdAjuste.PARED_OSCURO,
                 IdAjuste.MARCO, IdAjuste.TAMANO, IdAjuste.COMPLETA_CON_MARCO, IdAjuste.EXPLICACION, IdAjuste.SALA, IdAjuste.CALIDAD,
-                IdAjuste.TIEMPO, IdAjuste.ORDEN, IdAjuste.GALERIA, IdAjuste.PARED, IdAjuste.CARTEL, IdAjuste.CREDITO, IdAjuste.TRANSICION,
+                IdAjuste.TIEMPO, IdAjuste.ORDEN, IdAjuste.GALERIA, IdAjuste.PARED, IdAjuste.CARTEL, IdAjuste.CREDITO, IdAjuste.CIERRE_BARRA, IdAjuste.TRANSICION,
                 IdAjuste.DURACION, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.RITMO, IdAjuste.CAMINO, IdAjuste.CARPETA, IdAjuste.GALERIAS_NUEVAS,
                 IdAjuste.PROTECTOR, IdAjuste.ESTADO,
             ),
@@ -199,7 +199,7 @@ class GruposAjustesTest {
         assertEquals(
             listOf(
                 IdAjuste.TEMA, IdAjuste.MODO, IdAjuste.HORA_DIA, IdAjuste.HORA_NOCHE, IdAjuste.PARED_CLARO, IdAjuste.PARED_OSCURO,
-                IdAjuste.MARCO, IdAjuste.TAMANO, IdAjuste.COMPLETA_CON_MARCO, IdAjuste.EXPLICACION, IdAjuste.SALA, IdAjuste.CARTEL, IdAjuste.CREDITO,
+                IdAjuste.MARCO, IdAjuste.TAMANO, IdAjuste.COMPLETA_CON_MARCO, IdAjuste.EXPLICACION, IdAjuste.SALA, IdAjuste.CARTEL, IdAjuste.CREDITO, IdAjuste.CIERRE_BARRA,
             ),
             items.delGrupo(GrupoAjustes.APARIENCIA).map { it.id },
         )
