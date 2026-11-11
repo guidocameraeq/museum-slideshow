@@ -2,6 +2,21 @@
 
 > Historia permanente. `/cierre` agrega una entrada AL TOPE en cada sesión. Orden descendente estricto, sin excepciones. Nada de versiones duplicadas en otros docs.
 
+## 2026-11-11 — Versión 0.2: APK en GitHub, clave en Ajustes y Actualizaciones
+
+### Added
+- **APK en GitHub Releases**: `publicar.yml` compila el APK sin clave al subir la etiqueta `v<versión>` y lo publica; `compilar.yml` compila y prueba cada push. Versión en un solo lugar (`versionApp` en `app/build.gradle.kts`).
+- **Clave y carpeta de Drive en Ajustes** (Conexión y espacio): se escriben con OK en una ventanita (o desde la app Google TV del teléfono); la clave se ve tapada. Sin clave, la pantalla sin obras lleva a cargarla. Por adb: `--es clave`.
+- **Actualizaciones** (borrador `08-actualizaciones.html`, aprobado): botón en Inicio (en dorado si hay una nueva), Actualizar baja el APK e Android pide confirmar; permiso "instalar apps desconocidas" la primera vez; ajuste "Buscar actualizaciones" (una vez por día / solo a mano; adb `--es actualizaciones`).
+- `docs/tele-nueva.md`: instalar en otra tele, con o sin PC.
+
+### Changed
+- Al arrancar, una clave/carpeta de fábrica (`local.properties`) se copia a los ajustes si la tele no tiene: así actualizar con el APK de GitHub no la deja sin Drive.
+- El registro tapa también una clave suelta (`AIza***`).
+
+### NO VERIFICADO en la TV
+- Todo lo de esta versión: se construyó en una sesión en la nube (sin acceso a la tele). Compila y pasan las pruebas en GitHub.
+
 ## 2026-11-05 — Misión del 05/11: fichas, reserva, Barra lateral y marcos reales
 
 ### Added

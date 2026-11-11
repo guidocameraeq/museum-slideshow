@@ -1,6 +1,6 @@
 # SPEC delta: APK en GitHub, actualizarse desde la app y clave cargada en Ajustes — Museum Slideshow
 Cada versión queda publicada en GitHub como APK instalable; la app avisa y se actualiza sola desde Ajustes; la clave y la carpeta de Drive se cargan en la tele, no adentro del APK.
-- Estado: READY (OK de Guido 2026-11-11, opción A) · partes 1 y 2 construidas; parte 3 espera el OK del borrador `docs/diseno/08-actualizaciones.html`
+- Estado: COMPLETO 2026-11-11 (construido; NO VERIFICADO en la TV)
 - Fecha: 2026-11-11
 
 ## Pedido original, textual
