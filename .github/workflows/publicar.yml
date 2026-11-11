@@ -30,7 +30,7 @@ jobs:
         run: bash ./gradlew assembleRelease testDebugUnitTest --console=plain
       - name: El APK no trae ninguna clave de Drive
         run: |
-          if unzip -p app/build/outputs/apk/release/app-release.apk | grep -a -q 'AIza'; then
+          if unzip -p app/build/outputs/apk/release/app-release.apk | grep -a -E -q 'AIza[0-9A-Za-z_-]{35}'; then
             echo "El APK trae una clave de Drive adentro"; exit 1
           fi
       - name: Publicar en Releases
