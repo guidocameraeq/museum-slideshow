@@ -22,7 +22,7 @@ class Opcion(
 enum class IdAjuste {
     TEMA, MODO, HORA_DIA, HORA_NOCHE, PARED_CLARO, PARED_OSCURO, MARCO, TAMANO, COMPLETA_CON_MARCO, EXPLICACION, SALA,
     CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, CREDITO, CIERRE_BARRA, TRANSICION, DURACION, SINCRONIZAR, RESERVA, ESPACIO, RITMO, CAMINO, CARPETA, CLAVE, GALERIAS_NUEVAS,
-    PROTECTOR, ESTADO,
+    PROTECTOR, ESTADO, BUSCAR_ACTUALIZACIONES,
 }
 
 /** Una galería bajada, para armar las opciones del ajuste "Galería". */
@@ -304,6 +304,10 @@ object ListaAjustes {
             },
             ItemInfo(IdAjuste.PROTECTOR, R.string.aj_protector, { res(R.string.protector_proximamente) }, null, habilitado = false),
             ItemAbrirEstado(),
+            lista(
+                IdAjuste.BUSCAR_ACTUALIZACIONES, R.string.aj_buscar_actualizaciones, BuscarActualizaciones.values().toList(),
+                { it.buscarActualizaciones }, { p, v -> p.copy(buscarActualizaciones = v) },
+            ) { res(if (it == BuscarActualizaciones.UNA_VEZ_POR_DIA) R.string.act_una_vez_por_dia else R.string.act_solo_a_mano) },
         ).also { check(it.map { i -> i.id } == IdAjuste.values().toList()) { "Falta o sobra un ajuste en la lista" } }
     }
 
@@ -335,8 +339,8 @@ enum class GrupoAjustes(val ids: List<IdAjuste>) {
     ;
 
     companion object {
-        /** Los ajustes que no están en ningún grupo: tienen su propia pantalla. */
-        val APARTE: List<IdAjuste> = listOf(IdAjuste.PROTECTOR, IdAjuste.ESTADO)
+        /** Los ajustes que no están en ningún grupo: tienen su propia pantalla (Buscar actualizaciones vive en Actualizaciones). */
+        val APARTE: List<IdAjuste> = listOf(IdAjuste.PROTECTOR, IdAjuste.ESTADO, IdAjuste.BUSCAR_ACTUALIZACIONES)
     }
 }
 

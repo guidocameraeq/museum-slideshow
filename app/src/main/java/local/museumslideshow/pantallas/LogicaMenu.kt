@@ -24,6 +24,7 @@ enum class PantallaApp(val id: String) {
     CONEXION("conexion"),
     PROTECTOR("protector"),
     ESTADO("estado"),
+    ACTUALIZACIONES("actualizaciones"),
     ;
 
     companion object {
@@ -50,23 +51,31 @@ enum class PantallaApp(val id: String) {
 // ------------------------------------------------------------------------------------------------- Inicio
 
 /** A dónde lleva cada botón de Inicio, en el orden en que se recorren con las flechas (0 = el botón principal). */
-enum class DestinoInicio { VER_GALERIA, GALERIAS, APARIENCIA, PASE, CONEXION, PROTECTOR, ESTADO }
+enum class DestinoInicio { VER_GALERIA, GALERIAS, APARIENCIA, PASE, CONEXION, PROTECTOR, ESTADO, ACTUALIZACIONES }
 
 data class PasoInicio(val foco: Int, val abrir: DestinoInicio? = null, val salir: Boolean = false)
 
 /**
- * El foco de Inicio como función pura. Foco 0 = "Ver la galería"; 1 a 6 = los seis botones en dos columnas
- * (1-2, 3-4, 5-6). Abajo desde el principal cae en el primero; arriba desde la primera fila vuelve al principal.
+ * El foco de Inicio como función pura. Foco 0 = "Ver la galería"; 1 a 7 = los siete botones en dos columnas
+ * (1-2, 3-4, 5-6, 7). Abajo desde el principal cae en el primero; arriba desde la primera fila vuelve al principal.
+ * La última fila tiene uno solo: Abajo desde la fila de arriba (cualquier columna) cae en él.
  */
 object NavegacionInicio {
-    const val CANTIDAD = 7
+    const val CANTIDAD = 8
 
     fun paso(foco: Int, tecla: Tecla): PasoInicio {
         val f = foco.coerceIn(0, CANTIDAD - 1)
         return when (tecla) {
             Tecla.ATRAS -> PasoInicio(f, salir = true)
             Tecla.OK -> PasoInicio(f, abrir = DestinoInicio.values()[f])
-            Tecla.ABAJO -> PasoInicio(if (f == 0) 1 else if (f + 2 < CANTIDAD) f + 2 else f)
+            Tecla.ABAJO -> PasoInicio(
+                when {
+                    f == 0 -> 1
+                    f + 2 < CANTIDAD -> f + 2
+                    fila(f) < fila(CANTIDAD - 1) -> CANTIDAD - 1
+                    else -> f
+                },
+            )
             Tecla.ARRIBA -> PasoInicio(if (f <= 2) 0 else f - 2)
             Tecla.DERECHA -> PasoInicio(if (f in 1 until CANTIDAD - 1 && esColumnaIzquierda(f)) f + 1 else f)
             Tecla.IZQUIERDA -> PasoInicio(if (f > 0 && !esColumnaIzquierda(f)) f - 1 else f)
@@ -74,6 +83,7 @@ object NavegacionInicio {
     }
 
     private fun esColumnaIzquierda(f: Int) = f % 2 == 1
+    private fun fila(f: Int) = (f - 1) / 2
 }
 
 /** Los datos que muestra Inicio, sacados del catálogo, los ajustes y la reserva. Solo cuentan las galerías tildadas. */

@@ -38,6 +38,9 @@ enum class VistaGalerias { TARJETAS, LISTA }
 /** A los cuántos segundos sin tocar nada se cierra sola la Barra (el panel de la izquierda). */
 enum class CierreBarra(val segundos: Int?) { S5(5), S10(10), S20(20), NUNCA(null) }
 
+/** Si la app busca sola, una vez por día, si hay una versión nueva en GitHub (nunca la instala sola). */
+enum class BuscarActualizaciones { UNA_VEZ_POR_DIA, SOLO_A_MANO }
+
 /** `maximo` = cuántas verticales cuelgan juntas como mucho (1 = de a una). */
 enum class Pared(val maximo: Int) { APAGADA(1), HASTA_2(2), HASTA_3(3) }
 enum class CartelObra { SIEMPRE, UNOS_SEGUNDOS, NUNCA }
@@ -97,6 +100,7 @@ data class Preferencias(
     val vistaGalerias: VistaGalerias = VistaGalerias.TARJETAS,
     /** Cuánto tarda en cerrarse sola la Barra si no se toca nada (no cambia cómo se ve una escena). */
     val cierreBarra: CierreBarra = CierreBarra.S10,
+    val buscarActualizaciones: BuscarActualizaciones = BuscarActualizaciones.UNA_VEZ_POR_DIA,
 ) {
     companion object {
         val TIEMPO_POR_OBRA_SEG = 10..600
@@ -126,6 +130,7 @@ fun Preferencias.paraEscena(): Preferencias {
         reservaObras = d.reservaObras,
         vistaGalerias = d.vistaGalerias,
         cierreBarra = d.cierreBarra,
+        buscarActualizaciones = d.buscarActualizaciones,
     )
 }
 

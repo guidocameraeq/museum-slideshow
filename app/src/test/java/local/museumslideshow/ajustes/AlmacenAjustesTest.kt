@@ -48,6 +48,7 @@ class CodecPreferenciasTest {
         reservaObras = 100,
         vistaGalerias = VistaGalerias.LISTA,
         cierreBarra = CierreBarra.NUNCA,
+        buscarActualizaciones = BuscarActualizaciones.SOLO_A_MANO,
     )
 
     @Test

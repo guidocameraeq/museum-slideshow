@@ -56,4 +56,10 @@ class ClaveDriveTest {
         assertEquals(k, PreferenciasDesdeTexto.aplicar(p, mapOf("clave" to "no sirve")).claveDrive)
         assertNull(PreferenciasDesdeTexto.aplicar(p, mapOf("clave" to "borrar")).claveDrive)
     }
+
+    @Test
+    fun porAdbSeEligeCadaCuantoBuscarActualizaciones() {
+        assertEquals(BuscarActualizaciones.SOLO_A_MANO, PreferenciasDesdeTexto.aplicar(Preferencias(), mapOf("actualizaciones" to "mano")).buscarActualizaciones)
+        assertEquals(BuscarActualizaciones.UNA_VEZ_POR_DIA, Preferencias().buscarActualizaciones)
+    }
 }

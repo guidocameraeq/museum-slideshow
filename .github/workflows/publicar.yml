@@ -38,5 +38,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp app/build/outputs/apk/release/app-release.apk "museum-slideshow-$VERSION.apk"
+          # Las notas son el mensaje de la etiqueta (git tag -a v0.3 -m "..."): es lo que muestra la app en "Qué trae".
+          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+          git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > notas.md
+          if [ -s notas.md ]; then NOTAS=(--notes-file notas.md); else NOTAS=(--generate-notes); fi
           gh release create "$GITHUB_REF_NAME" "museum-slideshow-$VERSION.apk" \
-            --title "Museum Slideshow $VERSION" --generate-notes
+            --title "Museum Slideshow $VERSION" "${NOTAS[@]}"

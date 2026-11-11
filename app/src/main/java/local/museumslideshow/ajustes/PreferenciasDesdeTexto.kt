@@ -7,7 +7,7 @@ import java.text.Normalizer
 /**
  * Para probar en la tele por adb: `am start ... --es tema sala-oscura --es tam maximo`.
  * Claves: tema, modo, pared-claro, pared-oscuro, marco, tam, completa-con-marco, expl, sala, calidad,
- * tiempo, orden, galeria, pared, cartel, credito (si|no), transicion, duracion, sincronizar, espacio, ritmo, camino (copia|original), carpeta, clave (o borrar), nuevas, reserva, barra (5|10|20|nunca). Un valor inválido se ignora.
+ * tiempo, orden, galeria, pared, cartel, credito (si|no), transicion, duracion, sincronizar, espacio, ritmo, camino (copia|original), carpeta, clave (o borrar), actualizaciones (dia|mano), nuevas, reserva, barra (5|10|20|nunca). Un valor inválido se ignora.
  * (`tildar` y `destildar` necesitan el catálogo: los resuelve la pantalla, no esta función.)
  * Estos cambios se GUARDAN en el almacén de ajustes (`reset=si` los vuelve todos a los valores por defecto).
  */
@@ -131,6 +131,11 @@ object PreferenciasDesdeTexto {
                 "clave" -> when {
                     v == "borrar" -> p.copy(claveDrive = null)
                     else -> ClaveDrive.limpiar(crudo)?.let { p.copy(claveDrive = it) } ?: p
+                }
+                "actualizaciones" -> when (v) {
+                    "dia", "una-vez-por-dia" -> p.copy(buscarActualizaciones = BuscarActualizaciones.UNA_VEZ_POR_DIA)
+                    "mano", "solo-a-mano" -> p.copy(buscarActualizaciones = BuscarActualizaciones.SOLO_A_MANO)
+                    else -> p
                 }
                 "nuevas", "galerias-nuevas" -> when (v) {
                     "tildadas" -> p.copy(galeriasNuevas = GaleriasNuevas.TILDADAS)

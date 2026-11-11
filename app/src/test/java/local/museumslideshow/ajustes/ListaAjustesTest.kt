@@ -65,7 +65,7 @@ class ListaAjustesTest {
                 IdAjuste.MARCO, IdAjuste.TAMANO, IdAjuste.COMPLETA_CON_MARCO, IdAjuste.EXPLICACION, IdAjuste.SALA, IdAjuste.CALIDAD,
                 IdAjuste.TIEMPO, IdAjuste.ORDEN, IdAjuste.GALERIA, IdAjuste.PARED, IdAjuste.CARTEL, IdAjuste.CREDITO, IdAjuste.CIERRE_BARRA, IdAjuste.TRANSICION,
                 IdAjuste.DURACION, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.RITMO, IdAjuste.CAMINO, IdAjuste.CARPETA, IdAjuste.CLAVE, IdAjuste.GALERIAS_NUEVAS,
-                IdAjuste.PROTECTOR, IdAjuste.ESTADO,
+                IdAjuste.PROTECTOR, IdAjuste.ESTADO, IdAjuste.BUSCAR_ACTUALIZACIONES,
             ),
             items.map { it.id },
         )

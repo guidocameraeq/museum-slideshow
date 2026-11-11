@@ -7,6 +7,9 @@
     <!-- Permiso especial: se da UNA vez por adb (`pm grant`). Lo usa solo el interruptor del protector, para escribir `screensaver_components`. -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
 
+    <!-- Para actualizarse desde GitHub: Android igual muestra su cartel para confirmar (ver actualizacion/Actualizador.kt). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <!-- Para poder ver el nombre de otros protectores instalados. -->
     <queries>
         <intent>
@@ -34,6 +37,11 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Lo que contesta Android al instalar una versión nueva (pedir confirmar, salió bien o no). -->
+        <receiver
+            android:name=".actualizacion.ReceptorInstalacion"
+            android:exported="false" />
 
         <!-- El protector de pantalla. El nombre de esta clase es identidad fija (ver CLAUDE.md). -->
         <service

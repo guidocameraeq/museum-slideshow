@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import local.museumslideshow.ajustes.AlmacenAjustes
+import local.museumslideshow.actualizacion.Actualizador
 import local.museumslideshow.ajustes.Calidad
 import local.museumslideshow.ajustes.ClaveDrive
 import local.museumslideshow.ajustes.Preferencias
@@ -133,8 +134,14 @@ class MotorApp private constructor(context: Context) {
             } catch (e: Exception) {
                 Log.w(Registro.TAG, "No se pudieron copiar la clave y la carpeta de fábrica (${e.javaClass.simpleName})")
             }
+            var primeraVez = true
             almacen.flow.collect { p ->
                 preferencias = p
+                if (primeraVez) {
+                    primeraVez = false
+                    // Una vez por día (si el ajuste lo pide) se fija si hay una versión nueva en GitHub. Nunca instala.
+                    Actualizador.de(ctx).buscarSiToca(p.buscarActualizaciones)
+                }
                 Log.i(Registro.TAG, Registro.limpiar("Preferencias efectivas: ${p.copy(claveDrive = p.claveDrive?.let { "***" })}"))
                 alCambiarAjustes(p)
                 val clave = listOf(p.seleccionGalerias, p.galeriasNuevas, p.orden, p.galeria, p.pared, p.tema, p.reservaObras, p.espacioMaximo)
