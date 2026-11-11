@@ -22,7 +22,7 @@ class Opcion(
 enum class IdAjuste {
     TEMA, MODO, HORA_DIA, HORA_NOCHE, PARED_CLARO, PARED_OSCURO, MARCO, TAMANO, COMPLETA_CON_MARCO, EXPLICACION, SALA,
     CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, CREDITO, CIERRE_BARRA, TRANSICION, DURACION, SINCRONIZAR, RESERVA, ESPACIO, RITMO, CAMINO, CARPETA, CLAVE, GALERIAS_NUEVAS,
-    PROTECTOR, ESTADO, BUSCAR_ACTUALIZACIONES,
+    BUSCAR_ACTUALIZACIONES, PROTECTOR, ESTADO,
 }
 
 /** Una galería bajada, para armar las opciones del ajuste "Galería". */
@@ -302,12 +302,12 @@ object ListaAjustes {
             lista(IdAjuste.GALERIAS_NUEVAS, R.string.aj_galerias_nuevas, GaleriasNuevas.values().toList(), { it.galeriasNuevas }, { p, v -> p.copy(galeriasNuevas = v) }) {
                 res(if (it == GaleriasNuevas.TILDADAS) R.string.v_tildadas else R.string.v_destildadas)
             },
-            ItemInfo(IdAjuste.PROTECTOR, R.string.aj_protector, { res(R.string.protector_proximamente) }, null, habilitado = false),
-            ItemAbrirEstado(),
             lista(
                 IdAjuste.BUSCAR_ACTUALIZACIONES, R.string.aj_buscar_actualizaciones, BuscarActualizaciones.values().toList(),
                 { it.buscarActualizaciones }, { p, v -> p.copy(buscarActualizaciones = v) },
             ) { res(if (it == BuscarActualizaciones.UNA_VEZ_POR_DIA) R.string.act_una_vez_por_dia else R.string.act_solo_a_mano) },
+            ItemInfo(IdAjuste.PROTECTOR, R.string.aj_protector, { res(R.string.protector_proximamente) }, null, habilitado = false),
+            ItemAbrirEstado(),
         ).also { check(it.map { i -> i.id } == IdAjuste.values().toList()) { "Falta o sobra un ajuste en la lista" } }
     }
 
