@@ -18,10 +18,11 @@ import kotlinx.serialization.json.longOrNull
  * excepción que salga de acá lleva el mensaje original de la red: solo [ErrorDrive].
  */
 class DriveApiHttp(
-    private val clave: String,
+    /** Se lee en cada pedido: si se carga otra clave en Ajustes, se usa desde el próximo. */
+    private val clave: () -> String,
     private val esperar: (Long) -> Unit = { Thread.sleep(it) },
 ) : DriveApi {
-    override val disponible: Boolean get() = clave.isNotBlank()
+    override val disponible: Boolean get() = clave().isNotBlank()
 
     override fun listar(carpetaId: String): List<ArchivoDrive> {
         val salida = ArrayList<ArchivoDrive>()
@@ -31,7 +32,7 @@ class DriveApiHttp(
             val campos = URLEncoder.encode("nextPageToken,files(id,name,mimeType,md5Checksum,modifiedTime,size,imageMediaMetadata(width,height,rotation))", "UTF-8")
             val url = StringBuilder("$BASE?q=$q&fields=$campos&pageSize=1000")
             if (pagina != null) url.append("&pageToken=").append(URLEncoder.encode(pagina, "UTF-8"))
-            url.append("&key=").append(URLEncoder.encode(clave, "UTF-8"))
+            url.append("&key=").append(URLEncoder.encode(clave(), "UTF-8"))
             val texto = conReintentos(carpetaId) { pedirTexto(url.toString(), carpetaId) }
             val raiz = try {
                 Json.parseToJsonElement(texto).jsonObject
@@ -60,7 +61,7 @@ class DriveApiHttp(
     }
 
     override fun bajar(archivoId: String, destino: File, maxBytes: Long) {
-        val url = "$BASE/${URLEncoder.encode(archivoId, "UTF-8")}?alt=media&key=${URLEncoder.encode(clave, "UTF-8")}"
+        val url = "$BASE/${URLEncoder.encode(archivoId, "UTF-8")}?alt=media&key=${URLEncoder.encode(clave(), "UTF-8")}"
         conReintentos(archivoId) { descargar(url, archivoId, destino, maxBytes, soloImagen = false) }
     }
 
@@ -70,7 +71,7 @@ class DriveApiHttp(
      * una respuesta que no es imagen, lanza [ErrorDrive] para que se use el original.
      */
     override fun bajarCopia(archivoId: String, lado: Int, destino: File, maxBytes: Long) {
-        val pedido = "$BASE/${URLEncoder.encode(archivoId, "UTF-8")}?fields=thumbnailLink&key=${URLEncoder.encode(clave, "UTF-8")}"
+        val pedido = "$BASE/${URLEncoder.encode(archivoId, "UTF-8")}?fields=thumbnailLink&key=${URLEncoder.encode(clave(), "UTF-8")}"
         val texto = conReintentos(archivoId) { pedirTexto(pedido, archivoId) }
         val enlace = try {
             cadena(Json.parseToJsonElement(texto).jsonObject, "thumbnailLink")

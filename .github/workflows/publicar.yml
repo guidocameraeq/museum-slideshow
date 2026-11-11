@@ -1,0 +1,78 @@
+# Publica una versión: compila el APK sin clave de Drive y lo deja en Releases (la app lo busca ahí para actualizarse).
+# Se dispara solo cuando llega a main un número de versión (versionApp en app/build.gradle.kts) que todavía no está
+# publicado; también al subir la etiqueta v<versión> o a mano desde Actions ("Run workflow").
+name: Publicar versión
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      notas:
+        description: "Qué trae esta versión (lo muestra la app)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: La etiqueta coincide con la versión de la app
+        run: |
+          VERSION=$(sed -n 's/^val versionApp = "\(.*\)"$/\1/p' app/build.gradle.kts)
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] || [ "$GITHUB_REF_TYPE" = "branch" ]; then
+            echo "VERSION=$VERSION" >> "$GITHUB_ENV"; echo "ETIQUETA=v$VERSION" >> "$GITHUB_ENV"; exit 0
+          fi
+          echo "ETIQUETA=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
+          if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "La etiqueta es $GITHUB_REF_NAME pero la app dice $VERSION"; exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+      - name: ¿Ya está publicada esta versión?
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$ETIQUETA" >/dev/null 2>&1; then
+            echo "La $ETIQUETA ya está publicada: no se hace nada (subí versionApp para publicar otra)."
+            echo "YA_ESTA=si" >> "$GITHUB_ENV"
+          fi
+      - name: Compilar y correr las pruebas
+        if: env.YA_ESTA != 'si'
+        run: bash ./gradlew assembleRelease testDebugUnitTest --console=plain
+      - name: El APK no trae ninguna clave de Drive
+        if: env.YA_ESTA != 'si'
+        run: |
+          if unzip -p app/build/outputs/apk/release/app-release.apk | grep -a -E -q 'AIza[0-9A-Za-z_-]{35}'; then
+            echo "El APK trae una clave de Drive adentro"; exit 1
+          fi
+      - name: Publicar en Releases
+        if: env.YA_ESTA != 'si'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTAS_A_MANO: ${{ inputs.notas }}
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk "museum-slideshow-$VERSION.apk"
+          # Las notas (lo que muestra la app en "Qué trae"): las escritas a mano, docs/notas-version.md (al llegar a
+          # main) o el mensaje de la etiqueta (git tag -a v0.3 -m "..."). Si no hay ninguna, las arma GitHub.
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ -n "$NOTAS_A_MANO" ]; then
+            printf '%s\n' "$NOTAS_A_MANO" | sed 's/ - /\n- /g' > notas.md
+          elif [ "$GITHUB_REF_TYPE" = "branch" ]; then
+            cp docs/notas-version.md notas.md 2>/dev/null || : > notas.md
+          else
+            git fetch --force origin "refs/tags/$ETIQUETA:refs/tags/$ETIQUETA"
+            git tag -l --format='%(contents)' "$ETIQUETA" > notas.md
+          fi
+          if grep -q '[^[:space:]]' notas.md; then NOTAS=(--notes-file notas.md); else NOTAS=(--generate-notes); fi
+          # A mano, la etiqueta la crea GitHub sobre este mismo commit.
+          gh release create "$ETIQUETA" "museum-slideshow-$VERSION.apk" --target "$GITHUB_SHA" \
+            --title "Museum Slideshow $VERSION" "${NOTAS[@]}"

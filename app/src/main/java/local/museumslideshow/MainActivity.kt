@@ -26,6 +26,7 @@ import local.museumslideshow.ajustes.GrupoAjustes
 import local.museumslideshow.ajustes.ListaAjustes
 import local.museumslideshow.ajustes.delGrupo
 import local.museumslideshow.ajustes.Preferencias
+import local.museumslideshow.ajustes.IdAjuste
 import local.museumslideshow.ajustes.PreferenciasDesdeTexto
 import local.museumslideshow.ajustes.estaTildada
 import local.museumslideshow.catalogo.Arbol
@@ -35,6 +36,8 @@ import local.museumslideshow.galeria.SaltoEscena
 import local.museumslideshow.pantallas.DatosSync
 import local.museumslideshow.pantallas.DestinoInicio
 import local.museumslideshow.pantallas.PantallaAjustesGrupo
+import local.museumslideshow.pantallas.PantallaActualizaciones
+import local.museumslideshow.actualizacion.Actualizador
 import local.museumslideshow.pantallas.PantallaApp
 import local.museumslideshow.pantallas.PantallaGalerias
 import local.museumslideshow.pantallas.PantallaInicio
@@ -48,6 +51,7 @@ import local.museumslideshow.protector.ResultadoInterruptor
 class MainActivity : ComponentActivity() {
     /** Lo compartido con el protector (ajustes, catálogo, sincronización, reserva): una sola vez por proceso. */
     private val motor by lazy { MotorApp.de(applicationContext) }
+    private val actualizador by lazy { Actualizador.de(applicationContext) }
     private var salto by mutableStateOf<SaltoEscena?>(null)
 
     /** La pantalla al frente (la Barra no cuenta: vive dentro de la galería). Al abrir la app es Inicio. */
@@ -204,6 +208,7 @@ class MainActivity : ComponentActivity() {
                         activa = pantalla == PantallaApp.GALERIA,
                         alVerEstado = { irA(PantallaApp.ESTADO, atrasA = PantallaApp.GALERIA) },
                         alVolver = { irA(PantallaApp.INICIO) },
+                        alCargarClave = { irA(PantallaApp.CONEXION) },
                     )
                 }
             }
@@ -215,6 +220,7 @@ class MainActivity : ComponentActivity() {
                         alAbrir = { destino -> abrirDesdeInicio(destino) },
                         alSalir = { finish() },
                         reserva = estadoReserva,
+                        versionNueva = actualizador.nueva?.version,
                     )
                     PantallaApp.GALERIA -> Unit
                     PantallaApp.GALERIAS -> PantallaGalerias(cat, p, cambiar = { t -> motor.cambiarAjustes(t) }, activa = true, alVolver = volver)
@@ -238,6 +244,11 @@ class MainActivity : ComponentActivity() {
                     }
                     PantallaApp.PROTECTOR -> PantallaProtector(motor.interruptor, activa = true, alVolver = volver)
                     PantallaApp.ESTADO -> PantallaEstado(cat, p, sincronizando, alVolver = volver, reserva = estadoReserva)
+                    PantallaApp.ACTUALIZACIONES -> PantallaActualizaciones(
+                        actualizador, p, todos.first { it.id == IdAjuste.BUSCAR_ACTUALIZACIONES },
+                        cambiar = { t -> motor.cambiarAjustes(t) },
+                        alVolver = volver,
+                    )
                 }
             }
         }
@@ -252,6 +263,7 @@ class MainActivity : ComponentActivity() {
             DestinoInicio.CONEXION -> PantallaApp.CONEXION
             DestinoInicio.PROTECTOR -> PantallaApp.PROTECTOR
             DestinoInicio.ESTADO -> PantallaApp.ESTADO
+            DestinoInicio.ACTUALIZACIONES -> PantallaApp.ACTUALIZACIONES
         },
     )
 }

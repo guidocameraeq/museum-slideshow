@@ -26,15 +26,19 @@ class NavegacionInicioTest {
     }
 
     @Test
-    fun losSeisBotonesVanEnDosColumnas() {
+    fun losSieteBotonesVanEnDosColumnasYElUltimoSolo() {
         assertEquals(3, paso(1, Tecla.ABAJO).foco)
         assertEquals(4, paso(2, Tecla.ABAJO).foco)
         assertEquals(6, paso(4, Tecla.ABAJO).foco)
         assertEquals(1, paso(3, Tecla.ARRIBA).foco)
         assertEquals(4, paso(6, Tecla.ARRIBA).foco)
-        // en la última fila no hay más abajo
-        assertEquals(5, paso(5, Tecla.ABAJO).foco)
-        assertEquals(6, paso(6, Tecla.ABAJO).foco)
+        // a la última fila (Actualizaciones, sola a la izquierda) se llega desde las dos columnas
+        assertEquals(7, paso(5, Tecla.ABAJO).foco)
+        assertEquals(7, paso(6, Tecla.ABAJO).foco)
+        assertEquals(5, paso(7, Tecla.ARRIBA).foco)
+        // en la última fila no hay más abajo ni a la derecha
+        assertEquals(7, paso(7, Tecla.ABAJO).foco)
+        assertEquals(7, paso(7, Tecla.DERECHA).foco)
     }
 
     @Test
@@ -51,7 +55,8 @@ class NavegacionInicioTest {
     @Test
     fun okAbreElBotonConFocoYAtrasSale() {
         val destinos = DestinoInicio.values()
-        for (f in 0..6) assertEquals(destinos[f], paso(f, Tecla.OK).abrir)
+        for (f in 0..7) assertEquals(destinos[f], paso(f, Tecla.OK).abrir)
+        assertEquals(DestinoInicio.ACTUALIZACIONES, paso(7, Tecla.OK).abrir)
         assertEquals(DestinoInicio.VER_GALERIA, paso(0, Tecla.OK).abrir)
         assertEquals(DestinoInicio.ESTADO, paso(6, Tecla.OK).abrir)
         assertTrue(paso(3, Tecla.ATRAS).salir)
@@ -61,7 +66,7 @@ class NavegacionInicioTest {
 
     @Test
     fun unFocoFueraDeRangoSeCorrige() {
-        assertEquals(DestinoInicio.ESTADO, paso(99, Tecla.OK).abrir)
+        assertEquals(DestinoInicio.ACTUALIZACIONES, paso(99, Tecla.OK).abrir)
         assertEquals(DestinoInicio.VER_GALERIA, paso(-4, Tecla.OK).abrir)
     }
 }

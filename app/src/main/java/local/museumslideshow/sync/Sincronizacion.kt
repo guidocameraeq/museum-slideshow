@@ -17,6 +17,9 @@ object Sincronizacion {
     /** La carpeta que se sincroniza: la de los ajustes si tiene valor, si no la de `local.properties` (al compilar). */
     fun carpetaEfectiva(p: Preferencias, deFabrica: String): String = p.carpetaDrive?.takeIf { it.isNotBlank() } ?: deFabrica
 
+    /** La clave que se usa: la cargada en Ajustes si hay, si no la de `local.properties` (vacía en el APK de GitHub). */
+    fun claveEfectiva(p: Preferencias, deFabrica: String): String = p.claveDrive?.takeIf { it.isNotBlank() } ?: deFabrica
+
     /**
      * La API de Drive con la que se pide TODO (sincronización y reserva): respeta la pausa que pidió Google, baja de a una con
      * el "Ritmo de bajada" y, si Google pide una pausa, la anota en el registro y agenda el reintento. `prefs` se lee en cada uso.
@@ -24,7 +27,7 @@ object Sincronizacion {
     fun crearApi(context: Context, prefs: () -> Preferencias): DriveApi {
         val ctx = context.applicationContext
         return DriveApiConPausa(
-            api = DriveApiHttp(BuildConfig.DRIVE_API_KEY),
+            api = DriveApiHttp({ claveEfectiva(prefs(), BuildConfig.DRIVE_API_KEY) }),
             pausa = PausaDrive.de(ctx),
             ritmoMs = { prefs().ritmoBajada.pausaMs },
             registrar = { Log.i(Registro.TAG, Registro.limpiar(it)) },

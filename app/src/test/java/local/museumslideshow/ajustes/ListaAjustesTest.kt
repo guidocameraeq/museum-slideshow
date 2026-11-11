@@ -3,6 +3,7 @@ package local.museumslideshow.ajustes
 import local.museumslideshow.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -63,8 +64,8 @@ class ListaAjustesTest {
                 IdAjuste.TEMA, IdAjuste.MODO, IdAjuste.HORA_DIA, IdAjuste.HORA_NOCHE, IdAjuste.PARED_CLARO, IdAjuste.PARED_OSCURO,
                 IdAjuste.MARCO, IdAjuste.TAMANO, IdAjuste.COMPLETA_CON_MARCO, IdAjuste.EXPLICACION, IdAjuste.SALA, IdAjuste.CALIDAD,
                 IdAjuste.TIEMPO, IdAjuste.ORDEN, IdAjuste.GALERIA, IdAjuste.PARED, IdAjuste.CARTEL, IdAjuste.CREDITO, IdAjuste.CIERRE_BARRA, IdAjuste.TRANSICION,
-                IdAjuste.DURACION, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.RITMO, IdAjuste.CAMINO, IdAjuste.CARPETA, IdAjuste.GALERIAS_NUEVAS,
-                IdAjuste.PROTECTOR, IdAjuste.ESTADO,
+                IdAjuste.DURACION, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.RITMO, IdAjuste.CAMINO, IdAjuste.CARPETA, IdAjuste.CLAVE, IdAjuste.GALERIAS_NUEVAS,
+                IdAjuste.BUSCAR_ACTUALIZACIONES, IdAjuste.PROTECTOR, IdAjuste.ESTADO,
             ),
             items.map { it.id },
         )
@@ -148,18 +149,46 @@ class ListaAjustesTest {
     }
 
     @Test
-    fun elProtectorYLaCarpetaNoSeCambianAcaYElProtectorEstaDeshabilitado() {
+    fun elProtectorNoSeCambiaAcaYEstaDeshabilitado() {
         val protector = item(IdAjuste.PROTECTOR) as ItemInfo
         assertFalse(protector.habilitado)
         assertFalse(protector.editable)
         assertEquals(Etiqueta.Res(R.string.protector_proximamente), protector.valor(Preferencias()))
-        val carpeta = item(IdAjuste.CARPETA) as ItemInfo
+        val prefs = Preferencias()
+        assertEquals(prefs, protector.mover(prefs, 1, true))
+    }
+
+    @Test
+    fun laCarpetaSeEscribeYAceptaElLinkEntero() {
+        val carpeta = item(IdAjuste.CARPETA) as ItemTexto
         assertEquals(R.string.carpeta_ayuda, carpeta.ayuda)
-        assertEquals(Etiqueta.Res(R.string.carpeta_de_fabrica), carpeta.valor(Preferencias()))
+        assertEquals(Etiqueta.Res(R.string.v_sin_cargar), carpeta.valor(Preferencias()))
         assertEquals(Etiqueta.Texto("1AbCdE…Mn_p"), carpeta.valor(Preferencias(carpetaDrive = "1AbCdEfGhIjKlMn_p")))
         val prefs = Preferencias()
+        // Las flechas no la cambian: se escribe con OK.
+        assertFalse(carpeta.editable)
         assertEquals(prefs, carpeta.mover(prefs, 1, true))
-        assertEquals(prefs, protector.mover(prefs, 1, true))
+        assertEquals("1AbCdEfGhIjKlMnOp", carpeta.poner(prefs, "https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOp?usp=sharing")?.carpetaDrive)
+        assertNull(carpeta.poner(prefs, "cualquier cosa"))
+        assertNull(carpeta.poner(Preferencias(carpetaDrive = "1AbCdEfGhIjKlMnOp"), "")!!.carpetaDrive)
+        assertEquals("1AbCdEfGhIjKlMnOp", carpeta.inicial(Preferencias(carpetaDrive = "1AbCdEfGhIjKlMnOp")))
+    }
+
+    @Test
+    fun laClaveSeEscribeYNuncaSeMuestraEntera() {
+        val clave = item(IdAjuste.CLAVE) as ItemTexto
+        val k = "AIzaSyA1234567890abcdefghijklmnopqrstu"
+        assertTrue(clave.secreto)
+        assertFalse(clave.editable)
+        assertEquals(Etiqueta.Res(R.string.v_sin_cargar), clave.valor(Preferencias()))
+        val cargada = clave.poner(Preferencias(), "  $k \n")!!
+        assertEquals(k, cargada.claveDrive)
+        val mostrada = (clave.valor(cargada) as Etiqueta.Texto).texto
+        assertFalse(mostrada.contains(k.drop(4).take(6)))
+        // La ventanita arranca vacía aunque haya una cargada.
+        assertEquals("", clave.inicial(cargada))
+        assertNull(clave.poner(Preferencias(), "corta"))
+        assertNull(clave.poner(cargada, "")!!.claveDrive)
     }
 
     @Test
@@ -208,7 +237,7 @@ class GruposAjustesTest {
             items.delGrupo(GrupoAjustes.PASE).map { it.id },
         )
         assertEquals(
-            listOf(IdAjuste.CARPETA, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.RITMO, IdAjuste.CAMINO),
+            listOf(IdAjuste.CARPETA, IdAjuste.CLAVE, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.RITMO, IdAjuste.CAMINO),
             items.delGrupo(GrupoAjustes.CONEXION).map { it.id },
         )
     }
@@ -222,9 +251,9 @@ class GruposAjustesTest {
     }
 
     @Test
-    fun laCarpetaSigueSiendoSoloDeLectura() {
-        val carpeta = items.delGrupo(GrupoAjustes.CONEXION).first { it.id == IdAjuste.CARPETA } as ItemInfo
-        assertEquals(R.string.carpeta_ayuda, carpeta.ayuda)
-        assertFalse(carpeta.editable)
+    fun laCarpetaYLaClaveEstanEnConexionComoTexto() {
+        val conexion = items.delGrupo(GrupoAjustes.CONEXION)
+        assertTrue(conexion.first { it.id == IdAjuste.CARPETA } is ItemTexto)
+        assertTrue(conexion.first { it.id == IdAjuste.CLAVE } is ItemTexto)
     }
 }

@@ -42,7 +42,8 @@ import local.museumslideshow.reserva.EstadoReserva
 
 /**
  * Inicio ("Inicio A" del borrador 4): la obra de la galería actual de fondo con un velo a la izquierda, el nombre de la
- * app, tres datos chicos, el botón principal "Ver la galería" y seis botones. `foco` lo guarda quien la usa (para
+ * app, tres datos chicos, el botón principal "Ver la galería" y siete botones (el último, Actualizaciones, avisa si hay una
+ * versión nueva). `foco` lo guarda quien la usa (para
  * volver al mismo botón al regresar de otra pantalla). Atrás sale de la app (`alSalir`).
  */
 @Composable
@@ -55,6 +56,8 @@ fun PantallaInicio(
     alSalir: () -> Unit,
     reserva: EstadoReserva? = null,
     modifier: Modifier = Modifier,
+    /** La versión nueva que hay en GitHub (el botón Actualizaciones la avisa en dorado); null = al día. */
+    versionNueva: String? = null,
 ) {
     val res = LocalContext.current.resources
     val resumen = ResumenInicio.de(cat, prefs, reserva)
@@ -110,13 +113,16 @@ fun PantallaInicio(
             BotonPrincipal(stringResource(R.string.inicio_ver), subtitulo, foco == 0, Modifier.offset(120.dp, 508.dp))
 
             val textos = listOf(
-                R.string.menu_galerias, R.string.menu_apariencia, R.string.menu_pase,
-                R.string.menu_conexion, R.string.menu_protector, R.string.menu_estado,
+                stringResource(R.string.menu_galerias), stringResource(R.string.menu_apariencia), stringResource(R.string.menu_pase),
+                stringResource(R.string.menu_conexion), stringResource(R.string.menu_protector), stringResource(R.string.menu_estado),
+                versionNueva?.let { stringResource(R.string.inicio_version_nueva, it) } ?: stringResource(R.string.menu_actualizaciones),
             )
+            // Cuatro filas de dos (la última con uno solo): más bajitos que antes para que entren sobre la barra de ayuda.
             textos.forEachIndexed { i, t ->
                 BotonMenu(
-                    stringResource(t), foco == i + 1,
-                    Modifier.offset((120 + (i % 2) * 420).dp, (652 + (i / 2) * 104).dp),
+                    t, foco == i + 1,
+                    Modifier.offset((120 + (i % 2) * 420).dp, (642 + (i / 2) * 88).dp),
+                    aviso = i == textos.lastIndex && versionNueva != null,
                 )
             }
 
@@ -216,11 +222,12 @@ private fun BotonPrincipal(texto: String, subtitulo: String, conFoco: Boolean, m
 }
 
 @Composable
-private fun BotonMenu(texto: String, conFoco: Boolean, modifier: Modifier) {
+private fun BotonMenu(texto: String, conFoco: Boolean, modifier: Modifier, aviso: Boolean = false) {
     val forma = RoundedCornerShape(16.dp)
     Row(
         modifier
-            .width(400.dp).height(84.dp)
+            .width(400.dp).height(76.dp)
+            .then(if (aviso && !conFoco) Modifier.border(3.dp, Paleta.Dorado, forma) else Modifier)
             .scale(if (conFoco) 1.035f else 1f)
             .then(if (conFoco) Modifier.border(6.dp, HaloFoco, forma) else Modifier)
             .clip(forma)
@@ -228,9 +235,13 @@ private fun BotonMenu(texto: String, conFoco: Boolean, modifier: Modifier) {
             .padding(horizontal = 30.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (aviso) {
+            Box(Modifier.size(14.dp).clip(CircleShape).background(Paleta.Dorado))
+            Spacer(Modifier.width(14.dp))
+        }
         BasicText(
             texto,
-            style = estiloTexto(32, if (conFoco) TextoFoco else Paleta.Texto, if (conFoco) 600 else 500),
+            style = estiloTexto(if (aviso) 28 else 32, if (conFoco) TextoFoco else Paleta.Texto, if (conFoco) 600 else 500),
             maxLines = 1, overflow = TextOverflow.Ellipsis,
         )
     }

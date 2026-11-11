@@ -40,8 +40,11 @@ fun PantallaSinObras(
     alVerEstado: (() -> Unit)?,
     alVolver: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Si falta la clave o la carpeta, el botón lleva a cargarlas (null = sin ese botón: el protector). */
+    alCargarClave: (() -> Unit)? = null,
 ) {
-    val verEstado by rememberUpdatedState(alVerEstado)
+    val cargarClave = if (motivo == MotivoSinObras.SIN_CLAVE) alCargarClave else null
+    val verEstado by rememberUpdatedState(cargarClave ?: alVerEstado)
     val volver by rememberUpdatedState(alVolver)
     val activaActual by rememberUpdatedState(activa)
     val pedirFoco = remember { FocusRequester() }
@@ -93,8 +96,8 @@ fun PantallaSinObras(
             Box(Modifier.padding(top = 24.dp).widthIn(max = 1200.dp)) {
                 BasicText(explicacion, style = estiloTexto(32, Paleta.Tenue, 400).copy(textAlign = TextAlign.Center, lineHeight = androidx.compose.ui.unit.TextUnit(46f, androidx.compose.ui.unit.TextUnitType.Sp)))
             }
-            if (alVerEstado != null) Box(Modifier.padding(top = 56.dp)) {
-                Boton(stringResource(R.string.vacio_ver_estado), conFoco = activa)
+            if (cargarClave != null || alVerEstado != null) Box(Modifier.padding(top = 56.dp)) {
+                Boton(stringResource(if (cargarClave != null) R.string.vacio_cargar_clave else R.string.vacio_ver_estado), conFoco = activa)
             }
         }
     }

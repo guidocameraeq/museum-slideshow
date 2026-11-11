@@ -1,0 +1,34 @@
+# Compila el APK y corre las pruebas con cada cambio subido (sin clave de Drive: es la misma app que se publica).
+name: Compilar y probar
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Compilar y correr las pruebas
+        run: bash ./gradlew assembleRelease testDebugUnitTest --console=plain
+      - name: El APK no trae ninguna clave de Drive
+        run: |
+          if unzip -p app/build/outputs/apk/release/app-release.apk | grep -a -E -q 'AIza[0-9A-Za-z_-]{35}'; then
+            echo "El APK trae una clave de Drive adentro"; exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: app/build/outputs/apk/release/app-release.apk
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: informe-pruebas
+          path: app/build/reports/tests/

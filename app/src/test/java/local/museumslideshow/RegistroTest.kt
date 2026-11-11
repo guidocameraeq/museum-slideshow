@@ -25,4 +25,10 @@ class RegistroTest {
         assertEquals("FileNotFoundException: https://x/y?alt=media&key=*** fallo", Registro.limpiar(msg))
         assertEquals("sin clave acá", Registro.limpiar("sin clave acá"))
     }
+
+    @Test
+    fun limpiarBorraUnaClaveSueltaFueraDeUnaUrl() {
+        val msg = "Preferencias(claveDrive=AIzaSyClaveDePrueba_123-x, tema=X)"
+        assertEquals("Preferencias(claveDrive=AIza***, tema=X)", Registro.limpiar(msg))
+    }
 }
