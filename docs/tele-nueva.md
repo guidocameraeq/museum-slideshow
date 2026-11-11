@@ -1,7 +1,15 @@
 # Instalar Museum Slideshow en una tele nueva
 
-> Guía paso a paso para dejar la app andando en otra Google TV / Android TV, desde una PC con Windows.
-> Hoy el APK se compila en la PC. Cuando esté hecho lo de `docs/SPEC-actualizaciones.md`, los pasos 2 y 3 se reemplazan por "bajar el APK de Releases".
+> Guía paso a paso para dejar la app andando en otra Google TV / Android TV.
+> Hay dos caminos: **A. bajar el APK de GitHub** (sin compilar nada) o **B. compilarlo en la PC** (pasos 2 y 3).
+
+## Camino A: el APK de GitHub (sin compilar)
+1. Bajar `museum-slideshow-<versión>.apk` de https://github.com/guidocameraeq/museum-slideshow/releases (la última).
+2. Preparar la tele (paso 1 de abajo) e instalarlo con adb (paso 4, cambiando la ruta por la del APK bajado).
+3. Abrir la app: como el APK de GitHub **no trae la clave**, la app dice "Falta conectar con Drive" → **Cargar la clave y la carpeta**. En **Conexión y espacio**, OK sobre **Carpeta de Drive** (pegar el link) y sobre **Clave de Drive**.
+   - Para no escribir con el control: en el teléfono, abrir la app **Google TV** → control remoto → ícono de teclado, y pegar lo copiado.
+   - Por adb también se puede: `adb -s <IP>:5555 shell am start -n local.museumslideshow/.MainActivity --es clave <la clave> --es carpeta <ID>`
+4. Seguir con el paso 5 (protector).
 
 ## Lo que necesitás tener a mano
 - **La clave de Drive.** Está en el `local.properties` de la PC vieja (renglón `drive.apiKey=`). Si no tenés esa PC: entrá a https://console.cloud.google.com con la cuenta del proyecto → proyecto "Museum Slideshow" → **APIs y servicios → Credenciales** → en la clave, **Mostrar clave** y copiala. Nunca la pegues en un chat ni en un doc.
@@ -11,6 +19,8 @@
 1. **Activar el modo desarrollador**: Ajustes → Sistema → Información → tocar 7 veces **Compilación del SO de Android TV** hasta que diga "Ya sos desarrollador".
 2. **Activar la depuración**: Ajustes → Sistema → Opciones para desarrolladores → **Depuración por USB** (en las TCL también habilita la conexión por red).
 3. **Anotar la IP de la tele**: Ajustes → Red e Internet → tocar la red Wi-Fi → **Dirección IP** (algo como `192.168.0.xxx`). La PC tiene que estar en la misma red.
+
+## Camino B: compilar en la PC
 
 ## 2. Preparar la PC (una sola vez)
 1. Instalar **JDK 17** (Temurin, de adoptium.net) y **Android SDK** con platform 34, build-tools 34.0.0 y platform-tools (lo más fácil: instalar Android Studio y dejar que baje todo). Detalle en `docs/desarrollo.md`.

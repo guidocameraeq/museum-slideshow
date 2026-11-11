@@ -35,3 +35,11 @@ La app necesita `WRITE_SECURE_SETTINGS` para ponerse como protector. Se da una v
 - Volver al Ambient de Google: `adb shell settings put secure screensaver_components com.google.android.apps.tv.dreamx/.service.Backdrop`
 - Arrancarlo ya: `adb shell am start -n com.android.systemui/.Somnambulator` · despertarlo: `adb shell service call dreams 2`
 - En TCL quizá haga falta el permiso "Inicio automático" para que arranque solo (SIN CONTRASTAR; se ve en la sesión 4).
+
+## Publicar una versión (APK en GitHub Releases)
+1. Subir el número en `app/build.gradle.kts` (`val versionApp = "0.3"`). El código interno sale solo y siempre crece.
+2. Anotar la entrada en `docs/CHANGELOG.md`, commit y push a `main`.
+3. Etiqueta: `git tag v0.3` y `git push origin v0.3`. El workflow `publicar.yml` compila el APK **sin clave**, revisa que no traiga ninguna (`AIza`) y lo publica como `museum-slideshow-0.3.apk`. Si la etiqueta no coincide con `versionApp`, falla a propósito.
+- Cada push a cualquier rama corre `compilar.yml` (compila y prueba). El APK queda como "artifact" del run, para probar sin publicar.
+- El APK de GitHub no trae clave: la tele usa la que tiene cargada en Ajustes. Una tele que tenía un APK compilado con clave la copió a los ajustes al arrancar, así que sigue andando.
+- Compilar en la PC sigue igual. Ojo: una versión de la PC con número menor que la instalada no se puede instalar encima (`INSTALL_FAILED_VERSION_DOWNGRADE`).

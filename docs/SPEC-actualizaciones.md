@@ -1,6 +1,6 @@
 # SPEC delta: APK en GitHub, actualizarse desde la app y clave cargada en Ajustes — Museum Slideshow
 Cada versión queda publicada en GitHub como APK instalable; la app avisa y se actualiza sola desde Ajustes; la clave y la carpeta de Drive se cargan en la tele, no adentro del APK.
-- Estado: BORRADOR — falta el OK de Guido
+- Estado: READY (OK de Guido 2026-11-11, opción A) · partes 1 y 2 construidas; parte 3 espera el OK del borrador `docs/diseno/08-actualizaciones.html`
 - Fecha: 2026-11-11
 
 ## Pedido original, textual
@@ -18,7 +18,7 @@ Instalar en otra tele obliga a armar una PC entera (JDK, SDK, compilar). Y para 
 - Firma: `keystore.jks` versionado, misma firma para todas las versiones → las actualizaciones se instalan encima.
 
 ## AGREGA
-- **Releases en GitHub** (`.github/workflows/release.yml`): al subir una etiqueta `v*` (ej. `v0.2`), GitHub compila el APK release firmado **sin `local.properties`** y lo publica en Releases como `museum-slideshow-<versión>.apk`, con las notas del CHANGELOG.
+- **Releases en GitHub** (`.github/workflows/release.yml`): al subir una etiqueta `v*` (ej. `v0.2`), GitHub compila el APK release firmado **sin `local.properties`** y lo publica en Releases como `museum-slideshow-<versión>.apk`, con notas armadas por GitHub (`--generate-notes`). Además `compilar.yml` compila y prueba cada push.
 - **Ajuste "Clave de Drive"** (Conexión y espacio): se escribe en la tele. Se muestra tapada (`AIza…•••`), nunca entera. Por adb: `--es clave <la clave>` (y nunca va al registro: `Registro.limpiar` ya tapa `key=`; agregar que tape también la clave suelta).
 - **Ajuste "Carpeta de Drive" editable**: se pega el link entero o el ID (usa `CarpetaDrive.extraerId`). Para escribir fácil: la app **Google TV del teléfono** tiene teclado y deja pegar lo copiado en el teléfono.
 - **Primera vez sin clave o sin carpeta**: en vez de "falta la clave", la pantalla sin obras ofrece ir directo a cargarlas.

@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Borrador 8 — Actualizaciones</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fondo:#0E0E10; --panel:#1F1F22; --panelc:#2C2C30; --texto:#E8E6E1; --tenue:#A19D95;
+    --dorado:#C9A54E; --bien:#8FBF8F; --foco:#F4F1EA; --focotx:#1A1A1C;
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; background:#18181b; color:var(--texto); font:400 16px Inter, sans-serif; }
+  header { padding:14px 22px; background:#111; border-bottom:1px solid #2a2a2e; }
+  header h1 { font:600 18px Inter; margin:0; }
+  main { padding:18px 22px 40px; max-width:1500px; margin:0 auto; }
+  .titulo-lienzo { margin:30px 0 10px; font:600 20px Inter; }
+  .titulo-lienzo span { color:var(--tenue); font-weight:400; }
+  .wrap { position:relative; width:100%; max-width:960px; background:#000; overflow:hidden; border-radius:10px; }
+  .stage { position:absolute; left:0; top:0; width:1920px; height:1080px; transform-origin:0 0; overflow:hidden; background:var(--fondo); font-family:Inter, sans-serif; }
+  .nota { margin-top:22px; padding:22px 28px; background:#1d1d21; border:1px solid #3a3a40; border-radius:12px; font-size:16px; line-height:1.6; max-width:1100px; }
+  .nota h2 { font:600 18px Inter; margin:0 0 10px; }
+  .nota ul { margin:0 0 6px; padding-left:22px; }
+  .nota b { color:var(--dorado); font-weight:600; }
+  .intro { max-width:1100px; font-size:18px; line-height:1.6; }
+  .intro b { color:var(--dorado); }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:18px; max-width:1100px; margin-top:18px; }
+  .col { padding:18px 24px; background:#1d1d21; border:1px solid #3a3a40; border-radius:12px; line-height:1.55; }
+  .col h3 { margin:0 0 8px; font:600 18px Inter; }
+  .col.rec { border-color:var(--dorado); }
+  .col ul { margin:0; padding-left:20px; }
+  @media (max-width:700px){ .cols{grid-template-columns:1fr;} }
+
+  /* ---- pantalla de ajustes (como Conexión y espacio) ---- */
+  .pant { position:absolute; inset:0; padding:44px 120px 96px; }
+  .pant h2 { margin:0; font:600 52px Inter; }
+  .pant .pie { margin:10px 0 28px; font:400 24px Inter; color:var(--tenue); }
+  .fila { display:flex; align-items:center; padding:16px 28px; margin-bottom:12px; border-radius:12px; background:var(--panel); }
+  .fila .n { width:560px; font:500 30px Inter; }
+  .fila .v { font:600 30px Inter; }
+  .fila .a { font:400 22px Inter; color:var(--tenue); margin-top:2px; }
+  .fila.foco { background:var(--panelc); }
+  .fila.foco .n { font-weight:600; }
+  .fila.foco .v { color:var(--dorado); }
+  .fila .v.bien { color:var(--bien); }
+  .fila .v.nueva { color:var(--dorado); }
+  .caja { margin-top:26px; padding:26px 32px; border-radius:16px; background:var(--panel); }
+  .caja h3 { margin:0 0 10px; font:600 34px Inter; }
+  .caja h3 b { color:var(--dorado); font-weight:600; }
+  .caja p { margin:6px 0 0; font:400 26px/1.5 Inter; color:var(--tenue); }
+  .caja li { font:400 26px/1.55 Inter; color:var(--texto); }
+  .caja ul { margin:10px 0 0; padding-left:34px; }
+  .progreso { margin-top:18px; height:26px; border-radius:13px; background:#0A0A0B; overflow:hidden; }
+  .progreso i { display:block; width:62%; height:100%; background:linear-gradient(90deg,#9A7C36,var(--dorado)); }
+  .ayuda { position:absolute; left:0; right:0; bottom:0; height:84px; padding:0 120px; display:flex; align-items:center; gap:34px; background:rgba(0,0,0,.55); font:400 24px Inter; color:var(--tenue); }
+  .ayuda b { display:inline-block; padding:3px 12px; margin-right:8px; border-radius:9px; background:rgba(255,255,255,.14); color:var(--texto); font:600 22px Inter; }
+
+  /* ---- cartel de Android ---- */
+  .velo { position:absolute; inset:0; background:rgba(0,0,0,.6); }
+  .dialogo { position:absolute; left:50%; top:50%; width:900px; transform:translate(-50%,-50%); padding:40px 48px; border-radius:20px; background:#2B2D31; box-shadow:0 30px 80px rgba(0,0,0,.6); font-family:Roboto, Inter, sans-serif; }
+  .dialogo .ic { width:72px; height:72px; border-radius:16px; background:linear-gradient(135deg,#C9A54E,#7a5d12); margin-bottom:22px; }
+  .dialogo h3 { margin:0 0 12px; font:500 36px Inter; }
+  .dialogo p { margin:0; font:400 26px/1.5 Inter; color:#C4C7C5; }
+  .dialogo .bot { display:flex; justify-content:flex-end; gap:20px; margin-top:34px; }
+  .dialogo .bot span { padding:14px 30px; border-radius:30px; font:500 26px Inter; color:#A8C7FA; }
+  .dialogo .bot span.foco { background:#A8C7FA; color:#062E6F; }
+  .android { position:absolute; right:40px; top:30px; padding:8px 20px; border-radius:20px; border:2px dashed var(--tenue); font:500 22px Inter; color:var(--tenue); }
+
+  /* ---- Inicio con aviso ---- */
+  .inicio { position:absolute; inset:0; padding:70px 120px; }
+  .inicio .marca { font:600 32px Inter; color:var(--dorado); }
+  .inicio h2 { margin:14px 0 40px; font:500 64px 'EB Garamond',serif; }
+  .botones { display:grid; grid-template-columns:repeat(4, 1fr); gap:24px; }
+  .boton { height:170px; border-radius:18px; background:var(--panel); padding:28px; font:500 32px Inter; display:flex; align-items:flex-end; }
+  .boton.foco { background:var(--foco); color:var(--focotx); font-weight:600; }
+  .avisoact { position:absolute; left:120px; right:120px; bottom:130px; display:flex; align-items:center; gap:24px; padding:22px 30px; border-radius:16px; background:rgba(201,165,78,.14); border:2px solid rgba(201,165,78,.55); font:500 28px Inter; }
+  .avisoact .pt { width:18px; height:18px; border-radius:50%; background:var(--dorado); flex:none; }
+  .avisoact span { color:var(--tenue); font-weight:400; }
+
+  html.solo, html.solo body { margin:0; padding:0; width:1920px; height:1080px; overflow:hidden; background:#000; }
+  html.solo header, html.solo .nota, html.solo .titulo-lienzo, html.solo .wrap.oculto, html.solo .intro, html.solo .cols { display:none !important; }
+  html.solo main { padding:0; margin:0; max-width:none; }
+  html.solo .wrap { position:fixed; left:0; top:0; width:1920px; max-width:none; height:1080px; border-radius:0; }
+  html.solo .stage { transform:none !important; }
+</style>
+</head>
+<body>
+<header><h1>Actualizaciones — borrador 8</h1></header>
+<main>
+
+<div class="intro">
+  <p><b>Qué es:</b> una pantalla nueva para que la app se actualice sola desde GitHub, sin PC. Muestra qué versión tenés, si hay una nueva y un botón <b>Actualizar</b>.</p>
+  <p>Al actualizar, la app baja la versión nueva y la tele muestra <b>su propio cartel</b> de "¿Instalar?", que se acepta con el control. Android no deja que una app se instale sin ese cartel. Tus ajustes, la clave y el protector quedan como estaban.</p>
+</div>
+
+<div class="titulo-lienzo">1 · La pantalla Actualizaciones <span>(hay una versión nueva)</span></div>
+<div class="wrap" data-n="1"><div class="stage">
+  <div class="pant">
+    <h2>Actualizaciones</h2>
+    <div class="pie">La app se actualiza desde GitHub, sin PC</div>
+    <div class="fila"><div class="n">Versión instalada</div><div class="v">0.2</div></div>
+    <div class="fila"><div class="n">Última en GitHub</div><div class="v nueva">0.3 · nueva</div></div>
+    <div class="fila foco"><div class="n">Actualizar a la 0.3</div><div class="v">OK para instalar</div></div>
+    <div class="fila"><div class="n">Buscar actualizaciones</div><div><div class="v">Una vez por día</div></div></div>
+    <div class="fila"><div class="n">Buscar ahora</div><div class="v" style="color:var(--tenue);font-weight:500;font-size:26px">Última vez: hoy 09:12</div></div>
+    <div class="caja">
+      <h3>Qué trae la <b>0.3</b></h3>
+      <ul><li>Pantalla Actualizaciones.</li><li>Arreglos en la Barra lateral.</li></ul>
+    </div>
+  </div>
+  <div class="ayuda"><span><b>▲▼</b>Recorrer</span><span><b>OK</b>Actualizar</span><span><b>Atrás</b>Volver</span></div>
+</div></div>
+
+<div class="titulo-lienzo">2 · Bajando y el cartel de la tele <span>(el cartel lo dibuja Android, no la app)</span></div>
+<div class="wrap" data-n="2"><div class="stage">
+  <div class="pant">
+    <h2>Actualizaciones</h2>
+    <div class="pie">La app se actualiza desde GitHub, sin PC</div>
+    <div class="fila"><div class="n">Versión instalada</div><div class="v">0.2</div></div>
+    <div class="fila"><div class="n">Última en GitHub</div><div class="v nueva">0.3 · nueva</div></div>
+    <div class="caja"><h3>Bajando la <b>0.3</b>… 62%</h3><div class="progreso"><i></i></div></div>
+  </div>
+  <div class="velo"></div>
+  <div class="android">Cartel de Android</div>
+  <div class="dialogo">
+    <div class="ic"></div>
+    <h3>Museum Slideshow</h3>
+    <p>¿Querés actualizar esta app? Tus datos no se van a borrar.</p>
+    <div class="bot"><span>Cancelar</span><span class="foco">Actualizar</span></div>
+  </div>
+</div></div>
+
+<div class="titulo-lienzo">3 · La primera vez: falta el permiso <span>(una sola vez por tele)</span></div>
+<div class="wrap" data-n="3"><div class="stage">
+  <div class="pant">
+    <h2>Actualizaciones</h2>
+    <div class="pie">La app se actualiza desde GitHub, sin PC</div>
+    <div class="fila"><div class="n">Versión instalada</div><div class="v">0.2</div></div>
+    <div class="fila"><div class="n">Última en GitHub</div><div class="v nueva">0.3 · nueva</div></div>
+    <div class="caja">
+      <h3>Falta un permiso para actualizar</h3>
+      <p>La tele pide permiso una vez para que esta app pueda instalar versiones nuevas. Apretá OK y, en la pantalla que se abre, activá <b style="color:var(--texto)">Museum Slideshow</b>. Después volvé con Atrás.</p>
+    </div>
+    <div class="fila foco" style="margin-top:22px"><div class="n">Dar el permiso</div><div class="v">OK para abrir los Ajustes de la tele</div></div>
+  </div>
+  <div class="ayuda"><span><b>OK</b>Abrir los Ajustes de la tele</span><span><b>Atrás</b>Volver</span></div>
+</div></div>
+
+<div class="titulo-lienzo">4 · El aviso en Inicio <span>(cuando la búsqueda diaria encuentra una nueva)</span></div>
+<div class="wrap" data-n="4"><div class="stage">
+  <div class="inicio">
+    <div class="marca">Museum Slideshow</div>
+    <h2>Buenas tardes</h2>
+    <div class="botones">
+      <div class="boton foco">Ver la galería</div><div class="boton">Galerías</div><div class="boton">Apariencia</div><div class="boton">Pase</div>
+      <div class="boton">Conexión y espacio</div><div class="boton">Protector</div><div class="boton">Estado</div><div class="boton">Actualizaciones</div>
+    </div>
+  </div>
+  <div class="avisoact"><div class="pt"></div>Hay una versión nueva (0.3) <span>· entrá a Actualizaciones para instalarla</span></div>
+</div></div>
+
+<div class="titulo-lienzo">¿Dónde va la entrada? <span>(para decidir)</span></div>
+<div class="cols">
+  <div class="col rec"><h3>A · Un botón más en Inicio, "Actualizaciones"</h3>
+    <ul><li>Se encuentra al toque.</li><li>El aviso de versión nueva lleva ahí directo.</li><li>Inicio pasa de 7 a 8 botones (entra justo en dos filas de 4).</li></ul></div>
+  <div class="col"><h3>B · Un renglón dentro de Estado</h3>
+    <ul><li>Inicio queda como está.</li><li>Más escondido: hay que saber que está en Estado.</li><li>El aviso de Inicio igual haría falta.</li></ul></div>
+</div>
+
+<div class="nota" style="border-color:var(--dorado)">
+  <h2>Para decidir</h2>
+  <ul style="margin-bottom:0">
+    <li><b>¿A o B?</b> Recomiendo A: es lo más fácil de encontrar.</li>
+    <li><b>¿Busca sola una vez por día y avisa?</b> (nunca instala sola). Propongo que sí, con el ajuste "Solo a mano" para apagarlo.</li>
+    <li><b>¿El aviso va también en la Barra</b> de la galería, o solo en Inicio? Propongo solo Inicio, para no tapar las obras.</li>
+  </ul>
+</div>
+</main>
+<script>
+const qs = new URLSearchParams(location.search);
+const solo = qs.get('lienzo');
+if (solo) document.documentElement.classList.add('solo');
+function ajustar() {
+  document.querySelectorAll('.wrap').forEach(w => {
+    const st = w.firstElementChild;
+    if (solo) { if (w.dataset.n !== solo) w.classList.add('oculto'); return; }
+    const s = w.clientWidth / 1920;
+    st.style.transform = 'scale(' + s + ')';
+    w.style.height = (1080 * s) + 'px';
+  });
+}
+addEventListener('resize', ajustar);
+ajustar();
+</script>
+</body>
+</html>
