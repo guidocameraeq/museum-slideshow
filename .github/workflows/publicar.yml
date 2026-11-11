@@ -1,10 +1,17 @@
-# Publica una versión: al subir la etiqueta v<versión> (la misma de app/build.gradle.kts), compila el APK
-# sin clave de Drive y lo deja en Releases. La app lo busca ahí para actualizarse.
+# Publica una versión: al subir la etiqueta v<versión> (la misma de app/build.gradle.kts), o a mano desde la
+# pestaña Actions ("Run workflow", sobre la rama que se quiere publicar), compila el APK sin clave de Drive y lo
+# deja en Releases. La app lo busca ahí para actualizarse.
 name: Publicar versión
 
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      notas:
+        description: "Qué trae esta versión (lo muestra la app)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -22,6 +29,10 @@ jobs:
       - name: La etiqueta coincide con la versión de la app
         run: |
           VERSION=$(sed -n 's/^val versionApp = "\(.*\)"$/\1/p' app/build.gradle.kts)
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "VERSION=$VERSION" >> "$GITHUB_ENV"; echo "ETIQUETA=v$VERSION" >> "$GITHUB_ENV"; exit 0
+          fi
+          echo "ETIQUETA=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
           if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
             echo "La etiqueta es $GITHUB_REF_NAME pero la app dice $VERSION"; exit 1
           fi
@@ -36,11 +47,18 @@ jobs:
       - name: Publicar en Releases
         env:
           GH_TOKEN: ${{ github.token }}
+          NOTAS_A_MANO: ${{ inputs.notas }}
         run: |
           cp app/build/outputs/apk/release/app-release.apk "museum-slideshow-$VERSION.apk"
-          # Las notas son el mensaje de la etiqueta (git tag -a v0.3 -m "..."): es lo que muestra la app en "Qué trae".
-          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
-          git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > notas.md
-          if [ -s notas.md ]; then NOTAS=(--notes-file notas.md); else NOTAS=(--generate-notes); fi
-          gh release create "$GITHUB_REF_NAME" "museum-slideshow-$VERSION.apk" \
+          # Las notas (lo que muestra la app en "Qué trae"): las escritas a mano o el mensaje de la etiqueta
+          # (git tag -a v0.3 -m "..."). Si no hay ninguna, las arma GitHub.
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            printf '%s\n' "$NOTAS_A_MANO" | sed 's/ - /\n- /g' > notas.md
+          else
+            git fetch --force origin "refs/tags/$ETIQUETA:refs/tags/$ETIQUETA"
+            git tag -l --format='%(contents)' "$ETIQUETA" > notas.md
+          fi
+          if grep -q '[^[:space:]]' notas.md; then NOTAS=(--notes-file notas.md); else NOTAS=(--generate-notes); fi
+          # A mano, la etiqueta la crea GitHub sobre este mismo commit.
+          gh release create "$ETIQUETA" "museum-slideshow-$VERSION.apk" --target "$GITHUB_SHA" \
             --title "Museum Slideshow $VERSION" "${NOTAS[@]}"
