@@ -47,6 +47,7 @@ import local.museumslideshow.ajustes.GrupoAjustes
 import local.museumslideshow.ajustes.IdAjuste
 import local.museumslideshow.ajustes.ItemAjuste
 import local.museumslideshow.ajustes.ItemInfo
+import local.museumslideshow.ajustes.ItemTexto
 import local.museumslideshow.ajustes.ListaAjustes
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.catalogo.Obra
@@ -88,6 +89,8 @@ fun PantallaAjustesGrupo(
     val syncActual by rememberUpdatedState(alSincronizar)
     val cambiarActual by rememberUpdatedState(cambiar)
     val volverActual by rememberUpdatedState(alVolver)
+    val prefsActuales by rememberUpdatedState(prefs)
+    val ctx = LocalContext.current
     val filaSincronizar = if (sync != null) items.size else -1
     val cantidad = items.size + (if (sync != null) 1 else 0)
     var foco by remember { mutableIntStateOf(0) }
@@ -108,11 +111,16 @@ fun PantallaAjustesGrupo(
                 .fillMaxSize()
                 .background(Paleta.Fondo)
                 .conTeclas(activa) { tecla ->
-                    val paso = NavegacionLista.paso(foco, tecla, cantidad) { it == filaSincronizar }
+                    val paso = NavegacionLista.paso(foco, tecla, cantidad) { it == filaSincronizar || itemsActuales.getOrNull(it) is ItemTexto }
                     foco = paso.indice
                     when (val a = paso.accion) {
                         AccionLista.Volver -> volverActual()
-                        is AccionLista.Abrir -> syncActual()
+                        is AccionLista.Abrir -> {
+                            val texto = itemsActuales.getOrNull(a.indice) as? ItemTexto
+                            // Guardar una carpeta o clave nueva ya dispara la sincronización (MotorApp lo ve en los ajustes).
+                            if (texto != null) abrirVentanaTexto(ctx, texto, prefsActuales, cambiarActual, alGuardar = {})
+                            else syncActual()
+                        }
                         is AccionLista.Cambiar -> {
                             val item = itemsActuales.getOrNull(a.indice)
                             if (item != null && item.editable) cambiarActual { p -> item.mover(p, a.dir, a.envolver) }
@@ -151,6 +159,7 @@ fun PantallaAjustesGrupo(
             val ayudas = buildList {
                 add(Ayudas.recorrer())
                 if (foco == filaSincronizar) add(Ayuda(stringResource(R.string.tecla_ok), stringResource(R.string.ayuda_sincronizar)))
+                else if (items.getOrNull(foco) is ItemTexto) add(Ayuda(stringResource(R.string.tecla_ok), stringResource(R.string.ayuda_escribir)))
                 else add(Ayudas.cambiar())
                 add(Ayudas.atras(R.string.ayuda_volver))
             }

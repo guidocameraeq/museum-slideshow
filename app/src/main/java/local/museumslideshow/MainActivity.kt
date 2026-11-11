@@ -204,6 +204,7 @@ class MainActivity : ComponentActivity() {
                         activa = pantalla == PantallaApp.GALERIA,
                         alVerEstado = { irA(PantallaApp.ESTADO, atrasA = PantallaApp.GALERIA) },
                         alVolver = { irA(PantallaApp.INICIO) },
+                        alCargarClave = { irA(PantallaApp.CONEXION) },
                     )
                 }
             }

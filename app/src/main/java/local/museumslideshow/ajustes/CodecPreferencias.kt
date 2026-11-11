@@ -32,6 +32,7 @@ object CodecPreferencias {
         const val SINCRONIZAR_CADA = "sincronizar_cada"
         const val ESPACIO_MAXIMO = "espacio_maximo"
         const val CARPETA = "carpeta"
+        const val CLAVE_DRIVE = "clave_drive"
         const val GALERIAS_SELECCION = "galerias_seleccion"
         const val GALERIAS_NUEVAS = "galerias_nuevas"
         const val RESERVA = "reserva"
@@ -42,7 +43,7 @@ object CodecPreferencias {
 
         val TODAS = listOf(
             TEMA, MODO, HORA_DIA, HORA_NOCHE, PARED_CLARO, PARED_OSCURO, MARCO, TAMANO, COMPLETA_CON_MARCO, EXPLICACION,
-            SALA, CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, CREDITO, TRANSICION, DURACION, SINCRONIZAR_CADA, ESPACIO_MAXIMO, CARPETA,
+            SALA, CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, CREDITO, TRANSICION, DURACION, SINCRONIZAR_CADA, ESPACIO_MAXIMO, CARPETA, CLAVE_DRIVE,
             GALERIAS_SELECCION, GALERIAS_NUEVAS, RESERVA, VISTA_GALERIAS, RITMO_BAJADA, CAMINO_OBRAS, CIERRE_BARRA,
         )
     }
@@ -83,6 +84,7 @@ object CodecPreferencias {
         m[K.SINCRONIZAR_CADA] = p.sincronizarCada.name
         m[K.ESPACIO_MAXIMO] = p.espacioMaximo.name
         p.carpetaDrive?.let { m[K.CARPETA] = it }
+        p.claveDrive?.let { m[K.CLAVE_DRIVE] = it }
         if (p.seleccionGalerias.isNotEmpty()) m[K.GALERIAS_SELECCION] = codificarSeleccion(p.seleccionGalerias)
         m[K.GALERIAS_NUEVAS] = p.galeriasNuevas.name
         m[K.RESERVA] = p.reservaObras.toString()
@@ -128,6 +130,7 @@ object CodecPreferencias {
             sincronizarCada = enum<SincronizarCada>(m[K.SINCRONIZAR_CADA]) ?: d.sincronizarCada,
             espacioMaximo = enum<EspacioMaximo>(m[K.ESPACIO_MAXIMO]) ?: d.espacioMaximo,
             carpetaDrive = CarpetaDrive.extraerId(m[K.CARPETA]),
+            claveDrive = ClaveDrive.limpiar(m[K.CLAVE_DRIVE]),
             seleccionGalerias = decodificarSeleccion(m[K.GALERIAS_SELECCION]),
             galeriasNuevas = enum<GaleriasNuevas>(m[K.GALERIAS_NUEVAS]) ?: d.galeriasNuevas,
             reservaObras = m[K.RESERVA]?.toIntOrNull()?.takeIf { it in Preferencias.RESERVA_OBRAS } ?: d.reservaObras,

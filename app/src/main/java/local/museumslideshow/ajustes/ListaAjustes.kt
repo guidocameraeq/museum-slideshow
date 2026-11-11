@@ -21,7 +21,7 @@ class Opcion(
 /** Los ajustes de la pantalla, en el orden de la tabla del SPEC-0 (y al final, la entrada que abre Estado). */
 enum class IdAjuste {
     TEMA, MODO, HORA_DIA, HORA_NOCHE, PARED_CLARO, PARED_OSCURO, MARCO, TAMANO, COMPLETA_CON_MARCO, EXPLICACION, SALA,
-    CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, CREDITO, CIERRE_BARRA, TRANSICION, DURACION, SINCRONIZAR, RESERVA, ESPACIO, RITMO, CAMINO, CARPETA, GALERIAS_NUEVAS,
+    CALIDAD, TIEMPO, ORDEN, GALERIA, PARED, CARTEL, CREDITO, CIERRE_BARRA, TRANSICION, DURACION, SINCRONIZAR, RESERVA, ESPACIO, RITMO, CAMINO, CARPETA, CLAVE, GALERIAS_NUEVAS,
     PROTECTOR, ESTADO,
 }
 
@@ -83,7 +83,7 @@ class ItemHora(
     override fun mover(p: Preferencias, dir: Int, envolver: Boolean): Preferencias = poner(p, Pasos.moverHora(leer(p), dir))
 }
 
-/** Solo muestra un valor (no se cambia acá): la carpeta de Drive y el interruptor del protector. */
+/** Solo muestra un valor (no se cambia acá): el interruptor del protector. */
 class ItemInfo(
     id: IdAjuste,
     @StringRes nombre: Int,
@@ -92,6 +92,26 @@ class ItemInfo(
     val habilitado: Boolean,
 ) : ItemAjuste(id, nombre) {
     override fun valor(p: Preferencias): Etiqueta = texto(p)
+    override val ayuda get() = ayudaRes
+}
+
+/**
+ * Un ajuste que se escribe (la carpeta y la clave de Drive): OK abre una ventanita con el teclado de la tele (o el del
+ * teléfono, con la app Google TV). Las flechas no lo cambian.
+ */
+class ItemTexto(
+    id: IdAjuste,
+    @StringRes nombre: Int,
+    private val mostrar: (Preferencias) -> Etiqueta,
+    @StringRes private val ayudaRes: Int,
+    /** Con qué texto arranca la ventanita. La clave arranca vacía: nunca se muestra entera. */
+    val inicial: (Preferencias) -> String,
+    /** Aplica lo escrito. Vacío = borrar (vuelve a "sin cargar"). null = lo escrito no sirve (y se avisa). */
+    val poner: (Preferencias, String) -> Preferencias?,
+    /** Un texto que no se muestra (la clave): sin autocorrector ni sugerencias. */
+    val secreto: Boolean,
+) : ItemAjuste(id, nombre) {
+    override fun valor(p: Preferencias): Etiqueta = mostrar(p)
     override val ayuda get() = ayudaRes
 }
 
@@ -263,10 +283,21 @@ object ListaAjustes {
             lista(IdAjuste.CAMINO, R.string.aj_camino, CaminoObras.values().toList(), { it.caminoObras }, { p, v -> p.copy(caminoObras = v) }) {
                 res(if (it == CaminoObras.COPIA_PRIMERO) R.string.camino_copia else R.string.camino_original)
             },
-            ItemInfo(
+            ItemTexto(
                 IdAjuste.CARPETA, R.string.aj_carpeta,
-                { p -> p.carpetaDrive?.let { Etiqueta.Texto(CarpetaDrive.abreviar(it)) } ?: res(R.string.carpeta_de_fabrica) },
-                R.string.carpeta_ayuda, habilitado = true,
+                { p -> p.carpetaDrive?.let { Etiqueta.Texto(CarpetaDrive.abreviar(it)) } ?: res(R.string.v_sin_cargar) },
+                R.string.carpeta_ayuda,
+                inicial = { it.carpetaDrive.orEmpty() },
+                poner = { p, t -> if (t.isBlank()) p.copy(carpetaDrive = null) else CarpetaDrive.extraerId(t)?.let { p.copy(carpetaDrive = it) } },
+                secreto = false,
+            ),
+            ItemTexto(
+                IdAjuste.CLAVE, R.string.aj_clave,
+                { p -> p.claveDrive?.let { Etiqueta.Texto(ClaveDrive.tapar(it)) } ?: res(R.string.v_sin_cargar) },
+                R.string.clave_ayuda,
+                inicial = { "" },
+                poner = { p, t -> if (t.isBlank()) p.copy(claveDrive = null) else ClaveDrive.limpiar(t)?.let { p.copy(claveDrive = it) } },
+                secreto = true,
             ),
             lista(IdAjuste.GALERIAS_NUEVAS, R.string.aj_galerias_nuevas, GaleriasNuevas.values().toList(), { it.galeriasNuevas }, { p, v -> p.copy(galeriasNuevas = v) }) {
                 res(if (it == GaleriasNuevas.TILDADAS) R.string.v_tildadas else R.string.v_destildadas)
@@ -298,7 +329,7 @@ enum class GrupoAjustes(val ids: List<IdAjuste>) {
             IdAjuste.TIEMPO, IdAjuste.ORDEN, IdAjuste.GALERIA, IdAjuste.PARED, IdAjuste.TRANSICION, IdAjuste.DURACION, IdAjuste.CALIDAD,
         ),
     ),
-    CONEXION(listOf(IdAjuste.CARPETA, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.RITMO, IdAjuste.CAMINO)),
+    CONEXION(listOf(IdAjuste.CARPETA, IdAjuste.CLAVE, IdAjuste.SINCRONIZAR, IdAjuste.RESERVA, IdAjuste.ESPACIO, IdAjuste.RITMO, IdAjuste.CAMINO)),
     /** La pantalla Galerías lleva su propia fila "Galerías nuevas" al pie. */
     GALERIAS(listOf(IdAjuste.GALERIAS_NUEVAS)),
     ;

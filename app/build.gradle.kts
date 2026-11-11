@@ -14,6 +14,14 @@ val localProps = Properties().apply {
 }
 fun comillas(s: String) = "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
+// La versión de la app. Para publicar una nueva: subir este número y la etiqueta `v<versión>` (ver docs/desarrollo.md).
+// El código interno sale del número (0.2 -> 200, 1.3.4 -> 10304): siempre crece, así Android acepta la actualización.
+val versionApp = "0.2"
+fun codigoDeVersion(v: String): Int {
+    val p = (v.split('.').map { it.toInt() } + listOf(0, 0)).take(3)
+    return p[0] * 10000 + p[1] * 100 + p[2]
+}
+
 android {
     namespace = "local.museumslideshow"
     compileSdk = 34
@@ -22,14 +30,14 @@ android {
         applicationId = "local.museumslideshow"
         minSdk = 28
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = codigoDeVersion(versionApp)
+        versionName = versionApp
 
         buildConfigField("String", "DRIVE_API_KEY", comillas(localProps.getProperty("drive.apiKey", "")))
         buildConfigField("String", "DRIVE_CARPETA", comillas(localProps.getProperty("drive.carpeta", "")))
     }
 
-    // Firma propia, versionada a propósito (repo privado). Cambiarla obliga a reinstalar.
+    // Firma propia, versionada a propósito: todas las versiones (PC y GitHub) firman igual. Cambiarla obliga a reinstalar.
     signingConfigs {
         create("tv") {
             storeFile = rootProject.file("keystore.jks")

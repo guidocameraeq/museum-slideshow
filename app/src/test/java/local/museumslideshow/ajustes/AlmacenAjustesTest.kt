@@ -42,6 +42,7 @@ class CodecPreferenciasTest {
         espacioMaximo = EspacioMaximo.DOS_GB,
         ritmoBajada = RitmoBajada.NORMAL,
         carpetaDrive = "1CarpetaDeDriveLarga123",
+        claveDrive = "AIzaSyClaveDePruebaQueNoEsReal_12345",
         seleccionGalerias = mapOf("G-1" to false, "G_2" to true),
         galeriasNuevas = GaleriasNuevas.DESTILDADAS,
         reservaObras = 100,

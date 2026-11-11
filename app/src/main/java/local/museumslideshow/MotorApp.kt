@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import local.museumslideshow.ajustes.AlmacenAjustes
 import local.museumslideshow.ajustes.Calidad
+import local.museumslideshow.ajustes.ClaveDrive
 import local.museumslideshow.ajustes.Preferencias
 import local.museumslideshow.ajustes.SincronizarCada
 import local.museumslideshow.catalogo.Catalogo
@@ -91,6 +92,7 @@ class MotorApp private constructor(context: Context) {
     private var arranque: Job? = null
     private var cadaProgramada: SincronizarCada? = null
     private var carpetaVista: String? = null
+    private var claveVista: String? = null
     private var primeraLectura = true
     private var repetirSync = false
 
@@ -124,9 +126,16 @@ class MotorApp private constructor(context: Context) {
         if (iniciado) return
         iniciado = true
         scope.launch {
+            // Si el APK trae clave o carpeta de fábrica y la tele no tiene una cargada, se copian a los ajustes
+            // (antes de seguirlos, así no cuenta como "cambió la carpeta"). Así un APK de GitHub sin clave sigue andando.
+            try {
+                almacen.cambiar { ClaveDrive.conLasDeFabrica(it, BuildConfig.DRIVE_API_KEY, BuildConfig.DRIVE_CARPETA) }
+            } catch (e: Exception) {
+                Log.w(Registro.TAG, "No se pudieron copiar la clave y la carpeta de fábrica (${e.javaClass.simpleName})")
+            }
             almacen.flow.collect { p ->
                 preferencias = p
-                Log.i(Registro.TAG, Registro.limpiar("Preferencias efectivas: $p"))
+                Log.i(Registro.TAG, Registro.limpiar("Preferencias efectivas: ${p.copy(claveDrive = p.claveDrive?.let { "***" })}"))
                 alCambiarAjustes(p)
                 val clave = listOf(p.seleccionGalerias, p.galeriasNuevas, p.orden, p.galeria, p.pared, p.tema, p.reservaObras, p.espacioMaximo)
                 if (clave != claveReserva) {
@@ -158,11 +167,12 @@ class MotorApp private constructor(context: Context) {
                 Log.w(Registro.TAG, "No se pudo programar la sincronización (${e.javaClass.simpleName})")
             }
         }
-        if (!primeraLectura && p.carpetaDrive != carpetaVista) {
-            Log.i(Registro.TAG, "Cambió la carpeta de Drive: se sincroniza")
+        if (!primeraLectura && (p.carpetaDrive != carpetaVista || p.claveDrive != claveVista)) {
+            Log.i(Registro.TAG, "Cambió la carpeta o la clave de Drive: se sincroniza")
             sincronizarAhora()
         }
         carpetaVista = p.carpetaDrive
+        claveVista = p.claveDrive
         primeraLectura = false
     }
 

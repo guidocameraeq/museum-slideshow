@@ -6,6 +6,9 @@ object Registro {
 
     private val CLAVE = Regex("key=[^&\\s\"']*", RegexOption.IGNORE_CASE)
 
-    /** Reemplaza `key=<lo que sea>` por `key=***`. Todo texto de error que se loguee pasa por acá. */
-    fun limpiar(texto: String): String = CLAVE.replace(texto, "key=***")
+    /** Una clave de API de Google suelta (todas empiezan con `AIza`), por si aparece fuera de una URL. */
+    private val CLAVE_SUELTA = Regex("AIza[0-9A-Za-z_-]+")
+
+    /** Reemplaza `key=<lo que sea>` por `key=***` y una clave suelta por `AIza***`. Todo texto que se loguee pasa por acá. */
+    fun limpiar(texto: String): String = CLAVE_SUELTA.replace(CLAVE.replace(texto, "key=***"), "AIza***")
 }

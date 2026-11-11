@@ -84,8 +84,10 @@ data class Preferencias(
     val espacioMaximo: EspacioMaximo = EspacioMaximo.UN_GB,
     val ritmoBajada: RitmoBajada = RitmoBajada.TRANQUILO,
     val caminoObras: CaminoObras = CaminoObras.COPIA_PRIMERO,
-    /** null = el de `local.properties` al compilar. */
+    /** null = sin cargar (si el APK trae una de fábrica, al arrancar se copia acá: ver [ClaveDrive.conLasDeFabrica]). */
     val carpetaDrive: String? = null,
+    /** La clave de Drive cargada en la tele. Nunca se muestra entera ni va al registro. null = sin cargar. */
+    val claveDrive: String? = null,
     /** Id de carpeta -> tildada. Lo que falta toma el valor de [galeriasNuevas]. */
     val seleccionGalerias: Map<String, Boolean> = emptyMap(),
     val galeriasNuevas: GaleriasNuevas = GaleriasNuevas.TILDADAS,
@@ -118,6 +120,7 @@ fun Preferencias.paraEscena(): Preferencias {
         ritmoBajada = d.ritmoBajada,
         caminoObras = d.caminoObras,
         carpetaDrive = d.carpetaDrive,
+        claveDrive = d.claveDrive,
         seleccionGalerias = d.seleccionGalerias,
         galeriasNuevas = d.galeriasNuevas,
         reservaObras = d.reservaObras,
